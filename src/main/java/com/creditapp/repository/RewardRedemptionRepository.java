@@ -49,4 +49,17 @@ public interface RewardRedemptionRepository extends JpaRepository<RewardRedempti
            "GROUP BY r.id, r.name " +
            "ORDER BY redemptionCount DESC")
     List<Object[]> getRewardRedemptionStats(@org.springframework.data.repository.query.Param("parentId") Long parentId);
+    
+    // Get daily reward redemption statistics for the last 7 days
+    @Query("SELECT CAST(rr.redeemedAt AS date) as redemptionDate, COUNT(rr) as rewardCount, SUM(r.pointsRequired) as pointsSpent " +
+           "FROM RewardRedemption rr " +
+           "JOIN rr.reward r " +
+           "JOIN rr.child c " +
+           "WHERE c.parent.id = :parentId " +
+           "AND rr.redeemedAt >= :startDate " +
+           "GROUP BY CAST(rr.redeemedAt AS date) " +
+           "ORDER BY redemptionDate")
+    List<Object[]> getDailyRewardRedemptionStats(
+            @org.springframework.data.repository.query.Param("parentId") Long parentId,
+            @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate);
 }

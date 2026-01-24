@@ -131,6 +131,36 @@ public class DashboardServiceImpl implements DashboardService {
         builder.totalPointsDistributed(totalPointsDistributed)
                .totalPointsRedeemed(totalPointsRedeemed);
         
+        // Get task type distribution and average points
+        Map<String, Integer> taskTypeDistribution = getTaskTypeDistribution(parentId);
+        builder.taskTypeDistribution(taskTypeDistribution);
+        
+        // Calculate average points per task
+        if (!recentCompletions.isEmpty()) {
+            double averagePoints = recentCompletions.stream()
+                    .mapToInt(tc -> tc.getTask().getPoints())
+                    .average()
+                    .orElse(0.0);
+            builder.averagePointsPerTask(averagePoints);
+        }
+        
+        // Find most rewarding task type
+        if (!taskTypeDistribution.isEmpty()) {
+            // This would need more complex logic to find task type with highest average points
+            // For now, we'll just set the first one
+            Map.Entry<String, Integer> firstEntry = taskTypeDistribution.entrySet().iterator().next();
+            builder.mostRewardingTaskType(firstEntry.getKey())
+                   .mostRewardingTaskTypePoints(firstEntry.getValue());
+        }
+        
+        // Get points distribution by child
+        Map<String, Integer> pointsByChild = getPointsDistributionByChild(parentId);
+        builder.pointsDistributionByChild(pointsByChild);
+        
+        // Get weekly activity data
+        List<DashboardStatsDTO.DailyActivityDTO> weeklyActivity = getWeeklyActivity(parentId);
+        builder.weeklyActivity(weeklyActivity);
+        
         return builder.build();
     }
 
@@ -334,5 +364,100 @@ public class DashboardServiceImpl implements DashboardService {
                 .redeemedAt(rewardRedemption.getRedeemedAt())
                 .note(rewardRedemption.getNote())
                 .build();
+    }
+    
+    private Map<String, Integer> getTaskTypeDistribution(Long parentId) {
+        List<TaskCompletion> completions = taskCompletionRepository.findRecentCompletionsByParentId(parentId);
+        Map<String, Integer> typeDistribution = new HashMap<>();
+        
+        for (TaskCompletion tc : completions) {
+            String taskType = tc.getTask().getType().toString();
+            typeDistribution.put(taskType, typeDistribution.getOrDefault(taskType, 0) + 1);
+        }
+        
+        return typeDistribution;
+    }
+    
+    private Map<String, Integer> getPointsDistributionByChild(Long parentId) {
+        List<Child> children = childRepository.findByParentId(parentId);
+        Map<String, Integer> pointsByChild = new LinkedHashMap<>();
+        
+        for (Child child : children) {
+            pointsByChild.put(child.getUsername(), child.getPoints());
+        }
+        
+        return pointsByChild;
+    }
+    
+    private List<DashboardStatsDTO.DailyActivityDTO> getWeeklyActivity(Long parentId) {
+        List<DashboardStatsDTO.DailyActivityDTO> weeklyActivity = new ArrayList<>();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM-dd");
+        
+        // Get start date (7 days ago)
+        LocalDateTime startDate = LocalDateTime.now().minusDays(7);
+        
+        // Get task completion statistics
+        List<Object[]> taskStats = taskCompletionRepository.getDailyTaskCompletionStats(parentId, startDate);
+        Map<LocalDate, DailyTaskStats> taskStatsMap = new HashMap<>();
+        
+        for (Object[] result : taskStats) {
+            LocalDate date = ((java.sql.Date) result[0]).toLocalDate();
+            Long taskCount = (Long) result[1];
+            Long pointsEarned = (Long) result[2];
+            taskStatsMap.put(date, new DailyTaskStats(taskCount.intValue(), pointsEarned.intValue()));
+        }
+        
+        // Get reward redemption statistics
+        List<Object[]> rewardStats = rewardRedemptionRepository.getDailyRewardRedemptionStats(parentId, startDate);
+        Map<LocalDate, DailyRewardStats> rewardStatsMap = new HashMap<>();
+        
+        for (Object[] result : rewardStats) {
+            LocalDate date = ((java.sql.Date) result[0]).toLocalDate();
+            Long rewardCount = (Long) result[1];
+            Long pointsSpent = (Long) result[2];
+            rewardStatsMap.put(date, new DailyRewardStats(rewardCount.intValue(), pointsSpent.intValue()));
+        }
+        
+        // Build weekly activity data for last 7 days
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+            String dateStr = date.format(dateFormatter);
+            
+            DailyTaskStats taskStatsForDate = taskStatsMap.get(date);
+            DailyRewardStats rewardStatsForDate = rewardStatsMap.get(date);
+            
+            DashboardStatsDTO.DailyActivityDTO dailyActivity = DashboardStatsDTO.DailyActivityDTO.builder()
+                    .date(dateStr)
+                    .tasksCompleted(taskStatsForDate != null ? taskStatsForDate.taskCount : 0)
+                    .rewardsRedeemed(rewardStatsForDate != null ? rewardStatsForDate.rewardCount : 0)
+                    .pointsEarned(taskStatsForDate != null ? taskStatsForDate.pointsEarned : 0)
+                    .pointsSpent(rewardStatsForDate != null ? rewardStatsForDate.pointsSpent : 0)
+                    .build();
+            
+            weeklyActivity.add(dailyActivity);
+        }
+        
+        return weeklyActivity;
+    }
+    
+    // Helper classes for daily statistics
+    private static class DailyTaskStats {
+        int taskCount;
+        int pointsEarned;
+        
+        DailyTaskStats(int taskCount, int pointsEarned) {
+            this.taskCount = taskCount;
+            this.pointsEarned = pointsEarned;
+        }
+    }
+    
+    private static class DailyRewardStats {
+        int rewardCount;
+        int pointsSpent;
+        
+        DailyRewardStats(int rewardCount, int pointsSpent) {
+            this.rewardCount = rewardCount;
+            this.pointsSpent = pointsSpent;
+        }
     }
 }

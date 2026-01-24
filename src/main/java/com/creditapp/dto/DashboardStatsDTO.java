@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -36,6 +37,15 @@ public class DashboardStatsDTO {
     
     // For charts and visualizations
     private List<DailyActivityDTO> weeklyActivity;
+    
+    // Task type distribution statistics
+    private Map<String, Integer> taskTypeDistribution;
+    private Double averagePointsPerTask;
+    private String mostRewardingTaskType;
+    private Integer mostRewardingTaskTypePoints;
+    
+    // Point distribution by child
+    private Map<String, Integer> pointsDistributionByChild;
     
     @Data
     @Builder

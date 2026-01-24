@@ -39,4 +39,18 @@ public interface TaskCompletionRepository extends JpaRepository<TaskCompletion, 
            "AND tc.status = 'APPROVED' " +
            "GROUP BY c.id, c.username")
     List<Object[]> countCompletionsByChildForParent(@org.springframework.data.repository.query.Param("parentId") Long parentId);
+    
+    // Get daily task completion statistics for the last 7 days
+    @Query("SELECT CAST(tc.completedAt AS date) as completionDate, COUNT(tc) as taskCount, SUM(t.points) as pointsEarned " +
+           "FROM TaskCompletion tc " +
+           "JOIN tc.task t " +
+           "JOIN tc.child c " +
+           "WHERE c.parent.id = :parentId " +
+           "AND tc.status = 'APPROVED' " +
+           "AND tc.completedAt >= :startDate " +
+           "GROUP BY CAST(tc.completedAt AS date) " +
+           "ORDER BY completionDate")
+    List<Object[]> getDailyTaskCompletionStats(
+            @org.springframework.data.repository.query.Param("parentId") Long parentId,
+            @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate);
 }

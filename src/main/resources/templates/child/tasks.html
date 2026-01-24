@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的任务 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .task-card {
+            transition: transform 0.2s;
+        }
+        
+        .task-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .points-badge {
+            background: linear-gradient(135deg, var(--success-color), #34D399);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+        
+        .task-type-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/child/tasks">
+                            <i class="bi bi-list-check"></i> 我的任务
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/rewards">
+                            <i class="bi bi-gift"></i> 礼物商城
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-list-check"></i> 我的任务
+                </h1>
+                <p class="text-muted">完成任务赚取积分，兑换心仪的礼物！</p>
+            </div>
+        </div>
+
+        <!-- Stats Card -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-md-4">
+                <div class="card text-center p-4">
+                    <div class="stat-icon icon-primary mx-auto" style="background-color: rgba(79, 70, 229, 0.1); color: var(--primary-color);">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <h3 class="mb-2">0 积分</h3>
+                    <p class="text-muted mb-0">当前积分</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center p-4">
+                    <div class="stat-icon icon-success mx-auto" style="background-color: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <h3 class="mb-2">0 个</h3>
+                    <p class="text-muted mb-0">已完成任务</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center p-4">
+                    <div class="stat-icon icon-warning mx-auto" style="background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color);">
+                        <i class="bi bi-clock-fill"></i>
+                    </div>
+                    <h3 class="mb-2">4 个</h3>
+                    <p class="text-muted mb-0">待完成任务</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Tasks -->
+        <div class="row mb-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-task"></i> 进行中的任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Task 1 -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card task-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="card-title mb-0">完成作业</h5>
+                                            <span class="badge points-badge">10 积分</span>
+                                        </div>
+                                        <p class="card-text text-muted">按时完成学校作业</p>
+                                        <div class="mb-3">
+                                            <span class="badge bg-info task-type-badge">每日一次</span>
+                                            <span class="badge bg-success task-type-badge">进行中</span>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-primary">
+                                                <i class="bi bi-check-circle"></i> 标记完成
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Task 2 -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card task-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="card-title mb-0">打扫房间</h5>
+                                            <span class="badge points-badge">5 积分</span>
+                                        </div>
+                                        <p class="card-text text-muted">整理自己的房间</p>
+                                        <div class="mb-3">
+                                            <span class="badge bg-warning task-type-badge">可重复</span>
+                                            <span class="badge bg-success task-type-badge">进行中</span>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-primary">
+                                                <i class="bi bi-check-circle"></i> 标记完成
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Task 3 -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card task-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="card-title mb-0">阅读书籍</h5>
+                                            <span class="badge points-badge">8 积分</span>
+                                        </div>
+                                        <p class="card-text text-muted">每天阅读30分钟课外书</p>
+                                        <div class="mb-3">
+                                            <span class="badge bg-info task-type-badge">每日一次</span>
+                                            <span class="badge bg-success task-type-badge">进行中</span>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-primary">
+                                                <i class="bi bi-check-circle"></i> 标记完成
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Task 4 -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card task-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="card-title mb-0">帮助做家务</h5>
+                                            <span class="badge points-badge">7 积分</span>
+                                        </div>
+                                        <p class="card-text text-muted">帮忙洗碗或扫地</p>
+                                        <div class="mb-3">
+                                            <span class="badge bg-warning task-type-badge">可重复</span>
+                                            <span class="badge bg-success task-type-badge">进行中</span>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-primary">
+                                                <i class="bi bi-check-circle"></i> 标记完成
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="row animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-check-circle"></i> 已完成的任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 还没有完成的任务，加油哦！
+                        </div>
+                        <p class="text-muted text-center mb-0">
+                            完成任务后，它们会显示在这里。继续努力赚取积分吧！
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

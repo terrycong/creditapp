@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务管理 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .task-card {
+            transition: transform 0.2s;
+        }
+        
+        .task-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .badge-task {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+        
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .points-badge {
+            background: linear-gradient(135deg, var(--success-color), #34D399);
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/children">
+                            <i class="bi bi-people"></i> 小孩管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-list-check"></i> 任务管理
+                </h1>
+                <p class="text-muted">为小孩创建和管理任务，帮助他们养成好习惯</p>
+            </div>
+        </div>
+
+        <!-- Create Task Form -->
+        <div class="row mb-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-plus-circle"></i> 创建新任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/parent/tasks}" method="post">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="title" class="form-label">任务标题</label>
+                                    <input type="text" class="form-control" id="title" name="title" 
+                                           placeholder="例如：完成作业" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="points" class="form-label">积分奖励</label>
+                                    <input type="number" class="form-control" id="points" name="points" 
+                                           min="1" max="1000" value="10" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="type" class="form-label">任务类型</label>
+                                    <select class="form-select" id="type" name="type" required>
+                                        <option value="ONE_TIME">一次性任务</option>
+                                        <option value="REPEATABLE">可重复任务</option>
+                                        <option value="DAILY_ONCE">每日一次</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="childId" class="form-label">分配给</label>
+                                    <select class="form-select" id="childId" name="childId" required>
+                                        <option value="1">child</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">任务描述</label>
+                                <textarea class="form-control" id="description" name="description" 
+                                          rows="3" placeholder="详细描述任务要求..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> 创建任务
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task List -->
+        <div class="row animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-task"></i> 现有任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>任务标题</th>
+                                        <th>描述</th>
+                                        <th>积分</th>
+                                        <th>类型</th>
+                                        <th>状态</th>
+                                        <th>分配给</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>完成作业</td>
+                                        <td>按时完成学校作业</td>
+                                        <td><span class="badge points-badge">10 积分</span></td>
+                                        <td><span class="badge bg-info">每日一次</span></td>
+                                        <td><span class="badge bg-success">进行中</span></td>
+                                        <td>child</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> 编辑
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>打扫房间</td>
+                                        <td>整理自己的房间</td>
+                                        <td><span class="badge points-badge">5 积分</span></td>
+                                        <td><span class="badge bg-warning">可重复</span></td>
+                                        <td><span class="badge bg-success">进行中</span></td>
+                                        <td>child</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> 编辑
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>阅读书籍</td>
+                                        <td>每天阅读30分钟课外书</td>
+                                        <td><span class="badge points-badge">8 积分</span></td>
+                                        <td><span class="badge bg-info">每日一次</span></td>
+                                        <td><span class="badge bg-success">进行中</span></td>
+                                        <td>child</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> 编辑
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>帮助做家务</td>
+                                        <td>帮忙洗碗或扫地</td>
+                                        <td><span class="badge points-badge">7 积分</span></td>
+                                        <td><span class="badge bg-warning">可重复</span></td>
+                                        <td><span class="badge bg-success">进行中</span></td>
+                                        <td>child</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> 编辑
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
