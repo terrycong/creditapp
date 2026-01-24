@@ -125,41 +125,99 @@
             </div>
         </div>
 
+        <!-- Welcome Message -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-primary animate__animated animate__fadeIn">
+                    <h4 class="alert-heading">
+                        <i class="bi bi-emoji-smile"></i> 欢迎回来，<span th:text="${username}">用户</span>！
+                    </h4>
+                    <p class="mb-0">
+                        <span th:if="${role == 'PARENT'}">作为家长，您可以查看所有小孩的活动统计和积分情况。</span>
+                        <span th:if="${role == 'CHILD'}">继续努力完成任务，赚取更多积分兑换心仪的礼物吧！</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
         <div class="row mb-5 animate__animated animate__fadeInUp">
             <div th:if="${role == 'PARENT'}" class="col-md-3">
                 <div class="stat-card text-center p-4">
                     <div class="stat-icon icon-primary mx-auto">
                         <i class="bi bi-people-fill"></i>
                     </div>
-                    <h3 class="mb-2">2</h3>
+                    <h3 class="mb-2" th:text="${dashboardStats.totalChildren} ?: 0">0</h3>
                     <p class="text-muted mb-0">家庭成员</p>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div th:if="${role == 'PARENT'}" class="col-md-3">
                 <div class="stat-card text-center p-4">
                     <div class="stat-icon icon-success mx-auto">
                         <i class="bi bi-check-circle-fill"></i>
                     </div>
-                    <h3 class="mb-2">10</h3>
-                    <p class="text-muted mb-0">已完成任务</p>
+                    <h3 class="mb-2" th:text="${dashboardStats.totalTasksCreated} ?: 0">0</h3>
+                    <p class="text-muted mb-0">创建的任务</p>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div th:if="${role == 'PARENT'}" class="col-md-3">
                 <div class="stat-card text-center p-4">
                     <div class="stat-icon icon-warning mx-auto">
-                        <i class="bi bi-list-check"></i>
+                        <i class="bi bi-gift-fill"></i>
                     </div>
-                    <h3 class="mb-2">4</h3>
-                    <p class="text-muted mb-0">待完成任务</p>
+                    <h3 class="mb-2" th:text="${dashboardStats.totalRewardsAvailable} ?: 0">0</h3>
+                    <p class="text-muted mb-0">可用礼物</p>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div th:if="${role == 'PARENT'}" class="col-md-3">
                 <div class="stat-card text-center p-4">
                     <div class="stat-icon icon-info mx-auto">
-                        <i class="bi bi-gift"></i>
+                        <i class="bi bi-cash-stack"></i>
                     </div>
-                    <h3 class="mb-2">6</h3>
-                    <p class="text-muted mb-0">可兑换礼物</p>
+                    <h3 class="mb-2" th:text="${dashboardStats.totalPointsDistributed} ?: 0">0</h3>
+                    <p class="text-muted mb-0">发放积分</p>
+                </div>
+            </div>
+            
+            <!-- Child-specific stats -->
+            <div th:if="${role == 'CHILD' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
+                 class="col-md-3">
+                <div class="stat-card text-center p-4">
+                    <div class="stat-icon icon-success mx-auto">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].taskCompletionCount} ?: 0">0</h3>
+                    <p class="text-muted mb-0">完成任务</p>
+                </div>
+            </div>
+            <div th:if="${role == 'CHILD' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
+                 class="col-md-3">
+                <div class="stat-card text-center p-4">
+                    <div class="stat-icon icon-warning mx-auto">
+                        <i class="bi bi-gift-fill"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].rewardRedemptionCount} ?: 0">0</h3>
+                    <p class="text-muted mb-0">兑换礼物</p>
+                </div>
+            </div>
+            <div th:if="${role == 'CHILD' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
+                 class="col-md-3">
+                <div class="stat-card text-center p-4">
+                    <div class="stat-icon icon-info mx-auto">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].currentPoints} ?: 0">0</h3>
+                    <p class="text-muted mb-0">当前积分</p>
+                </div>
+            </div>
+            <div th:if="${role == 'CHILD' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
+                 class="col-md-3">
+                <div class="stat-card text-center p-4">
+                    <div class="stat-icon icon-primary mx-auto">
+                        <i class="bi bi-trophy-fill"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].totalPointsEarned} ?: 0">0</h3>
+                    <p class="text-muted mb-0">累计积分</p>
                 </div>
             </div>
         </div>
@@ -216,23 +274,217 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-3">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <span>你完成了"完成作业"任务，获得10积分</span>
-                                <small class="text-muted d-block">2小时前</small>
-                            </li>
-                            <li class="mb-3">
-                                <i class="bi bi-gift-fill text-warning"></i>
-                                <span>你兑换了"游戏时间"，消耗20积分</span>
-                                <small class="text-muted d-block">昨天</small>
-                            </li>
-                            <li>
-                                <i class="bi bi-plus-circle text-primary"></i>
-                                <span>家长为你创建了新任务</span>
-                                <small class="text-muted d-block">2天前</small>
-                            </li>
-                        </ul>
+                        <div th:if="${dashboardStats.recentTaskCompletions != null && !dashboardStats.recentTaskCompletions.empty}">
+                            <h6 class="text-success mb-3">
+                                <i class="bi bi-check-circle-fill"></i> 最近完成的任务
+                            </h6>
+                            <ul class="list-unstyled mb-4">
+                                <li th:each="completion : ${dashboardStats.recentTaskCompletions}" class="mb-3">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <span th:if="${role == 'PARENT'}">
+                                        <strong th:text="${completion.childName}">小孩</strong> 完成了
+                                        <strong th:text="${completion.taskTitle}">任务</strong>，
+                                        获得 <span class="text-success" th:text="${completion.taskPoints}">0</span> 积分
+                                    </span>
+                                    <span th:if="${role == 'CHILD'}">
+                                        你完成了 <strong th:text="${completion.taskTitle}">任务</strong>，
+                                        获得 <span class="text-success" th:text="${completion.taskPoints}">0</span> 积分
+                                    </span>
+                                    <small class="text-muted d-block" 
+                                           th:text="${#temporals.format(completion.completedAt, 'yyyy-MM-dd HH:mm')}">
+                                        时间
+                                    </small>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div th:if="${dashboardStats.recentRewardRedemptions != null && !dashboardStats.recentRewardRedemptions.empty}">
+                            <h6 class="text-warning mb-3">
+                                <i class="bi bi-gift-fill"></i> 最近兑换的礼物
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li th:each="redemption : ${dashboardStats.recentRewardRedemptions}" class="mb-3">
+                                    <i class="bi bi-gift-fill text-warning"></i>
+                                    <span th:if="${role == 'PARENT'}">
+                                        <strong th:text="${redemption.childName}">小孩</strong> 兑换了
+                                        <strong th:text="${redemption.rewardName}">礼物</strong>，
+                                        消耗 <span class="text-warning" th:text="${redemption.pointsRequired}">0</span> 积分
+                                    </span>
+                                    <span th:if="${role == 'CHILD'}">
+                                        你兑换了 <strong th:text="${redemption.rewardName}">礼物</strong>，
+                                        消耗 <span class="text-warning" th:text="${redemption.pointsRequired}">0</span> 积分
+                                    </span>
+                                    <small class="text-muted d-block" 
+                                           th:text="${#temporals.format(redemption.redeemedAt, 'yyyy-MM-dd HH:mm')}">
+                                        时间
+                                    </small>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div th:if="${(dashboardStats.recentTaskCompletions == null || dashboardStats.recentTaskCompletions.empty) && 
+                                     (dashboardStats.recentRewardRedemptions == null || dashboardStats.recentRewardRedemptions.empty)}">
+                            <p class="text-muted text-center mb-0">
+                                <i class="bi bi-info-circle"></i> 暂无最近动态
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Child Activity Statistics (for Parents) -->
+        <div th:if="${role == 'PARENT' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
+             class="row mt-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bar-chart-fill"></i> 小孩活动统计
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>小孩姓名</th>
+                                        <th>完成任务数</th>
+                                        <th>获得积分</th>
+                                        <th>兑换礼物数</th>
+                                        <th>消耗积分</th>
+                                        <th>当前积分</th>
+                                        <th>最常完成的任务</th>
+                                        <th>最常兑换的礼物</th>
+                                        <th>最近活动</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="child : ${dashboardStats.childActivities}">
+                                        <td th:text="${child.childName}">小孩</td>
+                                        <td th:text="${child.taskCompletionCount}">0</td>
+                                        <td>
+                                            <span class="text-success" th:text="${child.totalPointsEarned}">0</span>
+                                        </td>
+                                        <td th:text="${child.rewardRedemptionCount}">0</td>
+                                        <td>
+                                            <span class="text-warning" th:text="${child.totalPointsSpent}">0</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-primary fw-bold" th:text="${child.currentPoints}">0</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${child.mostCompletedTask != null}">
+                                                <span th:text="${child.mostCompletedTask}">任务</span>
+                                                <small class="text-muted d-block" th:text="'(' + ${child.mostCompletedTaskCount} + '次)'">(0次)</small>
+                                            </span>
+                                            <span th:if="${child.mostCompletedTask == null}" class="text-muted">暂无</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${child.mostRedeemedReward != null}">
+                                                <span th:text="${child.mostRedeemedReward}">礼物</span>
+                                                <small class="text-muted d-block" th:text="'(' + ${child.mostRedeemedRewardCount} + '次)'">(0次)</small>
+                                            </span>
+                                            <span th:if="${child.mostRedeemedReward == null}" class="text-muted">暂无</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                <div th:if="${child.lastTaskCompletedAt != null}">
+                                                    任务: <span th:text="${child.lastTaskCompletedAt}">时间</span>
+                                                </div>
+                                                <div th:if="${child.lastRewardRedeemedAt != null}">
+                                                    礼物: <span th:text="${child.lastRewardRedeemedAt}">时间</span>
+                                                </div>
+                                                <div th:if="${child.lastTaskCompletedAt == null && child.lastRewardRedeemedAt == null}">
+                                                    暂无活动
+                                                </div>
+                                            </small>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Statistics -->
+        <div th:if="${role == 'PARENT'}" class="row mt-4 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-calendar-day"></i> 今日统计
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <h3 class="text-success" th:text="${dashboardStats.tasksCompletedToday} ?: 0">0</h3>
+                                <p class="text-muted mb-0">今日完成任务</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h3 class="text-warning" th:text="${dashboardStats.rewardsRedeemedToday} ?: 0">0</h3>
+                                <p class="text-muted mb-0">今日兑换礼物</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h3 class="text-success" th:text="${dashboardStats.pointsEarnedToday} ?: 0">0</h3>
+                                <p class="text-muted mb-0">今日获得积分</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h3 class="text-warning" th:text="${dashboardStats.pointsSpentToday} ?: 0">0</h3>
+                                <p class="text-muted mb-0">今日消耗积分</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Items -->
+        <div th:if="${role == 'PARENT'}" class="row mt-4 animate__animated animate__fadeInUp">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-trophy-fill"></i> 最受欢迎的任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${dashboardStats.mostPopularTask != null}">
+                            <h4 th:text="${dashboardStats.mostPopularTask}">任务名称</h4>
+                            <p class="text-muted">
+                                已完成 <span class="text-primary fw-bold" th:text="${dashboardStats.mostPopularTaskCount}">0</span> 次
+                            </p>
+                        </div>
+                        <div th:if="${dashboardStats.mostPopularTask == null}">
+                            <p class="text-muted text-center mb-0">
+                                <i class="bi bi-info-circle"></i> 暂无任务完成记录
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-star-fill"></i> 最受欢迎的礼物
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${dashboardStats.mostPopularReward != null}">
+                            <h4 th:text="${dashboardStats.mostPopularReward}">礼物名称</h4>
+                            <p class="text-muted">
+                                已兑换 <span class="text-primary fw-bold" th:text="${dashboardStats.mostPopularRewardCount}">0</span> 次
+                            </p>
+                        </div>
+                        <div th:if="${dashboardStats.mostPopularReward == null}">
+                            <p class="text-muted text-center mb-0">
+                                <i class="bi bi-info-circle"></i> 暂无礼物兑换记录
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

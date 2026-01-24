@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小孩管理 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .child-card {
+            transition: transform 0.2s;
+        }
+        
+        .child-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .child-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .points-badge {
+            background: linear-gradient(135deg, var(--success-color), #34D399);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/children">
+                            <i class="bi bi-people"></i> 小孩管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-people"></i> 小孩管理
+                </h1>
+                <p class="text-muted">管理小孩账号，查看他们的积分和任务完成情况</p>
+            </div>
+        </div>
+
+        <!-- Create Child Button -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">添加新小孩</h5>
+                        <p class="card-text text-muted">为家庭添加新的小孩账号，让他们也能参与积分系统</p>
+                        <a href="/child/create-child" class="btn btn-primary">
+                            <i class="bi bi-person-plus"></i> 创建小孩账号
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Children List -->
+        <div class="row animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-people-fill"></i> 我的小孩
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Dynamic Children List -->
+                            <div th:each="child : ${children}" class="col-md-6 mb-4">
+                                <div class="card child-card h-100">
+                                    <div class="card-body text-center">
+                                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+                                             class="child-avatar mb-3" alt="child">
+                                        <h4 class="card-title" th:text="${child.username}">child</h4>
+                                        <p class="text-muted">小孩账号</p>
+                                        
+                                        <div class="mb-4">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>当前积分</span>
+                                                <span class="badge points-badge" th:text="${child.points} + ' 积分'">0 积分</span>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                     th:style="'width: ' + ${child.points} + '%'" 
+                                                     th:attr="aria-valuenow=${child.points}" 
+                                                     aria-valuemin="0" aria-valuemax="1000"></div>
+                                            </div>
+                                            <small class="text-muted" th:text="${child.points} + ' / 1000 积分'">0 / 1000 积分</small>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <div class="text-center">
+                                                    <h5 class="mb-1">4</h5>
+                                                    <small class="text-muted">进行中任务</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-center">
+                                                    <h5 class="mb-1">0</h5>
+                                                    <small class="text-muted">已完成任务</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <a th:href="@{/parent/children/{childId}(childId=${child.id})}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="bi bi-eye"></i> 查看详情
+                                            </a>
+                                            <a th:href="@{/parent/children/{childId}/edit(childId=${child.id})}" 
+                                               class="btn btn-outline-warning">
+                                                <i class="bi bi-pencil"></i> 编辑信息
+                                            </a>
+                                            <form th:action="@{/parent/children/{childId}/delete(childId=${child.id})}" 
+                                                  method="post" 
+                                                  onsubmit="return confirm('确定要删除这个小孩账号吗？此操作不可撤销！');"
+                                                  class="d-grid">
+                                                <button type="submit" class="btn btn-outline-danger">
+                                                    <i class="bi bi-trash"></i> 删除账号
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Add New Child Card -->
+                            <div class="col-md-6 mb-4">
+                                <div class="card child-card h-100 border-dashed">
+                                    <div class="card-body text-center d-flex flex-column justify-content-center align-items-center">
+                                        <div class="mb-3">
+                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                                                 style="width: 100px; height: 100px; border: 2px dashed #dee2e6;">
+                                                <i class="bi bi-person-plus" style="font-size: 2.5rem; color: #6c757d;"></i>
+                                            </div>
+                                        </div>
+                                        <h4 class="card-title">添加新小孩</h4>
+                                        <p class="text-muted">为家庭添加新的成员</p>
+                                        <a href="/child/create-child" class="btn btn-primary mt-3">
+                                            <i class="bi bi-plus-circle"></i> 创建新账号
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Child Activity -->
+        <div class="row mt-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 小孩活动记录
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>小孩</th>
+                                        <th>活动</th>
+                                        <th>积分变化</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>刚刚</td>
+                                        <td>child</td>
+                                        <td>账号创建</td>
+                                        <td><span class="badge bg-secondary">+0</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="bi bi-info-circle"></i> 还没有其他活动记录
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

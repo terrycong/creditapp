@@ -1,6 +1,6 @@
 package com.creditapp.service;
 
-import com.creditapp.dto.ChildDTO;
+import com.creditapp.dto.*;
 import com.creditapp.entity.Child;
 import com.creditapp.entity.User;
 
@@ -13,4 +13,9 @@ public interface UserService {
     List<ChildDTO> getChildrenByParentId(Long parentId);
     java.util.Optional<User> findByUsername(String username);
     User findById(Long id);
+    
+    // New methods for child management
+    ChildDTO updateChild(Long childId, UpdateChildRequest request);
+    void deleteChild(Long childId);
+    ChildDetailsDTO getChildDetails(Long childId);
 }
