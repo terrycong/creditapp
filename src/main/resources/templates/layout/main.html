@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+            --bg-color: #F3F4F6;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .badge {
+            font-size: 0.9em;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+        
+        .feature-card {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-in-right"></i> 登录
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <div class="container text-center animate__animated animate__fadeIn">
+            <h1 class="display-4 mb-4">
+                <i class="bi bi-emoji-star-fill"></i> 欢迎来到家庭积分系统
+            </h1>
+            <p class="lead mb-4">
+                通过完成任务赚取积分，兑换心仪的礼物！让学习变得更有趣！
+            </p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 feature-card">
+                <div class="card h-100 animate__animated animate__fadeInLeft">
+                    <div class="card-body text-center">
+                        <i class="bi bi-list-check" style="font-size: 3rem; color: var(--primary-color);"></i>
+                        <h3 class="card-title mt-3">任务管理</h3>
+                        <p class="card-text">家长创建和管理任务，小孩完成任务赚取积分</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 feature-card">
+                <div class="card h-100 animate__animated animate__fadeInUp">
+                    <div class="card-body text-center">
+                        <i class="bi bi-gift" style="font-size: 3rem; color: var(--success-color);"></i>
+                        <h3 class="card-title mt-3">积分兑换</h3>
+                        <p class="card-text">用赚到的积分兑换各种礼物，让努力得到回报</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 feature-card">
+                <div class="card h-100 animate__animated animate__fadeInRight">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people-fill" style="font-size: 3rem; color: var(--warning-color);"></i>
+                        <h3 class="card-title mt-3">家庭互动</h3>
+                        <p class="card-text">促进家庭成员之间的互动，让孩子更健康成长</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+package com.creditapp.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "tasks")
+public class Task {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String title;
+
+    @Column(length = 500)
+    private String description;
+
+    @Column(nullable = false)
+    private Integer points;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskType type;
+
+    @Enumerated(EnumType.STRING)
+    private TaskStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_id")
+    private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_child_id")
+    private Child assignedChild;
+
+    @Column(nullable = false)
+    private boolean active = true;
+
+    // Constructors
+    public Task() {}
+
+    public Task(Long id, String title, String description, Integer points, TaskType type, TaskStatus status,
+                User createdBy, Child assignedChild, boolean active) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.points = points;
+        this.type = type;
+        this.status = status;
+        this.createdBy = createdBy;
+        this.assignedChild = assignedChild;
+        this.active = active;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
+    }
+
+    public TaskType getType() {
+        return type;
+    }
+
+    public void setType(TaskType type) {
+        this.type = type;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Child getAssignedChild() {
+        return assignedChild;
+    }
+
+    public void setAssignedChild(Child assignedChild) {
+        this.assignedChild = assignedChild;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+}
