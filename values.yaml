@@ -1,0 +1,213 @@
+# Default values for credit-app
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Application configuration
+app:
+  name: credit-app
+  fullnameOverride: ""
+  replicaCount: 2
+  image:
+    repository: creditapp
+    tag: latest
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    # tag: ""
+  imagePullSecrets: []
+  nameOverride: ""
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext:
+    fsGroup: 1000
+    runAsUser: 1000
+    runAsNonRoot: true
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    nodePort: null
+    annotations: {}
+  ingress:
+    enabled: false
+    className: ""
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - host: creditapp.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: creditapp-tls
+        hosts:
+          - creditapp.example.com
+  resources:
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "prod"
+    - name: JAVA_OPTS
+      value: "-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+    - name: SPRING_DATASOURCE_URL
+      value: "jdbc:mysql://{{ .Release.Name }}-mysql:3306/creditapp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    - name: SPRING_DATASOURCE_USERNAME
+      value: "creditapp"
+    - name: SPRING_DATASOURCE_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ .Release.Name }}-mysql-secret
+          key: mysql-password
+    - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+      value: "update"
+    - name: SPRING_JPA_SHOW_SQL
+      value: "false"
+    - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+      value: "org.hibernate.dialect.MySQL8Dialect"
+  extraEnv: []
+  # Additional volumes
+  extraVolumes: []
+  extraVolumeMounts: []
+  # Init containers
+  initContainers: []
+  # Sidecar containers
+  sidecars: []
+  # Liveness and readiness probes
+  livenessProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startupProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8080
+    failureThreshold: 30
+    periodSeconds: 10
+
+# MySQL configuration
+mysql:
+  enabled: true
+  auth:
+    rootPassword: "root123"
+    database: "creditapp"
+    username: "creditapp"
+    password: "creditapp123"
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+  architecture: standalone
+
+# Redis configuration
+redis:
+  enabled: false
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+
+# Ingress configuration
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: creditapp.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+
+# Prometheus rules
+prometheusRule:
+  enabled: false
+  groups:
+    - name: creditapp.rules
+      rules:
+        - alert: CreditAppDown
+          expr: up{job="credit-app"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Credit App is down"
+            description: "Credit App has been down for more than 5 minutes."
+
+# Grafana dashboard
+grafanaDashboard:
+  enabled: false
+  namespace: monitoring
+  labels: {}
+
+# Backup configuration
+backup:
+  enabled: false
+  schedule: "0 2 * * *"
+  retention: 7
+  s3:
+    enabled: false
+    bucket: ""
+    endpoint: ""
+    accessKey: ""
+    secretKey: ""

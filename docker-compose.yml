@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # Main application
+  creditapp:
+    build: .
+    container_name: credit-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/creditapp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=creditapp
+      - SPRING_DATASOURCE_PASSWORD=creditapp123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - creditapp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MySQL database
+  mysql:
+    image: mysql:8.0
+    container_name: creditapp-mysql
+    environment:
+      - MYSQL_DATABASE=creditapp
+      - MYSQL_USER=creditapp
+      - MYSQL_PASSWORD=creditapp123
+      - MYSQL_ROOT_PASSWORD=root123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - creditapp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # phpMyAdmin for database management (optional)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: creditapp-phpmyadmin
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - UPLOAD_LIMIT=100M
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - creditapp-network
+    restart: unless-stopped
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: creditapp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - creditapp-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Nginx as reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: creditapp-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - creditapp
+    networks:
+      - creditapp-network
+    restart: unless-stopped
+
+networks:
+  creditapp-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local

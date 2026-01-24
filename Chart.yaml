@@ -1,0 +1,51 @@
+apiVersion: v2
+name: credit-app
+description: A Helm chart for Credit App - Family Points Management System
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+# Dependencies
+dependencies:
+  - name: mysql
+    version: 9.10.2
+    repository: https://charts.bitnami.com/bitnami
+    condition: mysql.enabled
+  - name: redis
+    version: 17.17.2
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: ingress-nginx
+    version: 4.8.3
+    repository: https://kubernetes.github.io/ingress-nginx
+    condition: ingress.enabled
+
+# Maintainers
+maintainers:
+  - name: Credit App Team
+    email: dev@creditapp.com
+    url: https://creditapp.com
+
+# Keywords
+keywords:
+  - spring-boot
+  - java
+  - family
+  - points
+  - rewards
+  - tasks
+  - management
+
+# Annotations
+annotations:
+  artifacthub.io/changes: |
+    - Initial release of Credit App Helm chart
+  artifacthub.io/images: |
+    - name: creditapp
+      image: creditapp:latest
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: Source Code
+      url: https://github.com/your-org/creditapp
+    - name: Documentation
+      url: https://docs.creditapp.com

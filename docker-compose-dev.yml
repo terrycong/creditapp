@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Development environment with H2 database
+  creditapp-dev:
+    build: .
+    container_name: credit-app-dev
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:creditapp
+      - SPRING_H2_CONSOLE_ENABLED=true
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2  # Cache Maven dependencies
+    networks:
+      - creditapp-dev-network
+    restart: unless-stopped
+    command: mvn spring-boot:run
+
+  # Development database (H2 console)
+  h2-console:
+    image: oscarfonts/h2
+    container_name: creditapp-h2-console
+    ports:
+      - "8082:8082"
+      - "9092:9092"
+    environment:
+      - H2_OPTIONS=-web -webAllowOthers -webPort 8082 -tcp -tcpAllowOthers -tcpPort 9092 -baseDir /opt/h2-data
+    volumes:
+      - h2-data:/opt/h2-data
+    networks:
+      - creditapp-dev-network
+    restart: unless-stopped
+
+  # PostgreSQL for development (optional)
+  postgres:
+    image: postgres:15-alpine
+    container_name: creditapp-postgres-dev
+    environment:
+      - POSTGRES_DB=creditapp_dev
+      - POSTGRES_USER=creditapp
+      - POSTGRES_PASSWORD=creditapp123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - creditapp-dev-network
+    restart: unless-stopped
+
+  # pgAdmin for PostgreSQL management
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: creditapp-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@creditapp.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - creditapp-dev-network
+    restart: unless-stopped
+
+networks:
+  creditapp-dev-network:
+    driver: bridge
+
+volumes:
+  h2-data:
+    driver: local
+  postgres-data:
+    driver: local
