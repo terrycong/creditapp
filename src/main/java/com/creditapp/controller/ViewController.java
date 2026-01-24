@@ -1,8 +1,11 @@
 package com.creditapp.controller;
 
 import com.creditapp.dto.ChildDTO;
+import com.creditapp.entity.User;
 import com.creditapp.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -15,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ViewController {
 
+    private static final Logger log = LoggerFactory.getLogger(ViewController.class);
     private final UserService userService;
 
     @GetMapping("/")
@@ -29,15 +33,31 @@ public class ViewController {
 
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== DASHBOARD CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            log.warn("UserDetails is null - user not authenticated!");
+            return "redirect:/login";
+        }
+        
+        log.info("Dashboard accessed by user: {}, authorities: {}", 
+                userDetails.getUsername(), userDetails.getAuthorities());
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        // Strip "ROLE_" prefix if present
+        if (role.startsWith("ROLE_")) {
+            role = role.substring(5);
+        }
+        log.info("Role after stripping prefix: {}", role);
         model.addAttribute("role", role);
+        log.info("=== DASHBOARD RENDERING ===");
         return "dashboard";
     }
 
     @GetMapping("/parent/children")
     public String parentChildren(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        Long parentId = Long.parseLong(userDetails.getUsername());
-        List<ChildDTO> children = userService.getChildrenByParentId(parentId);
+        String username = userDetails.getUsername();
+        User parent = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+        List<ChildDTO> children = userService.getChildrenByParentId(parent.getId());
         model.addAttribute("children", children);
         return "parent/children";
     }
@@ -73,8 +93,10 @@ public class ViewController {
                               @RequestParam String password,
                               Model model) {
         try {
-            Long parentId = Long.parseLong(userDetails.getUsername());
-            userService.createChild(parentId, username, password);
+            String parentUsername = userDetails.getUsername();
+            User parent = userService.findByUsername(parentUsername)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + parentUsername));
+            userService.createChild(parent.getId(), username, password);
             return "redirect:/parent/children?success=true";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());

@@ -26,14 +26,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("Loading user by username: {}", username);
 
-        com.creditapp.entity.User appUser = userService.findByUsername(username);
+        com.creditapp.entity.User appUser = userService.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        if (appUser == null) {
-            log.warn("User not found: {}", username);
-            throw new UsernameNotFoundException("User not found: " + username);
-        }
-
-        log.info("User loaded successfully: {}, role: {}", appUser.getRole());
+        log.info("User loaded successfully: {}, role: {}", appUser.getUsername(), appUser.getRole());
 
         return User.builder()
                 .username(appUser.getUsername())

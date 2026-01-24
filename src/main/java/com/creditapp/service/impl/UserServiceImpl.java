@@ -96,9 +96,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+    public java.util.Optional<User> findByUsername(String username) {
+        log.debug("Searching for user with username: {}", username);
+        
+        // First, try to find in users table
+        java.util.Optional<User> user = userRepository.findByUsername(username);
+        if (user.isPresent()) {
+            log.debug("Found user in users table: {}", username);
+            return user;
+        }
+        
+        // If not found in users table, try to find in children table
+        java.util.Optional<Child> child = childRepository.findByUsername(username);
+        if (child.isPresent()) {
+            log.debug("Found child in children table: {}", username);
+            // Convert Child to User for authentication
+            User childAsUser = new User();
+            childAsUser.setId(child.get().getId());
+            childAsUser.setUsername(child.get().getUsername());
+            childAsUser.setPassword(child.get().getPassword());
+            childAsUser.setRole(child.get().getRole());
+            childAsUser.setPoints(child.get().getPoints());
+            childAsUser.setParent(child.get().getParent());
+            return java.util.Optional.of(childAsUser);
+        }
+        
+        log.debug("User not found in either table: {}", username);
+        return java.util.Optional.empty();
     }
 
     @Override

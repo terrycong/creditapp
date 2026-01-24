@@ -11,6 +11,6 @@ public interface UserService {
     void adjustChildPoints(Long childId, Integer points);
     ChildDTO getChildById(Long id);
     List<ChildDTO> getChildrenByParentId(Long parentId);
-    User findByUsername(String username);
+    java.util.Optional<User> findByUsername(String username);
     User findById(Long id);
 }
