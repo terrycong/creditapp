@@ -122,6 +122,12 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public List<TaskDTO> getTasksByParent(Long parentId) {
+        List<Task> tasks = taskRepository.findByCreatedBy_Id(parentId);
+        return tasks.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public TaskCompletionDTO completeTask(Long taskId, Long childId) {
         Task task = taskRepository.findById(taskId)

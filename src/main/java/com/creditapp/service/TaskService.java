@@ -13,6 +13,7 @@ public interface TaskService {
     TaskDTO getTaskById(Long id);
     List<TaskDTO> getAllTasks();
     List<TaskDTO> getTasksByChild(Long childId);
+    List<TaskDTO> getTasksByParent(Long parentId);
     TaskCompletionDTO completeTask(Long taskId, Long childId);
     TaskCompletionDTO approveCompletion(Long completionId);
     TaskCompletionDTO rejectCompletion(Long completionId);

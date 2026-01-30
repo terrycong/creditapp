@@ -149,7 +149,12 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="childId" class="form-label">分配给</label>
                                     <select class="form-select" id="childId" name="childId" required>
-                                        <option value="1">child</option>
+                                        <option value="">请选择小孩</option>
+                                        <option th:each="child : ${children}" 
+                                                th:value="${child.id}" 
+                                                th:text="${child.username}">
+                                            小孩
+                                        </option>
                                     </select>
                                 </div>
                             </div>
@@ -158,10 +163,18 @@
                                 <textarea class="form-control" id="description" name="description" 
                                           rows="3" placeholder="详细描述任务要求..."></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary">
+                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> 创建任务
                             </button>
                         </form>
+                        
+                        <!-- Success/Error Messages -->
+                        <div th:if="${success}" class="alert alert-success mt-3 animate__animated animate__fadeIn">
+                            <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
+                        </div>
+                        <div th:if="${error}" class="alert alert-danger mt-3 animate__animated animate__fadeIn">
+                            <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -191,13 +204,29 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>完成作业</td>
-                                        <td>按时完成学校作业</td>
-                                        <td><span class="badge points-badge">10 积分</span></td>
-                                        <td><span class="badge bg-info">每日一次</span></td>
-                                        <td><span class="badge bg-success">进行中</span></td>
-                                        <td>child</td>
+                                    <tr th:each="task : ${tasks}">
+                                        <td th:text="${task.title}">任务标题</td>
+                                        <td th:text="${task.description}">任务描述</td>
+                                        <td>
+                                            <span class="badge points-badge" th:text="${task.points}+' 积分'">
+                                                10 积分
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span th:classappend="${(task.type == 'ONE_TIME') ? 'bg-secondary' : (task.type == 'REPEATABLE') ? 'bg-warning' : 'bg-info'}"
+                                                  class="badge"
+                                                  th:text="${(task.type == 'ONE_TIME') ? '一次性' : (task.type == 'REPEATABLE') ? '可重复' : '每日一次'}">
+                                                任务类型
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span th:classappend="${(task.status == 'APPROVED') ? 'bg-success' : (task.status == 'REJECTED') ? 'bg-danger' : 'bg-warning'}"
+                                                  class="badge"
+                                                  th:text="${(task.status == 'APPROVED') ? '进行中' : (task.status == 'REJECTED') ? '已拒绝' : '草稿'}">
+                                                状态
+                                            </span>
+                                        </td>
+                                        <td th:text="${task.assignedChildName} ?: '未分配'">child</td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-primary">
                                                 <i class="bi bi-pencil"></i> 编辑
@@ -207,52 +236,9 @@
                                             </button>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td>打扫房间</td>
-                                        <td>整理自己的房间</td>
-                                        <td><span class="badge points-badge">5 积分</span></td>
-                                        <td><span class="badge bg-warning">可重复</span></td>
-                                        <td><span class="badge bg-success">进行中</span></td>
-                                        <td>child</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-pencil"></i> 编辑
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i> 删除
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>阅读书籍</td>
-                                        <td>每天阅读30分钟课外书</td>
-                                        <td><span class="badge points-badge">8 积分</span></td>
-                                        <td><span class="badge bg-info">每日一次</span></td>
-                                        <td><span class="badge bg-success">进行中</span></td>
-                                        <td>child</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-pencil"></i> 编辑
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i> 删除
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>帮助做家务</td>
-                                        <td>帮忙洗碗或扫地</td>
-                                        <td><span class="badge points-badge">7 积分</span></td>
-                                        <td><span class="badge bg-warning">可重复</span></td>
-                                        <td><span class="badge bg-success">进行中</span></td>
-                                        <td>child</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-pencil"></i> 编辑
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i> 删除
-                                            </button>
+                                    <tr th:if="${#lists.isEmpty(tasks)}">
+                                        <td colspan="7" class="text-center text-muted">
+                                            <i class="bi bi-inbox"></i> 暂无任务，请创建第一个任务
                                         </td>
                                     </tr>
                                 </tbody>

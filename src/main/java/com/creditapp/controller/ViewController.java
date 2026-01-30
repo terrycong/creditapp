@@ -1,8 +1,11 @@
 package com.creditapp.controller;
 
 import com.creditapp.dto.*;
+import com.creditapp.entity.TaskType;
 import com.creditapp.entity.User;
 import com.creditapp.service.DashboardService;
+import com.creditapp.service.RewardService;
+import com.creditapp.service.TaskService;
 import com.creditapp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -12,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -22,6 +26,8 @@ public class ViewController {
     private static final Logger log = LoggerFactory.getLogger(ViewController.class);
     private final UserService userService;
     private final DashboardService dashboardService;
+    private final TaskService taskService;
+    private final RewardService rewardService;
 
     @GetMapping("/")
     public String home() {
@@ -82,7 +88,19 @@ public class ViewController {
     }
 
     @GetMapping("/parent/tasks")
-    public String parentTasks(Model model) {
+    public String parentTasks(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        String username = userDetails.getUsername();
+        User parent = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+        
+        // Get tasks created by this parent
+        List<TaskDTO> tasks = taskService.getTasksByParent(parent.getId());
+        model.addAttribute("tasks", tasks);
+        
+        // Get children for the task creation form
+        List<ChildDTO> children = userService.getChildrenByParentId(parent.getId());
+        model.addAttribute("children", children);
+        
         return "parent/tasks";
     }
 
@@ -93,16 +111,50 @@ public class ViewController {
                            @RequestParam Integer points,
                            @RequestParam String type,
                            @RequestParam Long childId,
-                           Model model) {
+                           RedirectAttributes redirectAttrs) {
         log.info("Creating task: title={}, points={}, type={}, childId={}", 
                 title, points, type, childId);
-        // TODO: Implement task creation logic
-        model.addAttribute("success", "任务创建成功！");
-        return "parent/tasks";
+        
+        try {
+            // Get current user (parent)
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+            
+            // Create task request
+            CreateTaskRequest request = new CreateTaskRequest();
+            request.setTitle(title);
+            request.setDescription(description);
+            request.setPoints(points);
+            
+            // Convert type string to TaskType enum
+            TaskType taskType;
+            try {
+                taskType = TaskType.valueOf(type.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                redirectAttrs.addFlashAttribute("error", "无效的任务类型: " + type);
+                return "redirect:/parent/tasks";
+            }
+            request.setType(taskType);
+            request.setAssignedChildId(childId);
+            
+            // Call task service
+            taskService.createTask(request, parent.getId());
+            
+            redirectAttrs.addFlashAttribute("success", "任务创建成功！");
+            return "redirect:/parent/tasks?success=true";
+        } catch (Exception e) {
+            log.error("Failed to create task", e);
+            redirectAttrs.addFlashAttribute("error", "创建任务失败: " + e.getMessage());
+            return "redirect:/parent/tasks";
+        }
     }
 
     @GetMapping("/parent/rewards")
     public String parentRewards(Model model) {
+        // Get all active rewards
+        List<RewardDTO> rewards = rewardService.getAllRewards();
+        model.addAttribute("rewards", rewards);
         return "parent/rewards";
     }
 
@@ -114,10 +166,29 @@ public class ViewController {
                              @RequestParam(required = false) Integer quantity,
                              @RequestParam(required = false) String imageUrl,
                              Model model) {
-        log.info("Creating reward: name={}, pointsRequired={}, quantity={}", 
-                name, pointsRequired, quantity);
-        // TODO: Implement reward creation logic
-        model.addAttribute("success", "礼物添加成功！");
+        log.info("Creating reward: name={}, pointsRequired={}, quantity={}, imageUrl={}", 
+                name, pointsRequired, quantity, imageUrl);
+        
+        try {
+            // Create task request (misnamed - should be CreateRewardRequest)
+            CreateTaskRequest request = new CreateTaskRequest();
+            request.setTitle(name);  // RewardService expects title for name
+            request.setDescription(description);
+            request.setPoints(pointsRequired);  // RewardService expects points for pointsRequired
+            
+            // Call reward service
+            rewardService.createReward(request);
+            
+            model.addAttribute("success", "礼物添加成功！");
+        } catch (Exception e) {
+            log.error("Failed to create reward", e);
+            model.addAttribute("error", "添加礼物失败: " + e.getMessage());
+        }
+        
+        // Re-fetch rewards to show the new one
+        List<RewardDTO> rewards = rewardService.getAllRewards();
+        model.addAttribute("rewards", rewards);
+        
         return "parent/rewards";
     }
 
