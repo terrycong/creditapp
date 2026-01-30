@@ -38,6 +38,12 @@ public class DashboardStatsDTO {
     // For charts and visualizations
     private List<DailyActivityDTO> weeklyActivity;
     
+    // Weekly summary statistics
+    private Integer weeklyTasksCompleted;
+    private Integer weeklyRewardsRedeemed;
+    private Integer weeklyPointsEarned;
+    private Integer weeklyPointsSpent;
+    
     // Task type distribution statistics
     private Map<String, Integer> taskTypeDistribution;
     private Double averagePointsPerTask;

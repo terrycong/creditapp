@@ -593,22 +593,22 @@
                     <div class="card-body">
                         <canvas id="trendChart" height="100"></canvas>
                         <div class="row mt-3">
-                            <div class="col-md-3 text-center">
-                                <p class="text-muted mb-1">本周完成任务</p>
-                                <h4 class="text-success" th:text="${dashboardStats.weeklyActivity.?[tasksCompleted != null].![tasksCompleted].stream().sum()} ?: 0">0</h4>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <p class="text-muted mb-1">本周兑换礼物</p>
-                                <h4 class="text-warning" th:text="${dashboardStats.weeklyActivity.?[rewardsRedeemed != null].![rewardsRedeemed].stream().sum()} ?: 0">0</h4>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <p class="text-muted mb-1">本周获得积分</p>
-                                <h4 class="text-success" th:text="${dashboardStats.weeklyActivity.?[pointsEarned != null].![pointsEarned].stream().sum()} ?: 0">0</h4>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <p class="text-muted mb-1">本周消耗积分</p>
-                                <h4 class="text-warning" th:text="${dashboardStats.weeklyActivity.?[pointsSpent != null].![pointsSpent].stream().sum()} ?: 0">0</h4>
-                            </div>
+                             <div class="col-md-3 text-center">
+                                 <p class="text-muted mb-1">本周完成任务</p>
+                                 <h4 class="text-success" th:text="${dashboardStats.weeklyTasksCompleted} ?: 0">0</h4>
+                             </div>
+                             <div class="col-md-3 text-center">
+                                 <p class="text-muted mb-1">本周兑换礼物</p>
+                                 <h4 class="text-warning" th:text="${dashboardStats.weeklyRewardsRedeemed} ?: 0">0</h4>
+                             </div>
+                             <div class="col-md-3 text-center">
+                                 <p class="text-muted mb-1">本周获得积分</p>
+                                 <h4 class="text-success" th:text="${dashboardStats.weeklyPointsEarned} ?: 0">0</h4>
+                             </div>
+                             <div class="col-md-3 text-center">
+                                 <p class="text-muted mb-1">本周消耗积分</p>
+                                 <h4 class="text-warning" th:text="${dashboardStats.weeklyPointsSpent} ?: 0">0</h4>
+                             </div>
                         </div>
                     </div>
                 </div>

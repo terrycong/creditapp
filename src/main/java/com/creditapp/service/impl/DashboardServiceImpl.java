@@ -161,6 +161,25 @@ public class DashboardServiceImpl implements DashboardService {
         List<DashboardStatsDTO.DailyActivityDTO> weeklyActivity = getWeeklyActivity(parentId);
         builder.weeklyActivity(weeklyActivity);
         
+        // Calculate weekly sums
+        int weeklyTasksCompleted = weeklyActivity.stream()
+                .mapToInt(activity -> activity.getTasksCompleted() != null ? activity.getTasksCompleted() : 0)
+                .sum();
+        int weeklyRewardsRedeemed = weeklyActivity.stream()
+                .mapToInt(activity -> activity.getRewardsRedeemed() != null ? activity.getRewardsRedeemed() : 0)
+                .sum();
+        int weeklyPointsEarned = weeklyActivity.stream()
+                .mapToInt(activity -> activity.getPointsEarned() != null ? activity.getPointsEarned() : 0)
+                .sum();
+        int weeklyPointsSpent = weeklyActivity.stream()
+                .mapToInt(activity -> activity.getPointsSpent() != null ? activity.getPointsSpent() : 0)
+                .sum();
+        
+        builder.weeklyTasksCompleted(weeklyTasksCompleted)
+               .weeklyRewardsRedeemed(weeklyRewardsRedeemed)
+               .weeklyPointsEarned(weeklyPointsEarned)
+               .weeklyPointsSpent(weeklyPointsSpent);
+        
         return builder.build();
     }
 
