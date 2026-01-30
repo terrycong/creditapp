@@ -131,7 +131,7 @@ public class ViewController {
         return "child/rewards";
     }
 
-    @GetMapping("/child/create-child")
+    @GetMapping("/parent/create-child")
     public String showCreateChild() {
         return "common/create-child";
     }
