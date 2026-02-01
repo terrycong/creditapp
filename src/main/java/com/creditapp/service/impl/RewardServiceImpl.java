@@ -120,6 +120,16 @@ public class RewardServiceImpl implements RewardService {
         return toRedemptionDTO(redemption);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<RewardRedemptionDTO> getRedemptionsByChildId(Long childId) {
+        List<RewardRedemption> redemptions = rewardRedemptionRepository.findByChildIdWithReward(childId);
+        return redemptions.stream()
+                .map(this::toRedemptionDTO)
+                .sorted((a, b) -> b.getRedeemedAt().compareTo(a.getRedeemedAt()))
+                .collect(Collectors.toList());
+    }
+
     private RewardDTO toDTO(Reward reward) {
         return RewardDTO.builder()
                 .id(reward.getId())

@@ -2,6 +2,7 @@ package com.creditapp.service.impl;
 
 import com.creditapp.dto.*;
 import com.creditapp.entity.*;
+import com.creditapp.entity.CompletionStatus;
 import com.creditapp.exception.BusinessException;
 import com.creditapp.exception.ResourceNotFoundException;
 import com.creditapp.repository.*;
@@ -27,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final TaskCompletionRepository taskCompletionRepository;
     private final RewardRedemptionRepository rewardRedemptionRepository;
+    private final TaskRepository taskRepository;
 
     @Override
     @Transactional
@@ -72,12 +74,24 @@ public class UserServiceImpl implements UserService {
         Child child = childRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Child", id));
 
+        // Get active tasks count
+        List<Task> activeTasks = taskRepository.findActiveTasksWithChild(child.getId());
+        int activeTaskCount = activeTasks.size();
+
+        // Get completed tasks count
+        List<TaskCompletion> completions = taskCompletionRepository.findByChildId(child.getId());
+        int completedTaskCount = (int) completions.stream()
+                .filter(tc -> tc.getStatus() == CompletionStatus.APPROVED)
+                .count();
+
         return ChildDTO.builder()
                 .id(child.getId())
                 .username(child.getUsername())
                 .points(child.getPoints())
                 .parentId(child.getParent() != null ? child.getParent().getId() : null)
                 .parentName(child.getParent() != null ? child.getParent().getUsername() : null)
+                .activeTaskCount(activeTaskCount)
+                .completedTaskCount(completedTaskCount)
                 .build();
     }
 
@@ -85,12 +99,26 @@ public class UserServiceImpl implements UserService {
     public List<ChildDTO> getChildrenByParentId(Long parentId) {
         List<Child> children = childRepository.findByParentId(parentId);
         return children.stream()
-                .map(child -> ChildDTO.builder()
-                        .id(child.getId())
-                        .username(child.getUsername())
-                        .points(child.getPoints())
-                        .parentId(parentId)
-                        .build())
+                .map(child -> {
+                    // Get active tasks count
+                    List<Task> activeTasks = taskRepository.findActiveTasksWithChild(child.getId());
+                    int activeTaskCount = activeTasks.size();
+
+                    // Get completed tasks count
+                    List<TaskCompletion> completions = taskCompletionRepository.findByChildId(child.getId());
+                    int completedTaskCount = (int) completions.stream()
+                            .filter(tc -> tc.getStatus() == CompletionStatus.APPROVED)
+                            .count();
+
+                    return ChildDTO.builder()
+                            .id(child.getId())
+                            .username(child.getUsername())
+                            .points(child.getPoints())
+                            .parentId(parentId)
+                            .activeTaskCount(activeTaskCount)
+                            .completedTaskCount(completedTaskCount)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -156,7 +184,17 @@ public class UserServiceImpl implements UserService {
         }
         
         Child updatedChild = childRepository.save(child);
-        
+
+        // Get active tasks count
+        List<Task> activeTasks = taskRepository.findActiveTasksWithChild(updatedChild.getId());
+        int activeTaskCount = activeTasks.size();
+
+        // Get completed tasks count
+        List<TaskCompletion> completions = taskCompletionRepository.findByChildId(updatedChild.getId());
+        int completedTaskCount = (int) completions.stream()
+                .filter(tc -> tc.getStatus() == CompletionStatus.APPROVED)
+                .count();
+
         return ChildDTO.builder()
                 .id(updatedChild.getId())
                 .username(updatedChild.getUsername())
@@ -164,6 +202,8 @@ public class UserServiceImpl implements UserService {
                 .points(updatedChild.getPoints())
                 .parentId(updatedChild.getParent() != null ? updatedChild.getParent().getId() : null)
                 .parentName(updatedChild.getParent() != null ? updatedChild.getParent().getUsername() : null)
+                .activeTaskCount(activeTaskCount)
+                .completedTaskCount(completedTaskCount)
                 .build();
     }
 

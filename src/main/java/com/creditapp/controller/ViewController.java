@@ -3,10 +3,12 @@ package com.creditapp.controller;
 import com.creditapp.dto.*;
 import com.creditapp.entity.TaskType;
 import com.creditapp.entity.User;
+import com.creditapp.repository.ChildRepository;
 import com.creditapp.service.DashboardService;
 import com.creditapp.service.RewardService;
 import com.creditapp.service.TaskService;
 import com.creditapp.service.UserService;
+import com.creditapp.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,7 @@ public class ViewController {
     private final DashboardService dashboardService;
     private final TaskService taskService;
     private final RewardService rewardService;
+    private final ChildRepository childRepository;
 
     @GetMapping("/")
     public String home() {
@@ -158,6 +161,44 @@ public class ViewController {
         return "parent/rewards";
     }
 
+    @PostMapping("/parent/tasks/{id}/delete")
+    public String deleteTask(@AuthenticationPrincipal UserDetails userDetails,
+                           @PathVariable Long id,
+                           RedirectAttributes redirectAttrs) {
+        log.info("Deleting task: taskId={}", id);
+        try {
+            // Verify current user is the task creator (optional security check)
+            TaskDTO task = taskService.getTaskById(id);
+            Long currentUserId = SecurityUtils.getCurrentUserId(childRepository);
+            if (!task.getCreatedById().equals(currentUserId)) {
+                redirectAttrs.addFlashAttribute("error", "无权删除此任务");
+                return "redirect:/parent/tasks";
+            }
+
+            taskService.deleteTask(id);
+            redirectAttrs.addFlashAttribute("success", "任务删除成功");
+        } catch (Exception e) {
+            log.error("Failed to delete task", e);
+            redirectAttrs.addFlashAttribute("error", "删除任务失败: " + e.getMessage());
+        }
+        return "redirect:/parent/tasks";
+    }
+
+    @PostMapping("/parent/rewards/{id}/delete")
+    public String deleteReward(@AuthenticationPrincipal UserDetails userDetails,
+                             @PathVariable Long id,
+                             RedirectAttributes redirectAttrs) {
+        log.info("Deleting reward: rewardId={}", id);
+        try {
+            rewardService.deleteReward(id);
+            redirectAttrs.addFlashAttribute("success", "礼物删除成功");
+        } catch (Exception e) {
+            log.error("Failed to delete reward", e);
+            redirectAttrs.addFlashAttribute("error", "删除礼物失败: " + e.getMessage());
+        }
+        return "redirect:/parent/rewards";
+    }
+
     @PostMapping("/parent/rewards")
     public String createReward(@AuthenticationPrincipal UserDetails userDetails,
                              @RequestParam String name,
@@ -193,12 +234,61 @@ public class ViewController {
     }
 
     @GetMapping("/child/tasks")
-    public String childTasks(Model model) {
+    public String childTasks(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== CHILD TASKS CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            log.warn("UserDetails is null - user not authenticated!");
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        log.info("Child tasks accessed by user: {}, userId: {}", username, user.getId());
+
+        // Fetch tasks assigned to this child
+        List<TaskDTO> tasks = taskService.getTasksByChild(user.getId());
+        model.addAttribute("tasks", tasks);
+
+        // Add username for display
+        model.addAttribute("username", username);
+
+        log.info("Found {} tasks for child: {}", tasks.size(), username);
         return "child/tasks";
     }
 
     @GetMapping("/child/rewards")
-    public String childRewards(Model model) {
+    public String childRewards(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== CHILD REWARDS CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            log.warn("UserDetails is null - user not authenticated!");
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        log.info("Child rewards accessed by user: {}, userId: {}", username, user.getId());
+
+        // Fetch active rewards for the store
+        List<RewardDTO> rewards = rewardService.getAllRewards();
+        model.addAttribute("rewards", rewards);
+
+        // Get child's current points
+        ChildDTO child = userService.getChildById(user.getId());
+        model.addAttribute("childPoints", child.getPoints());
+
+        // Get child's redeemed rewards
+        List<RewardRedemptionDTO> redeemedRewards = rewardService.getRedemptionsByChildId(user.getId());
+        model.addAttribute("redeemedRewards", redeemedRewards);
+
+        // Add username for display
+        model.addAttribute("username", username);
+
+        log.info("Found {} rewards for child: {} with {} points and {} redemptions",
+                rewards.size(), username, child.getPoints(), redeemedRewards.size());
         return "child/rewards";
     }
 

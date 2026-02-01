@@ -9,6 +9,8 @@ public class ChildDTO {
     private Integer points;
     private Long parentId;
     private String parentName;
+    private Integer activeTaskCount;
+    private Integer completedTaskCount;
 
     // Getters and Setters
     public Long getId() {
@@ -59,6 +61,22 @@ public class ChildDTO {
         this.parentName = parentName;
     }
 
+    public Integer getActiveTaskCount() {
+        return activeTaskCount;
+    }
+
+    public void setActiveTaskCount(Integer activeTaskCount) {
+        this.activeTaskCount = activeTaskCount;
+    }
+
+    public Integer getCompletedTaskCount() {
+        return completedTaskCount;
+    }
+
+    public void setCompletedTaskCount(Integer completedTaskCount) {
+        this.completedTaskCount = completedTaskCount;
+    }
+
     // Builder
     public static Builder builder() {
         return new Builder();
@@ -71,6 +89,8 @@ public class ChildDTO {
         private Integer points;
         private Long parentId;
         private String parentName;
+        private Integer activeTaskCount;
+        private Integer completedTaskCount;
 
         public Builder id(Long id) {
             this.id = id;
@@ -102,6 +122,16 @@ public class ChildDTO {
             return this;
         }
 
+        public Builder activeTaskCount(Integer activeTaskCount) {
+            this.activeTaskCount = activeTaskCount;
+            return this;
+        }
+
+        public Builder completedTaskCount(Integer completedTaskCount) {
+            this.completedTaskCount = completedTaskCount;
+            return this;
+        }
+
         public ChildDTO build() {
             ChildDTO dto = new ChildDTO();
             dto.id = this.id;
@@ -110,6 +140,8 @@ public class ChildDTO {
             dto.points = this.points;
             dto.parentId = this.parentId;
             dto.parentName = this.parentName;
+            dto.activeTaskCount = this.activeTaskCount;
+            dto.completedTaskCount = this.completedTaskCount;
             return dto;
         }
     }

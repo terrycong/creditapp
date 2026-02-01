@@ -228,11 +228,17 @@
                                         </td>
                                         <td th:text="${task.assignedChildName} ?: '未分配'">child</td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary">
+                                            <form th:action="@{/parent/tasks/{id}/delete(id=${task.id})}" 
+                                                  method="post" 
+                                                  onsubmit="return confirm('确定要删除这个任务吗？此操作不可撤销！');"
+                                                  style="display:inline;"
+                                                  class="me-2">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i> 删除
+                                                </button>
+                                            </form>
+                                            <button class="btn btn-sm btn-outline-primary" disabled>
                                                 <i class="bi bi-pencil"></i> 编辑
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i> 删除
                                             </button>
                                         </td>
                                     </tr>

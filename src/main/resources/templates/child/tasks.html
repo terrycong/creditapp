@@ -131,7 +131,7 @@
                     <div class="stat-icon icon-success mx-auto" style="background-color: rgba(16, 185, 129, 0.1); color: var(--success-color);">
                         <i class="bi bi-check-circle-fill"></i>
                     </div>
-                    <h3 class="mb-2">0 个</h3>
+                    <h3 class="mb-2" th:text="${(tasks != null ? tasks.size() : 0) + ' 个'}">0 个</h3>
                     <p class="text-muted mb-0">已完成任务</p>
                 </div>
             </div>
@@ -140,7 +140,7 @@
                     <div class="stat-icon icon-warning mx-auto" style="background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color);">
                         <i class="bi bi-clock-fill"></i>
                     </div>
-                    <h3 class="mb-2">4 个</h3>
+                    <h3 class="mb-2" th:text="${(tasks != null ? tasks.size() : 0) + ' 个'}">4 个</h3>
                     <p class="text-muted mb-0">待完成任务</p>
                 </div>
             </div>
@@ -156,88 +156,40 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <!-- Task 1 -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card task-card h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <h5 class="card-title mb-0">完成作业</h5>
-                                            <span class="badge points-badge">10 积分</span>
-                                        </div>
-                                        <p class="card-text text-muted">按时完成学校作业</p>
-                                        <div class="mb-3">
-                                            <span class="badge bg-info task-type-badge">每日一次</span>
-                                            <span class="badge bg-success task-type-badge">进行中</span>
-                                        </div>
-                                        <div class="d-grid">
-                                            <button class="btn btn-primary">
-                                                <i class="bi bi-check-circle"></i> 标记完成
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                        <!-- Empty state -->
+                        <div th:if="${tasks == null or tasks.isEmpty()}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-inbox" style="font-size: 4rem; color: #d1d5db;"></i>
                             </div>
-                            
-                            <!-- Task 2 -->
-                            <div class="col-md-6 mb-4">
+                            <h5 class="text-muted">暂时没有任务</h5>
+                            <p class="text-muted">爸爸妈妈还没有分配任务给你哦！</p>
+                        </div>
+
+                        <!-- Dynamic task list -->
+                        <div th:if="${tasks != null and !tasks.isEmpty()}" class="row">
+                            <div th:each="task, iterStat : ${tasks}"
+                                 class="col-md-6 mb-4 animate__animated animate__fadeInUp"
+                                 th:style="'animation-delay: ' + ${iterStat.count * 100} + 'ms'">
                                 <div class="card task-card h-100">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <h5 class="card-title mb-0">打扫房间</h5>
-                                            <span class="badge points-badge">5 积分</span>
+                                            <h5 class="card-title mb-0" th:text="${task.title}">任务标题</h5>
+                                            <span class="badge points-badge" th:text="${task.points + ' 积分'}">10 积分</span>
                                         </div>
-                                        <p class="card-text text-muted">整理自己的房间</p>
+                                        <p class="card-text text-muted" th:text="${task.description}">任务描述</p>
                                         <div class="mb-3">
-                                            <span class="badge bg-warning task-type-badge">可重复</span>
+                                            <!-- Task type badge -->
+                                            <span class="badge bg-info task-type-badge"
+                                                  th:text="${task.type == 'ONE_TIME' ? '一次性' : (task.type == 'REPEATABLE' ? '可重复' : '每日一次')}">
+                                                任务类型
+                                            </span>
+                                            <!-- Status badge -->
                                             <span class="badge bg-success task-type-badge">进行中</span>
                                         </div>
                                         <div class="d-grid">
-                                            <button class="btn btn-primary">
-                                                <i class="bi bi-check-circle"></i> 标记完成
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Task 3 -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card task-card h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <h5 class="card-title mb-0">阅读书籍</h5>
-                                            <span class="badge points-badge">8 积分</span>
-                                        </div>
-                                        <p class="card-text text-muted">每天阅读30分钟课外书</p>
-                                        <div class="mb-3">
-                                            <span class="badge bg-info task-type-badge">每日一次</span>
-                                            <span class="badge bg-success task-type-badge">进行中</span>
-                                        </div>
-                                        <div class="d-grid">
-                                            <button class="btn btn-primary">
-                                                <i class="bi bi-check-circle"></i> 标记完成
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Task 4 -->
-                            <div class="col-md-6 mb-4">
-                                <div class="card task-card h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <h5 class="card-title mb-0">帮助做家务</h5>
-                                            <span class="badge points-badge">7 积分</span>
-                                        </div>
-                                        <p class="card-text text-muted">帮忙洗碗或扫地</p>
-                                        <div class="mb-3">
-                                            <span class="badge bg-warning task-type-badge">可重复</span>
-                                            <span class="badge bg-success task-type-badge">进行中</span>
-                                        </div>
-                                        <div class="d-grid">
-                                            <button class="btn btn-primary">
+                                            <button class="btn btn-primary complete-task-btn"
+                                                    th:attr="data-task-id=${task.id}"
+                                                    th:id="'completeBtn-' + ${task.id}">
                                                 <i class="bi bi-check-circle"></i> 标记完成
                                             </button>
                                         </div>
@@ -280,5 +232,55 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Task Completion JavaScript -->
+    <script>
+        /*<![CDATA[*/
+        function completeTask(button, taskId) {
+            if (!confirm('确定要标记此任务为已完成吗？')) {
+                return;
+            }
+
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 提交中...';
+
+            fetch('/api/v1/tasks/' + taskId + '/complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.code === 'SUCCESS') {
+                    alert('任务提交成功！等待家长批准后即可获得积分。');
+                    button.disabled = true;
+                    button.innerHTML = '<i class="bi bi-check-circle"></i> 已提交';
+                    button.classList.remove('btn-primary');
+                    button.classList.add('btn-success');
+                } else {
+                    throw new Error(data.message || '操作失败');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error completing task:', error);
+                alert('提交失败: ' + (error.message || '未知错误'));
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
+
+        // Initialize click handlers for complete task buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.complete-task-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var taskId = button.getAttribute('data-task-id');
+                    completeTask(button, taskId);
+                });
+            });
+        });
+        /*]]>*/
+    </script>
 </body>
 </html>

@@ -2,6 +2,7 @@ package com.creditapp.controller;
 
 import com.creditapp.dto.ApiResponse;
 import com.creditapp.entity.User;
+import com.creditapp.repository.ChildRepository;
 import com.creditapp.security.CustomUserDetailsService;
 import com.creditapp.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final CustomUserDetailsService userDetailsService;
+    private final ChildRepository childRepository;
 
     @PostMapping("/login")
     public ApiResponse<Void> login(@RequestBody LoginRequest request) {
@@ -49,7 +51,7 @@ public class AuthController {
             return ApiResponse.error("NOT_LOGGED_IN", "未登录");
         }
 
-        Long userId = SecurityUtils.getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId(childRepository);
         return ApiResponse.success("获取用户信息成功", null);
     }
 }

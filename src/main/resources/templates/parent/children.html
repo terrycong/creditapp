@@ -176,13 +176,13 @@
                                         <div class="row mb-3">
                                             <div class="col-6">
                                                 <div class="text-center">
-                                                    <h5 class="mb-1">4</h5>
+                                                    <h5 class="mb-1" th:text="${child.activeTaskCount} ?: 0">0</h5>
                                                     <small class="text-muted">进行中任务</small>
                                                 </div>
                                             </div>
                                             <div class="col-6">
                                                 <div class="text-center">
-                                                    <h5 class="mb-1">0</h5>
+                                                    <h5 class="mb-1" th:text="${child.completedTaskCount} ?: 0">0</h5>
                                                     <small class="text-muted">已完成任务</small>
                                                 </div>
                                             </div>

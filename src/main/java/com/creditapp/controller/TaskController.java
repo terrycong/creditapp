@@ -1,6 +1,7 @@
 package com.creditapp.controller;
 
 import com.creditapp.dto.*;
+import com.creditapp.repository.ChildRepository;
 import com.creditapp.service.TaskService;
 import com.creditapp.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,12 +22,13 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+    private final ChildRepository childRepository;
 
     @PostMapping
     @Operation(summary = "创建任务")
     public ResponseEntity<ApiResponse<TaskDTO>> createTask(@Valid @RequestBody CreateTaskRequest request,
                                                            @AuthenticationPrincipal UserDetails userDetails) {
-        Long createdById = SecurityUtils.getCurrentUserId();
+        Long createdById = SecurityUtils.getCurrentUserId(childRepository);
         TaskDTO task = taskService.createTask(request, createdById);
         return ResponseEntity.ok(ApiResponse.success(task));
     }
@@ -64,7 +66,7 @@ public class TaskController {
     @Operation(summary = "完成任务")
     public ResponseEntity<ApiResponse<TaskCompletionDTO>> completeTask(@PathVariable Long id,
                                                                        @AuthenticationPrincipal UserDetails userDetails) {
-        Long childId = SecurityUtils.getChildIdFromUsername(userDetails.getUsername());
+        Long childId = SecurityUtils.getChildIdFromUsername(userDetails.getUsername(), childRepository);
         TaskCompletionDTO completion = taskService.completeTask(id, childId);
         return ResponseEntity.ok(ApiResponse.success(completion));
     }

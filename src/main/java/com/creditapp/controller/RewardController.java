@@ -1,6 +1,7 @@
 package com.creditapp.controller;
 
 import com.creditapp.dto.*;
+import com.creditapp.repository.ChildRepository;
 import com.creditapp.service.RewardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,7 @@ import java.util.List;
 public class RewardController {
 
     private final RewardService rewardService;
+    private final ChildRepository childRepository;
 
     @PostMapping
     @Operation(summary = "创建礼物")
@@ -62,7 +64,7 @@ public class RewardController {
     @Operation(summary = "兑换礼物")
     public ResponseEntity<ApiResponse<RewardRedemptionDTO>> redeemReward(@PathVariable Long id,
                                                                        @AuthenticationPrincipal UserDetails userDetails) {
-        Long childId = SecurityUtils.getChildIdFromUsername(userDetails.getUsername());
+        Long childId = SecurityUtils.getChildIdFromUsername(userDetails.getUsername(), childRepository);
         RewardRedemptionDTO redemption = rewardService.redeemReward(id, childId);
         return ResponseEntity.ok(ApiResponse.success(redemption));
     }

@@ -1,9 +1,9 @@
 -- 插入家长账号（密码: parent123）
-INSERT INTO users (username, password, role, points) VALUES ('parent', '$2a$10$BFeE1qUtBvthU1sKwEc.tOIzuFOw1D635dDscfC2cv1HcP1/Co0Su', 'PARENT', 0);
+INSERT INTO users (username, password, role, points) VALUES ('parent', '$2a$10$BFeE1qUtBvthU1sKwEc.tOIzuFOw1D635dDscfC2cv1HcP1/Co0Su', 'PARENT', 1000);
 
 -- 插入小孩账号（密码: child123）
 -- Insert into children table directly since Child is a separate entity
-INSERT INTO children (username, password, role, parent_id, points) VALUES ('child', '$2a$10$cV03s.di3hDvqXLPMiAvpucc7aLcLrWv5kHMFWIrOZXWdAtT4SsDi', 'CHILD', 1, 0);
+INSERT INTO children (username, password, role, parent_id, points) VALUES ('child', '$2a$10$cV03s.di3hDvqXLPMiAvpucc7aLcLrWv5kHMFWIrOZXWdAtT4SsDi', 'CHILD', 1, 1000);
 
 -- 插入示例任务
 INSERT INTO tasks (title, description, points, type, status, created_by_id, assigned_child_id, active) VALUES
