@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>草稿任务审批 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/approvals">
+                            <i class="bi bi-check-circle"></i> 任务审批
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/children">
+                            <i class="bi bi-people"></i> 小孩管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-file-earmark-medical"></i> 草稿任务审批
+                </h1>
+                <p class="text-muted">审批小孩创建的草稿任务</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/approvals">
+                            <i class="bi bi-check-circle"></i> 任务完成审批
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/drafts">
+                            <i class="bi bi-file-earmark-medical"></i> 草稿任务审批
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Draft Tasks -->
+        <div class="row animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 待审批的草稿任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Success/Error Messages -->
+                        <div th:if="${success}" class="alert alert-success animate__animated animate__fadeIn">
+                            <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
+                        </div>
+                        <div th:if="${error}" class="alert alert-danger animate__animated animate__fadeIn">
+                            <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
+                        </div>
+
+                        <!-- Empty state -->
+                        <div th:if="${draftTasks == null or draftTasks.isEmpty()}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-check-circle" style="font-size: 4rem; color: #10B981;"></i>
+                            </div>
+                            <h5 class="text-muted">暂无待审批的草稿任务</h5>
+                            <p class="text-muted">所有草稿任务已处理完毕！</p>
+                        </div>
+
+                        <!-- Draft task list -->
+                        <div th:if="${draftTasks != null and !draftTasks.isEmpty()}" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>任务标题</th>
+                                        <th>描述</th>
+                                        <th>期望积分</th>
+                                        <th>类型</th>
+                                        <th>创建人</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="task : ${draftTasks}">
+                                        <td th:text="${task.title}">任务标题</td>
+                                        <td th:text="${task.description}">任务描述</td>
+                                        <td>
+                                            <span class="badge bg-warning" th:text="${task.points + ' 积分'}">10 积分</span>
+                                        </td>
+                                        <td>
+                                            <span th:classappend="${(task.type == 'ONE_TIME') ? 'bg-secondary' : (task.type == 'REPEATABLE') ? 'bg-warning' : 'bg-info'}"
+                                                  class="badge"
+                                                  th:text="${(task.type == 'ONE_TIME') ? '一次性' : (task.type == 'REPEATABLE') ? '可重复' : '每日一次'}">
+                                                任务类型
+                                            </span>
+                                        </td>
+                                        <td th:text="${task.createdByName} ?: '未知'">创建人</td>
+                                        <td>
+                                            <form th:action="@{/parent/drafts/{taskId}/approve(taskId=${task.id})}" 
+                                                  method="post" 
+                                                  style="display:inline;"
+                                                  class="me-2">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-check"></i> 批准
+                                                </button>
+                                            </form>
+                                            <form th:action="@{/parent/drafts/{taskId}/reject(taskId=${task.id})}" 
+                                                  method="post" 
+                                                  style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('确定要拒绝这个草稿任务吗？');">
+                                                    <i class="bi bi-x"></i> 拒绝
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

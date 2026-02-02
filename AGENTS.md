@@ -931,6 +931,88 @@ public class TaskServiceImpl implements TaskService {
 
 ---
 
+## 新增功能 (2026-02-02)
+
+### 草稿任务功能
+
+**需求描述**：
+孩子可以创建草稿任务，但需要家长审批后才能成为正式任务。
+
+**具体功能要求**：
+
+#### 1. 孩子创建草稿任务
+- 孩子在"我的任务"页面可以创建草稿任务
+- 草稿任务使用 `TaskStatus.DRAFT` 状态
+- 创建时需填写：任务标题、描述、期望积分、任务类型、分配给自己
+- 提交后显示"等待家长审批"提示
+
+#### 2. 家长审批草稿任务
+- 家长在"任务审批"页面可以切换到"草稿任务审批"标签
+- 显示所有孩子创建的待审批草稿任务
+- 家长可以：
+  - **批准**：草稿任务变为 `APPROVED` 状态，成为正式任务
+  - **拒绝**：草稿任务变为 `REJECTED` 状态
+- 批准的草稿任务会自动出现在孩子的任务列表中
+
+#### 3. 任务状态流转
+```
+草稿任务流程：
+DRAFT (孩子创建) → APPROVED (家长批准) → 成为正式任务
+                → REJECTED (家长拒绝) → 任务结束
+
+任务完成流程：
+APPROVED (正式任务) → 孩子标记完成 → PENDING (待审批) → APPROVED (获得积分)
+```
+
+**技术实现**：
+
+- **Repository层**：
+  - `TaskRepository.findDraftTasksByParentId()` - 查询家长所有孩子的草稿任务
+  - `TaskRepository.findByCreatedById()` - 查询指定用户创建的任务
+
+- **Service层**：
+  - `TaskService.createDraftTask()` - 创建草稿任务（状态为 DRAFT）
+  - `TaskService.approveDraftTask()` - 批准草稿任务（DRAFT → APPROVED）
+  - `TaskService.rejectDraftTask()` - 拒绝草稿任务（DRAFT → REJECTED）
+  - `TaskService.getDraftTasksByParent()` - 获取家长的草稿任务列表
+  - `TaskService.getDraftTasksByChild()` - 获取孩子自己的草稿任务
+
+- **Controller层**：
+  - `POST /child/tasks` - 孩子创建草稿任务
+  - `GET /child/tasks/drafts` - 孩子查看自己的草稿任务
+  - `GET /parent/drafts` - 家长查看待审批的草稿任务
+  - `POST /parent/drafts/{taskId}/approve` - 批准草稿任务
+  - `POST /parent/drafts/{taskId}/reject` - 拒绝草稿任务
+
+- **前端页面**：
+  - `child/tasks.html` - 添加草稿任务创建表单
+  - `child/drafts.html` - 孩子查看自己的草稿任务
+  - `parent/drafts.html` - 家长审批草稿任务
+  - `parent/approvals.html` - 添加导航标签切换到草稿任务审批
+
+### 每日任务限制功能 (补充说明)
+
+**已知问题**：
+- 如果孩子同一天尝试提交同类型 `DAILY_ONCE` 任务两次，系统会抛出 `DAILY_LIMIT_EXCEEDED` 错误
+- 前端 JavaScript 会捕获错误并显示提示信息
+
+**前端错误处理**：
+```javascript
+.catch(function(error) {
+    alert('提交失败: ' + (error.message || '未知错误'));
+    button.disabled = false;
+    button.innerHTML = originalText;
+});
+```
+
+**后端验证**：
+- `TaskCompletionRepository.existsCompletionToday()` 查询检查 `PENDING` 和 `APPROVED` 状态
+- 确保同一天只能有一个待审批或已批准的任务完成记录
+
+---
+
+---
+
 ## 参考资源
 
 - Spring Boot官方文档：https://spring.io/projects/spring-boot

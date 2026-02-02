@@ -92,6 +92,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/child/tasks/drafts">
+                            <i class="bi bi-file-earmark-medical"></i> 我的草稿
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/child/rewards">
                             <i class="bi bi-gift"></i> 礼物商城
                         </a>
@@ -113,6 +118,82 @@
                     <i class="bi bi-list-check"></i> 我的任务
                 </h1>
                 <p class="text-muted">完成任务赚取积分，兑换心仪的礼物！</p>
+            </div>
+        </div>
+
+        <!-- Create Draft Task Section -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-plus-circle"></i> 创建草稿任务
+                        </h5>
+                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#createTaskForm">
+                            <i class="bi bi-chevron-down"></i> 展开/收起
+                        </button>
+                    </div>
+                    <div class="card-body collapse show" id="createTaskForm">
+                        <form th:action="@{/child/tasks}" method="post">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="title" class="form-label">任务标题</label>
+                                    <input type="text" class="form-control" id="title" name="title" 
+                                           placeholder="例如：帮妈妈洗碗" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="points" class="form-label">期望积分</label>
+                                    <input type="number" class="form-control" id="points" name="points" 
+                                           min="1" max="100" value="5" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="type" class="form-label">任务类型</label>
+                                    <select class="form-select" id="type" name="type" required>
+                                        <option value="ONE_TIME">一次性任务</option>
+                                        <option value="REPEATABLE">可重复任务</option>
+                                        <option value="DAILY_ONCE">每日一次</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="childId" class="form-label">分配给自己</label>
+                                    <select class="form-select" id="childId" name="childId" required>
+                                        <option th:each="child : ${children}" 
+                                                th:value="${child.id}" 
+                                                th:text="${child.username}">
+                                            小孩
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">任务描述</label>
+                                <textarea class="form-control" id="description" name="description" 
+                                          rows="2" placeholder="详细描述任务要求..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-info">
+                                <i class="bi bi-send"></i> 提交草稿（等待家长审批）
+                            </button>
+                        </form>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="bi bi-info-circle"></i> 提示：草稿任务需要家长审批通过后才能成为正式任务并获得积分。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Draft Tasks Quick Link -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <a href="/child/tasks/drafts" class="card text-decoration-none" style="background: linear-gradient(135deg, #17a2b8, #20c997);">
+                    <div class="card-body text-white text-center py-4">
+                        <i class="bi bi-file-earmark-medical" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-1">查看我的草稿任务</h4>
+                        <p class="mb-0 small opacity-75">点击查看已提交等待家长审批的草稿任务</p>
+                    </div>
+                </a>
             </div>
         </div>
 

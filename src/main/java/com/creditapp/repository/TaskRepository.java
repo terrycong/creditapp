@@ -18,4 +18,16 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t JOIN FETCH t.assignedChild WHERE t.active = true AND t.assignedChild.id = :childId")
     List<Task> findActiveTasksWithChild(@Param("childId") Long childId);
+
+    // Find DRAFT tasks created by children (for parent approval)
+    @Query("SELECT t FROM Task t " +
+           "JOIN FETCH t.assignedChild c " +
+           "WHERE c.parent.id = :parentId " +
+           "AND t.status = 'DRAFT' " +
+           "ORDER BY t.id DESC")
+    List<Task> findDraftTasksByParentId(@Param("parentId") Long parentId);
+
+    // Find tasks created by a specific child
+    @Query("SELECT t FROM Task t WHERE t.createdBy.id = :childId ORDER BY t.id DESC")
+    List<Task> findByCreatedById(@Param("childId") Long childId);
 }

@@ -348,6 +348,10 @@ public class ViewController {
         ChildDTO child = userService.getChildById(user.getId());
         model.addAttribute("childPoints", child.getPoints());
 
+        // Get children list for task creation form (including the current child)
+        List<ChildDTO> children = userService.getChildrenByParentId(child.getParentId());
+        model.addAttribute("children", children);
+
         // Add username for display
         model.addAttribute("username", username);
 
@@ -355,6 +359,58 @@ public class ViewController {
                 tasks.size(), dashboardStats.getRecentTaskCompletions().size(), 
                 pendingCompletions.size(), username);
         return "child/tasks";
+    }
+
+    // Child creates a draft task
+    @PostMapping("/child/tasks")
+    public String createDraftTask(@AuthenticationPrincipal UserDetails userDetails,
+                                  @RequestParam String title,
+                                  @RequestParam String description,
+                                  @RequestParam Integer points,
+                                  @RequestParam String type,
+                                  @RequestParam Long childId,
+                                  RedirectAttributes redirectAttrs) {
+        log.info("Child creating draft task: title={}, points={}, type={}, childId={}",
+                title, points, type, childId);
+
+        try {
+            String username = userDetails.getUsername();
+            User user = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+            CreateTaskRequest request = new CreateTaskRequest();
+            request.setTitle(title);
+            request.setDescription(description);
+            request.setPoints(points);
+            request.setType(TaskType.valueOf(type.toUpperCase()));
+            request.setAssignedChildId(childId);
+
+            taskService.createDraftTask(request, user.getId());
+            redirectAttrs.addFlashAttribute("success", "草稿任务已创建，等待家长审批！");
+            return "redirect:/child/tasks";
+        } catch (Exception e) {
+            log.error("Failed to create draft task", e);
+            redirectAttrs.addFlashAttribute("error", "创建草稿任务失败: " + e.getMessage());
+            return "redirect:/child/tasks";
+        }
+    }
+
+    // Get my draft tasks (for child)
+    @GetMapping("/child/tasks/drafts")
+    public String myDraftTasks(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        List<TaskDTO> draftTasks = taskService.getDraftTasksByChild(user.getId());
+        model.addAttribute("draftTasks", draftTasks);
+        model.addAttribute("username", username);
+
+        return "child/drafts";
     }
 
     @GetMapping("/child/rewards")
@@ -534,6 +590,68 @@ public class ViewController {
             log.error("Failed to reject completion", e);
             redirectAttrs.addFlashAttribute("error", "拒绝失败: " + e.getMessage());
             return "redirect:/parent/approvals";
+        }
+    }
+
+    // ========== Draft Task Approval ==========
+
+    // Get draft tasks for parent approval
+    @GetMapping("/parent/drafts")
+    public String draftApprovals(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== PARENT DRAFT APPROVALS CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User parent = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        // Get draft tasks from this parent's children
+        List<TaskDTO> draftTasks = taskService.getDraftTasksByParent(parent.getId());
+        model.addAttribute("draftTasks", draftTasks);
+
+        // Get children for dropdown
+        List<ChildDTO> children = userService.getChildrenByParentId(parent.getId());
+        model.addAttribute("children", children);
+
+        model.addAttribute("username", username);
+
+        log.info("Found {} draft tasks for parent: {}", draftTasks.size(), username);
+        return "parent/drafts";
+    }
+
+    // Approve draft task (DRAFT -> APPROVED)
+    @PostMapping("/parent/drafts/{taskId}/approve")
+    public String approveDraftTask(@AuthenticationPrincipal UserDetails userDetails,
+                                   @PathVariable Long taskId,
+                                   RedirectAttributes redirectAttrs) {
+        log.info("Approving draft task: taskId={}", taskId);
+        try {
+            taskService.approveDraftTask(taskId);
+            redirectAttrs.addFlashAttribute("success", "草稿任务已批准，成为正式任务！");
+            return "redirect:/parent/drafts";
+        } catch (Exception e) {
+            log.error("Failed to approve draft task", e);
+            redirectAttrs.addFlashAttribute("error", "批准失败: " + e.getMessage());
+            return "redirect:/parent/drafts";
+        }
+    }
+
+    // Reject draft task (DRAFT -> REJECTED)
+    @PostMapping("/parent/drafts/{taskId}/reject")
+    public String rejectDraftTask(@AuthenticationPrincipal UserDetails userDetails,
+                                  @PathVariable Long taskId,
+                                  RedirectAttributes redirectAttrs) {
+        log.info("Rejecting draft task: taskId={}", taskId);
+        try {
+            taskService.rejectDraftTask(taskId);
+            redirectAttrs.addFlashAttribute("success", "草稿任务已拒绝");
+            return "redirect:/parent/drafts";
+        } catch (Exception e) {
+            log.error("Failed to reject draft task", e);
+            redirectAttrs.addFlashAttribute("error", "拒绝失败: " + e.getMessage());
+            return "redirect:/parent/drafts";
         }
     }
 }

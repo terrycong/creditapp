@@ -215,7 +215,85 @@ public class TaskServiceImpl implements TaskService {
                 .map(this::toCompletionDTO)
                 .collect(Collectors.toList());
     }
-    
+
+    // ========== Draft Task Methods ==========
+
+    @Override
+    @Transactional
+    public TaskDTO createDraftTask(CreateTaskRequest request, Long createdById) {
+        User createdBy = userRepository.findById(createdById)
+                .orElseThrow(() -> new ResourceNotFoundException("User", createdById));
+
+        Child assignedChild = null;
+        if (request.getAssignedChildId() != null) {
+            assignedChild = childRepository.findById(request.getAssignedChildId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Child", request.getAssignedChildId()));
+        }
+
+        Task task = new Task();
+        task.setTitle(request.getTitle());
+        task.setDescription(request.getDescription());
+        task.setPoints(request.getPoints());
+        task.setType(request.getType());
+        task.setStatus(TaskStatus.DRAFT);  // Create as DRAFT
+        task.setCreatedBy(createdBy);
+        task.setAssignedChild(assignedChild);
+        task.setActive(true);
+
+        Task savedTask = taskRepository.save(task);
+        log.info("Draft task created by user {}: taskId={}", createdById, savedTask.getId());
+        return toDTO(savedTask);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TaskDTO> getDraftTasksByParent(Long parentId) {
+        List<Task> tasks = taskRepository.findDraftTasksByParentId(parentId);
+        return tasks.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TaskDTO> getDraftTasksByChild(Long childId) {
+        List<Task> tasks = taskRepository.findByCreatedById(childId);
+        return tasks.stream()
+                .filter(t -> t.getStatus() == TaskStatus.DRAFT)
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public TaskDTO approveDraftTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+
+        if (task.getStatus() != TaskStatus.DRAFT) {
+            throw new BusinessException("INVALID_STATUS", "任务不是草稿状态");
+        }
+
+        task.setStatus(TaskStatus.APPROVED);
+        Task savedTask = taskRepository.save(task);
+        log.info("Draft task approved: taskId={}", taskId);
+        return toDTO(savedTask);
+    }
+
+    @Override
+    @Transactional
+    public TaskDTO rejectDraftTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+
+        if (task.getStatus() != TaskStatus.DRAFT) {
+            throw new BusinessException("INVALID_STATUS", "任务不是草稿状态");
+        }
+
+        task.setStatus(TaskStatus.REJECTED);
+        Task savedTask = taskRepository.save(task);
+        log.info("Draft task rejected: taskId={}", taskId);
+        return toDTO(savedTask);
+    }
+
     private TaskDTO toDTO(Task task) {
         return TaskDTO.builder()
                 .id(task.getId())

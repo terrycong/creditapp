@@ -118,7 +118,25 @@
                 <p class="text-muted">审核小孩提交的任务完成记录，批准后发放积分奖励</p>
             </div>
         </div>
- 
+
+        <!-- Navigation Tabs -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/approvals">
+                            <i class="bi bi-check-circle"></i> 任务完成审批
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/drafts">
+                            <i class="bi bi-file-earmark-medical"></i> 草稿任务审批
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Success/Error Messages -->
         <div th:if="${success}" class="row mb-4 animate__animated animate__fadeIn">
             <div class="col-12">

@@ -18,4 +18,11 @@ public interface TaskService {
     TaskCompletionDTO approveCompletion(Long completionId);
     TaskCompletionDTO rejectCompletion(Long completionId);
     List<TaskCompletionDTO> getPendingCompletionsByParent(Long parentId);
+
+    // Draft task methods
+    TaskDTO createDraftTask(CreateTaskRequest request, Long createdById);
+    List<TaskDTO> getDraftTasksByParent(Long parentId);
+    List<TaskDTO> getDraftTasksByChild(Long childId);
+    TaskDTO approveDraftTask(Long taskId);
+    TaskDTO rejectDraftTask(Long taskId);
 }
