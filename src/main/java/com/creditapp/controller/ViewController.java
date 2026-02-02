@@ -1,9 +1,11 @@
 package com.creditapp.controller;
 
 import com.creditapp.dto.*;
+import com.creditapp.entity.TaskCompletion;
 import com.creditapp.entity.TaskType;
 import com.creditapp.entity.User;
 import com.creditapp.repository.ChildRepository;
+import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.service.DashboardService;
 import com.creditapp.service.RewardService;
 import com.creditapp.service.TaskService;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class ViewController {
     private final TaskService taskService;
     private final RewardService rewardService;
     private final ChildRepository childRepository;
+    private final TaskCompletionRepository taskCompletionRepository;
 
     @GetMapping("/")
     public String home() {
@@ -174,6 +178,60 @@ public class ViewController {
         return "redirect:/parent/tasks";
     }
 
+    // Edit task form
+    @GetMapping("/parent/tasks/{id}/edit")
+    public String editTaskForm(@AuthenticationPrincipal UserDetails userDetails,
+                               @PathVariable Long id,
+                               Model model) {
+        try {
+            TaskDTO task = taskService.getTaskById(id);
+            model.addAttribute("task", task);
+
+            // Get children for the dropdown
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+            List<ChildDTO> children = userService.getChildrenByParentId(parent.getId());
+            model.addAttribute("children", children);
+
+            return "parent/edit-task";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/parent/tasks?error=" + e.getMessage();
+        }
+    }
+
+    // Update task
+    @PostMapping("/parent/tasks/{id}/update")
+    public String updateTask(@AuthenticationPrincipal UserDetails userDetails,
+                             @PathVariable Long id,
+                             @RequestParam String title,
+                             @RequestParam String description,
+                             @RequestParam Integer points,
+                             @RequestParam String type,
+                             @RequestParam Long childId,
+                             RedirectAttributes redirectAttrs) {
+        log.info("Updating task: id={}, title={}, points={}, type={}, childId={}",
+                id, title, points, type, childId);
+
+        try {
+            CreateTaskRequest request = new CreateTaskRequest();
+            request.setTitle(title);
+            request.setDescription(description);
+            request.setPoints(points);
+            request.setType(TaskType.valueOf(type.toUpperCase()));
+            request.setAssignedChildId(childId);
+
+            taskService.updateTask(id, request);
+            redirectAttrs.addFlashAttribute("success", "任务更新成功！");
+            return "redirect:/parent/tasks";
+        } catch (Exception e) {
+            log.error("Failed to update task", e);
+            redirectAttrs.addFlashAttribute("error", "更新任务失败: " + e.getMessage());
+            return "redirect:/parent/tasks/" + id + "/edit?error=" + e.getMessage();
+        }
+    }
+
     @PostMapping("/parent/rewards/{id}/delete")
     public String deleteReward(@AuthenticationPrincipal UserDetails userDetails,
                              @PathVariable Long id,
@@ -265,10 +323,37 @@ public class ViewController {
         List<TaskDTO> tasks = taskService.getTasksByChild(user.getId());
         model.addAttribute("tasks", tasks);
 
+        // Fetch approved task completions for this child
+        DashboardStatsDTO dashboardStats = dashboardService.getChildDashboardStats(user.getId());
+        model.addAttribute("completedTasks", dashboardStats.getRecentTaskCompletions());
+
+        // Fetch PENDING task completions (submitted but not approved yet)
+        List<TaskCompletionDTO> pendingCompletions = taskCompletionRepository
+                .findPendingCompletionsByChildId(user.getId())
+                .stream()
+                .map(tc -> TaskCompletionDTO.builder()
+                        .id(tc.getId())
+                        .taskId(tc.getTask().getId())
+                        .taskTitle(tc.getTask().getTitle())
+                        .taskPoints(tc.getTask().getPoints())
+                        .childId(tc.getChild().getId())
+                        .childName(tc.getChild().getUsername())
+                        .status(tc.getStatus())
+                        .completedAt(tc.getCompletedAt())
+                        .build())
+                .collect(Collectors.toList());
+        model.addAttribute("pendingTasks", pendingCompletions);
+
+        // Get child's current points
+        ChildDTO child = userService.getChildById(user.getId());
+        model.addAttribute("childPoints", child.getPoints());
+
         // Add username for display
         model.addAttribute("username", username);
 
-        log.info("Found {} tasks for child: {}", tasks.size(), username);
+        log.info("Found {} tasks, {} completed, {} pending for child: {}", 
+                tasks.size(), dashboardStats.getRecentTaskCompletions().size(), 
+                pendingCompletions.size(), username);
         return "child/tasks";
     }
 

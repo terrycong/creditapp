@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -122,7 +123,7 @@
                     <div class="stat-icon icon-primary mx-auto" style="background-color: rgba(79, 70, 229, 0.1); color: var(--primary-color);">
                         <i class="bi bi-star-fill"></i>
                     </div>
-                    <h3 class="mb-2">0 积分</h3>
+                    <h3 class="mb-2" th:text="${childPoints != null ? childPoints : 0} + ' 积分'">0 积分</h3>
                     <p class="text-muted mb-0">当前积分</p>
                 </div>
             </div>
@@ -131,7 +132,7 @@
                     <div class="stat-icon icon-success mx-auto" style="background-color: rgba(16, 185, 129, 0.1); color: var(--success-color);">
                         <i class="bi bi-check-circle-fill"></i>
                     </div>
-                    <h3 class="mb-2" th:text="${(tasks != null ? tasks.size() : 0) + ' 个'}">0 个</h3>
+                    <h3 class="mb-2" th:text="${(completedTasks != null ? completedTasks.size() : 0) + ' 个'}">0 个</h3>
                     <p class="text-muted mb-0">已完成任务</p>
                 </div>
             </div>
@@ -140,8 +141,8 @@
                     <div class="stat-icon icon-warning mx-auto" style="background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color);">
                         <i class="bi bi-clock-fill"></i>
                     </div>
-                    <h3 class="mb-2" th:text="${(tasks != null ? tasks.size() : 0) + ' 个'}">4 个</h3>
-                    <p class="text-muted mb-0">待完成任务</p>
+                    <h3 class="mb-2" th:text="${(pendingTasks != null ? pendingTasks.size() : 0) + ' 个'}">0 个</h3>
+                    <p class="text-muted mb-0">待审批任务</p>
                 </div>
             </div>
         </div>
@@ -202,6 +203,48 @@
             </div>
         </div>
 
+        <!-- Pending Approval Tasks -->
+        <div class="row mb-5 animate__animated animate__fadeInUp" th:if="${pendingTasks != null and !pendingTasks.isEmpty()}">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 待审批的任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>任务名称</th>
+                                        <th>预计积分</th>
+                                        <th>提交时间</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="pending : ${pendingTasks}">
+                                        <td th:text="${pending.taskTitle}">任务名称</td>
+                                        <td>
+                                            <span class="badge bg-warning" th:text="${pending.taskPoints + ' 积分'}">10 积分</span>
+                                        </td>
+                                        <td th:text="${#temporals.format(pending.completedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                                        <td>
+                                            <span class="badge bg-warning">等待审批</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-info-circle"></i> 这些任务已提交，等待家长审批。审批通过后将获得积分！
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Completed Tasks -->
         <div class="row animate__animated animate__fadeInUp">
             <div class="col-12">
@@ -212,12 +255,40 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> 还没有完成的任务，加油哦！
+                        <!-- Empty state -->
+                        <div th:if="${completedTasks == null or completedTasks.isEmpty()}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-inbox" style="font-size: 4rem; color: #d1d5db;"></i>
+                            </div>
+                            <h5 class="text-muted">暂时没有完成的任务</h5>
+                            <p class="text-muted">完成任务后，它们会显示在这里。继续努力赚取积分吧！</p>
                         </div>
-                        <p class="text-muted text-center mb-0">
-                            完成任务后，它们会显示在这里。继续努力赚取积分吧！
-                        </p>
+
+                        <!-- Dynamic completed task list -->
+                        <div th:if="${completedTasks != null and !completedTasks.isEmpty()}" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>任务名称</th>
+                                        <th>获得积分</th>
+                                        <th>完成时间</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="completion : ${completedTasks}">
+                                        <td th:text="${completion.taskTitle}">任务名称</td>
+                                        <td>
+                                            <span class="badge bg-success" th:text="${completion.taskPoints + ' 积分'}">10 积分</span>
+                                        </td>
+                                        <td th:text="${#temporals.format(completion.completedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                                        <td>
+                                            <span class="badge bg-success">已完成</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>任务管理 - 家庭积分系统</title>
+    <title>编辑任务 - 家庭积分系统</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -34,31 +34,6 @@
             border: none;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
-        
-        .task-card {
-            transition: transform 0.2s;
-        }
-        
-        .task-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .badge-task {
-            font-size: 0.8rem;
-            padding: 0.4rem 0.8rem;
-        }
-        
-        .section-title {
-            color: #374151;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        
-        .points-badge {
-            background: linear-gradient(135deg, var(--success-color), #34D399);
-            color: white;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -113,42 +88,42 @@
         <div class="row mb-4">
             <div class="col-12">
                 <h1 class="section-title animate__animated animate__fadeInLeft">
-                    <i class="bi bi-list-check"></i> 任务管理
+                    <i class="bi bi-pencil-square"></i> 编辑任务
                 </h1>
-                <p class="text-muted">为小孩创建和管理任务，帮助他们养成好习惯</p>
+                <p class="text-muted">修改任务信息</p>
             </div>
         </div>
 
-        <!-- Create Task Form -->
+        <!-- Edit Task Form -->
         <div class="row mb-5 animate__animated animate__fadeInUp">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">
-                            <i class="bi bi-plus-circle"></i> 创建新任务
+                            <i class="bi bi-pencil"></i> 编辑任务信息
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form th:action="@{/parent/tasks}" method="post">
+                        <form th:action="@{/parent/tasks/{id}/update(id=${task.id})}" method="post">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="title" class="form-label">任务标题</label>
                                     <input type="text" class="form-control" id="title" name="title" 
-                                           placeholder="例如：完成作业" required>
+                                           th:value="${task.title}" placeholder="例如：完成作业" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="points" class="form-label">积分奖励</label>
                                     <input type="number" class="form-control" id="points" name="points" 
-                                           min="1" max="1000" value="10" required>
+                                           th:value="${task.points}" min="1" max="1000" required>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="type" class="form-label">任务类型</label>
                                     <select class="form-select" id="type" name="type" required>
-                                        <option value="ONE_TIME">一次性任务</option>
-                                        <option value="REPEATABLE">可重复任务</option>
-                                        <option value="DAILY_ONCE">每日一次</option>
+                                        <option value="ONE_TIME" th:selected="${task.type == 'ONE_TIME'}">一次性任务</option>
+                                        <option value="REPEATABLE" th:selected="${task.type == 'REPEATABLE'}">可重复任务</option>
+                                        <option value="DAILY_ONCE" th:selected="${task.type == 'DAILY_ONCE'}">每日一次</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
@@ -157,7 +132,8 @@
                                         <option value="">请选择小孩</option>
                                         <option th:each="child : ${children}" 
                                                 th:value="${child.id}" 
-                                                th:text="${child.username}">
+                                                th:text="${child.username}"
+                                                th:selected="${child.id == task.assignedChildId}">
                                             小孩
                                         </option>
                                     </select>
@@ -166,11 +142,16 @@
                             <div class="mb-3">
                                 <label for="description" class="form-label">任务描述</label>
                                 <textarea class="form-control" id="description" name="description" 
-                                          rows="3" placeholder="详细描述任务要求..."></textarea>
+                                          rows="3" placeholder="详细描述任务要求..." th:text="${task.description}"></textarea>
                             </div>
-                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> 创建任务
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> 保存修改
+                                </button>
+                                <a th:href="@{/parent/tasks}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> 返回
+                                </a>
+                            </div>
                         </form>
                         
                         <!-- Success/Error Messages -->
@@ -179,82 +160,6 @@
                         </div>
                         <div th:if="${error}" class="alert alert-danger mt-3 animate__animated animate__fadeIn">
                             <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Task List -->
-        <div class="row animate__animated animate__fadeInUp">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="bi bi-list-task"></i> 现有任务
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>任务标题</th>
-                                        <th>描述</th>
-                                        <th>积分</th>
-                                        <th>类型</th>
-                                        <th>状态</th>
-                                        <th>分配给</th>
-                                        <th>操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="task : ${tasks}">
-                                        <td th:text="${task.title}">任务标题</td>
-                                        <td th:text="${task.description}">任务描述</td>
-                                        <td>
-                                            <span class="badge points-badge" th:text="${task.points}+' 积分'">
-                                                10 积分
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span th:classappend="${(task.type == 'ONE_TIME') ? 'bg-secondary' : (task.type == 'REPEATABLE') ? 'bg-warning' : 'bg-info'}"
-                                                  class="badge"
-                                                  th:text="${(task.type == 'ONE_TIME') ? '一次性' : (task.type == 'REPEATABLE') ? '可重复' : '每日一次'}">
-                                                任务类型
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span th:classappend="${(task.status == 'APPROVED') ? 'bg-success' : (task.status == 'REJECTED') ? 'bg-danger' : 'bg-warning'}"
-                                                  class="badge"
-                                                  th:text="${(task.status == 'APPROVED') ? '进行中' : (task.status == 'REJECTED') ? '已拒绝' : '草稿'}">
-                                                状态
-                                            </span>
-                                        </td>
-                                        <td th:text="${task.assignedChildName} ?: '未分配'">child</td>
-                                        <td>
-                                            <form th:action="@{/parent/tasks/{id}/delete(id=${task.id})}" 
-                                                  method="post" 
-                                                  onsubmit="return confirm('确定要删除这个任务吗？此操作不可撤销！');"
-                                                  style="display:inline;"
-                                                  class="me-2">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="bi bi-trash"></i> 删除
-                                                </button>
-                                            </form>
-                                            <a th:href="@{/parent/tasks/{id}/edit(id=${task.id})}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-pencil"></i> 编辑
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    <tr th:if="${#lists.isEmpty(tasks)}">
-                                        <td colspan="7" class="text-center text-muted">
-                                            <i class="bi bi-inbox"></i> 暂无任务，请创建第一个任务
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
                         </div>
                     </div>
                 </div>

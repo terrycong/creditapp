@@ -76,4 +76,20 @@ public interface TaskCompletionRepository extends JpaRepository<TaskCompletion, 
             @org.springframework.data.repository.query.Param("taskId") Long taskId,
             @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay,
             @org.springframework.data.repository.query.Param("endOfDay") java.time.LocalDateTime endOfDay);
+
+    // Find only APPROVED completions for a child (for displaying in child's task history)
+    @Query("SELECT tc FROM TaskCompletion tc " +
+           "JOIN FETCH tc.task t " +
+           "WHERE tc.child.id = :childId " +
+           "AND tc.status = 'APPROVED' " +
+           "ORDER BY tc.completedAt DESC")
+    List<TaskCompletion> findApprovedCompletionsByChildId(@org.springframework.data.repository.query.Param("childId") Long childId);
+
+    // Find PENDING completions for a child (submitted but not approved yet)
+    @Query("SELECT tc FROM TaskCompletion tc " +
+           "JOIN FETCH tc.task t " +
+           "WHERE tc.child.id = :childId " +
+           "AND tc.status = 'PENDING' " +
+           "ORDER BY tc.completedAt DESC")
+    List<TaskCompletion> findPendingCompletionsByChildId(@org.springframework.data.repository.query.Param("childId") Long childId);
 }

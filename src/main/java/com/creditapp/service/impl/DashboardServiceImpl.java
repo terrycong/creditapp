@@ -189,14 +189,14 @@ public class DashboardServiceImpl implements DashboardService {
         
         DashboardStatsDTO.DashboardStatsDTOBuilder builder = DashboardStatsDTO.builder();
         
-        // Get child's recent task completions
-        List<TaskCompletion> childCompletions = taskCompletionRepository.findByChildId(childId);
-        List<TaskCompletionDTO> taskCompletionDTOs = childCompletions.stream()
+        // Get child's approved task completions only (for displaying completed tasks)
+        List<TaskCompletion> approvedCompletions = taskCompletionRepository.findApprovedCompletionsByChildId(childId);
+        List<TaskCompletionDTO> approvedCompletionDTOs = approvedCompletions.stream()
                 .map(this::convertToTaskCompletionDTO)
                 .collect(Collectors.toList());
-        builder.recentTaskCompletions(taskCompletionDTOs);
+        builder.recentTaskCompletions(approvedCompletionDTOs);
         
-        // Get child's recent reward redemptions
+        // Get child's approved reward redemptions
         List<RewardRedemption> childRedemptions = rewardRedemptionRepository.findByChildIdWithReward(childId);
         List<RewardRedemptionDTO> rewardRedemptionDTOs = childRedemptions.stream()
                 .map(this::convertToRewardRedemptionDTO)
@@ -211,7 +211,7 @@ public class DashboardServiceImpl implements DashboardService {
         ChildActivityDTO childActivity = ChildActivityDTO.builder()
                 .childId(childId)
                 .childName(child.getUsername())
-                .taskCompletionCount(childCompletions.size())
+                .taskCompletionCount(approvedCompletions.size())
                 .rewardRedemptionCount(childRedemptions.size())
                 .currentPoints(child.getPoints())
                 .build();
