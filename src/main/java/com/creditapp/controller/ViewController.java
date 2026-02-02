@@ -4,6 +4,7 @@ import com.creditapp.dto.*;
 import com.creditapp.entity.TaskCompletion;
 import com.creditapp.entity.TaskType;
 import com.creditapp.entity.User;
+import com.creditapp.exception.BusinessException;
 import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.service.DashboardService;
@@ -355,10 +356,33 @@ public class ViewController {
         // Add username for display
         model.addAttribute("username", username);
 
-        log.info("Found {} tasks, {} completed, {} pending for child: {}", 
-                tasks.size(), dashboardStats.getRecentTaskCompletions().size(), 
+        log.info("Found {} tasks, {} completed, {} pending for child: {}",
+                tasks.size(), dashboardStats.getRecentTaskCompletions().size(),
                 pendingCompletions.size(), username);
         return "child/tasks";
+    }
+
+    // Withdraw (delete) a task completion request
+    @PostMapping("/child/completions/{id}/withdraw")
+    public String withdrawCompletion(@AuthenticationPrincipal UserDetails userDetails,
+                                     @PathVariable Long id,
+                                     RedirectAttributes redirectAttrs) {
+        log.info("Child withdrawing completion request: completionId={}", id);
+        try {
+            String username = userDetails.getUsername();
+            User user = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+            // Verify the completion belongs to this child and is in PENDING status
+            taskService.withdrawCompletion(id, user.getId());
+
+            redirectAttrs.addFlashAttribute("success", "任务完成申请已成功撤回！");
+            return "redirect:/child/tasks";
+        } catch (Exception e) {
+            log.error("Failed to withdraw completion", e);
+            redirectAttrs.addFlashAttribute("error", "撤回失败: " + e.getMessage());
+            return "redirect:/child/tasks";
+        }
     }
 
     // Child creates a draft task
@@ -411,6 +435,33 @@ public class ViewController {
         model.addAttribute("username", username);
 
         return "child/drafts";
+    }
+
+    // Withdraw (delete) a draft task
+    @PostMapping("/child/drafts/{id}/withdraw")
+    public String withdrawDraftTask(@AuthenticationPrincipal UserDetails userDetails,
+                                    @PathVariable Long id,
+                                    RedirectAttributes redirectAttrs) {
+        log.info("Child withdrawing draft task: taskId={}", id);
+        try {
+            String username = userDetails.getUsername();
+            User user = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+            // Verify the draft task belongs to this child
+            TaskDTO task = taskService.getTaskById(id);
+            if (!task.getCreatedById().equals(user.getId())) {
+                throw new BusinessException("PERMISSION_DENIED", "无权撤回此草稿任务");
+            }
+
+            taskService.deleteTask(id);
+            redirectAttrs.addFlashAttribute("success", "草稿任务已成功撤回删除！");
+            return "redirect:/child/tasks/drafts";
+        } catch (Exception e) {
+            log.error("Failed to withdraw draft task", e);
+            redirectAttrs.addFlashAttribute("error", "撤回失败: " + e.getMessage());
+            return "redirect:/child/tasks/drafts";
+        }
     }
 
     @GetMapping("/child/rewards")

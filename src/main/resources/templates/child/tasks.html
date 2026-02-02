@@ -302,6 +302,7 @@
                                         <th>预计积分</th>
                                         <th>提交时间</th>
                                         <th>状态</th>
+                                        <th>操作</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -313,6 +314,14 @@
                                         <td th:text="${#temporals.format(pending.completedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
                                         <td>
                                             <span class="badge bg-warning">等待审批</span>
+                                        </td>
+                                        <td>
+                                            <form th:action="@{/child/completions/{id}/withdraw(id=${pending.id})}" method="post" style="display:inline;"
+                                                  onsubmit="return confirm('确定要撤回这个任务完成申请吗？');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-x-circle"></i> 撤回
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 </tbody>

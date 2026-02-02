@@ -106,6 +106,14 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        <!-- Success/Error Messages -->
+                        <div th:if="${success}" class="alert alert-success animate__animated animate__fadeIn">
+                            <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
+                        </div>
+                        <div th:if="${error}" class="alert alert-danger animate__animated animate__fadeIn">
+                            <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
+                        </div>
+
                         <!-- Empty state -->
                         <div th:if="${draftTasks == null or draftTasks.isEmpty()}" class="text-center py-5">
                             <div class="mb-3">
@@ -128,6 +136,7 @@
                                         <th>期望积分</th>
                                         <th>类型</th>
                                         <th>状态</th>
+                                        <th>操作</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -146,6 +155,14 @@
                                         </td>
                                         <td>
                                             <span class="badge bg-info">等待审批</span>
+                                        </td>
+                                        <td>
+                                            <form th:action="@{/child/drafts/{id}/withdraw(id=${task.id})}" method="post" style="display:inline;"
+                                                  onsubmit="return confirm('确定要撤回这个草稿任务吗？删除后无法恢复。');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i> 撤回删除
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 </tbody>

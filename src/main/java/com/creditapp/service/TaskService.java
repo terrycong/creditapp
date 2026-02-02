@@ -18,6 +18,7 @@ public interface TaskService {
     TaskCompletionDTO approveCompletion(Long completionId);
     TaskCompletionDTO rejectCompletion(Long completionId);
     List<TaskCompletionDTO> getPendingCompletionsByParent(Long parentId);
+    void withdrawCompletion(Long completionId, Long childId);
 
     // Draft task methods
     TaskDTO createDraftTask(CreateTaskRequest request, Long createdById);

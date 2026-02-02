@@ -206,7 +206,27 @@ public class TaskServiceImpl implements TaskService {
         log.info("Rejected task completion {}", completionId);
         return toCompletionDTO(saved);
     }
-    
+
+    @Override
+    @Transactional
+    public void withdrawCompletion(Long completionId, Long childId) {
+        TaskCompletion completion = taskCompletionRepository.findById(completionId)
+                .orElseThrow(() -> new ResourceNotFoundException("TaskCompletion", completionId));
+
+        // Verify the completion belongs to this child
+        if (!completion.getChild().getId().equals(childId)) {
+            throw new BusinessException("PERMISSION_DENIED", "无权撤回此完成申请");
+        }
+
+        // Only allow withdrawing if status is PENDING
+        if (completion.getStatus() != CompletionStatus.PENDING) {
+            throw new BusinessException("INVALID_STATUS", "只能撤回待审批的申请");
+        }
+
+        taskCompletionRepository.delete(completion);
+        log.info("Withdrawn task completion {} by child {}", completionId, childId);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<TaskCompletionDTO> getPendingCompletionsByParent(Long parentId) {
