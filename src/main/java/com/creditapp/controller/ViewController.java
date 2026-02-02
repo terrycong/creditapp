@@ -1,7 +1,9 @@
 package com.creditapp.controller;
 
 import com.creditapp.dto.*;
+import com.creditapp.entity.PenaltyNotification;
 import com.creditapp.entity.TaskCompletion;
+import com.creditapp.entity.TaskDeadlineType;
 import com.creditapp.entity.TaskType;
 import com.creditapp.entity.User;
 import com.creditapp.exception.BusinessException;
@@ -104,12 +106,14 @@ public class ViewController {
 
     @PostMapping("/parent/tasks")
     public String createTask(@AuthenticationPrincipal UserDetails userDetails,
-                           @RequestParam String title,
-                           @RequestParam String description,
-                           @RequestParam Integer points,
-                           @RequestParam String type,
-                           @RequestParam Long childId,
-                           RedirectAttributes redirectAttrs) {
+                            @RequestParam String title,
+                            @RequestParam String description,
+                            @RequestParam Integer points,
+                            @RequestParam String type,
+                            @RequestParam Long childId,
+                            @RequestParam(required = false, defaultValue = "DAILY") String deadlineType,
+                            @RequestParam(required = false, defaultValue = "5") Integer penaltyPoints,
+                            RedirectAttributes redirectAttrs) {
         log.info("Creating task: title={}, points={}, type={}, childId={}", 
                 title, points, type, childId);
         
@@ -135,6 +139,13 @@ public class ViewController {
             }
             request.setType(taskType);
             request.setAssignedChildId(childId);
+            
+            // Set mandatory task fields if type is MANDATORY
+            if (taskType == TaskType.MANDATORY) {
+                request.setDeadlineType(TaskDeadlineType.valueOf(deadlineType.toUpperCase()));
+                request.setDeadlineValue(1); // Daily means 1 time per day
+                request.setPenaltyPoints(penaltyPoints);
+            }
             
             // Call task service
             taskService.createTask(request, parent.getId());
@@ -703,6 +714,91 @@ public class ViewController {
             log.error("Failed to reject draft task", e);
             redirectAttrs.addFlashAttribute("error", "拒绝失败: " + e.getMessage());
             return "redirect:/parent/drafts";
+        }
+    }
+
+    // ========== Penalty Notifications ==========
+
+    // Get penalty notifications page for parent
+    @GetMapping("/parent/notifications")
+    public String penaltyNotifications(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== PARENT NOTIFICATIONS CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User parent = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        // Get pending and all notifications
+        var pendingNotifications = taskService.getPendingPenaltyNotifications(parent.getId());
+        var allNotifications = taskService.getAllPenaltyNotifications(parent.getId());
+
+        model.addAttribute("pendingNotifications", pendingNotifications);
+        model.addAttribute("allNotifications", allNotifications);
+        model.addAttribute("username", username);
+
+        log.info("Found {} pending, {} total notifications for parent: {}",
+                pendingNotifications.size(), allNotifications.size(), username);
+        return "parent/notifications";
+    }
+
+    // Apply penalty to a notification
+    @PostMapping("/parent/notifications/{notificationId}/apply-penalty")
+    public String applyPenalty(@AuthenticationPrincipal UserDetails userDetails,
+                               @PathVariable Long notificationId,
+                               RedirectAttributes redirectAttrs) {
+        log.info("Applying penalty for notification: notificationId={}", notificationId);
+        try {
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+            taskService.applyPenalty(notificationId, parent.getId());
+            redirectAttrs.addFlashAttribute("success", "惩罚已执行，积分已扣除！");
+            return "redirect:/parent/notifications";
+        } catch (Exception e) {
+            log.error("Failed to apply penalty", e);
+            redirectAttrs.addFlashAttribute("error", "执行惩罚失败: " + e.getMessage());
+            return "redirect:/parent/notifications";
+        }
+    }
+
+    // Dismiss (ignore) a notification
+    @PostMapping("/parent/notifications/{notificationId}/dismiss")
+    public String dismissNotification(@AuthenticationPrincipal UserDetails userDetails,
+                                      @PathVariable Long notificationId,
+                                      RedirectAttributes redirectAttrs) {
+        log.info("Dismissing notification: notificationId={}", notificationId);
+        try {
+            taskService.dismissPenalty(notificationId);
+            redirectAttrs.addFlashAttribute("success", "已忽略此通知");
+            return "redirect:/parent/notifications";
+        } catch (Exception e) {
+            log.error("Failed to dismiss notification", e);
+            redirectAttrs.addFlashAttribute("error", "忽略失败: " + e.getMessage());
+            return "redirect:/parent/notifications";
+        }
+    }
+
+    // Trigger manual check for mandatory task deadlines (for testing/admin)
+    @PostMapping("/parent/notifications/check-deadlines")
+    public String checkDeadlines(@AuthenticationPrincipal UserDetails userDetails,
+                                 RedirectAttributes redirectAttrs) {
+        log.info("Manual deadline check triggered by user: {}", userDetails.getUsername());
+        try {
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+            taskService.checkAndNotifyMandatoryTaskDeadline(parent.getId());
+            redirectAttrs.addFlashAttribute("success", "已检查所有强制任务截止时间");
+            return "redirect:/parent/notifications";
+        } catch (Exception e) {
+            log.error("Failed to check deadlines", e);
+            redirectAttrs.addFlashAttribute("error", "检查失败: " + e.getMessage());
+            return "redirect:/parent/notifications";
         }
     }
 }

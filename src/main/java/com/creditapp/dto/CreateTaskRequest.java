@@ -1,5 +1,6 @@
 package com.creditapp.dto;
 
+import com.creditapp.entity.TaskDeadlineType;
 import com.creditapp.entity.TaskType;
 import jakarta.validation.constraints.*;
 
@@ -19,6 +20,11 @@ public class CreateTaskRequest {
     private TaskType type;
 
     private Long assignedChildId;
+
+    // 强制任务相关字段
+    private TaskDeadlineType deadlineType;
+    private Integer deadlineValue;
+    private Integer penaltyPoints;
 
     // Getters and Setters
     public String getTitle() {
@@ -59,5 +65,29 @@ public class CreateTaskRequest {
 
     public void setAssignedChildId(Long assignedChildId) {
         this.assignedChildId = assignedChildId;
+    }
+
+    public TaskDeadlineType getDeadlineType() {
+        return deadlineType;
+    }
+
+    public void setDeadlineType(TaskDeadlineType deadlineType) {
+        this.deadlineType = deadlineType;
+    }
+
+    public Integer getDeadlineValue() {
+        return deadlineValue;
+    }
+
+    public void setDeadlineValue(Integer deadlineValue) {
+        this.deadlineValue = deadlineValue;
+    }
+
+    public Integer getPenaltyPoints() {
+        return penaltyPoints;
+    }
+
+    public void setPenaltyPoints(Integer penaltyPoints) {
+        this.penaltyPoints = penaltyPoints;
     }
 }

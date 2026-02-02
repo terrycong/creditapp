@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知中心 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .notification-card {
+            transition: transform 0.2s;
+        }
+        
+        .notification-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .badge-pending {
+            background-color: var(--warning-color);
+        }
+        
+        .badge-applied {
+            background-color: var(--danger-color);
+        }
+        
+        .badge-dismissed {
+            background-color: var(--success-color);
+        }
+        
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/approvals">
+                            <i class="bi bi-check-circle"></i> 任务审批
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/drafts">
+                            <i class="bi bi-file-earmark-medical"></i> 草稿审批
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/notifications">
+                            <i class="bi bi-bell"></i> 通知中心
+                            <span th:if="${pendingNotifications != null and !pendingNotifications.empty}" 
+                                  class="badge bg-danger ms-1" 
+                                  th:text="${pendingNotifications.size()}">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/children">
+                            <i class="bi bi-people"></i> 小孩管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-bell"></i> 通知中心
+                </h1>
+                <p class="text-muted">管理强制任务的未完成通知，决定是否执行惩罚</p>
+            </div>
+        </div>
+
+        <!-- Manual Check Button -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form th:action="@{/parent/notifications/check-deadlines}" method="post">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-arrow-clockwise"></i> 立即检查强制任务完成情况
+                            </button>
+                        </form>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="bi bi-info-circle"></i> 提示：系统每天晚上11点会自动检查强制任务完成情况。您也可以点击上面的按钮手动触发检查。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div th:if="${success}" class="alert alert-success animate__animated animate__fadeIn">
+            <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
+        </div>
+        <div th:if="${error}" class="alert alert-danger animate__animated animate__fadeIn">
+            <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
+        </div>
+
+        <!-- Pending Notifications -->
+        <div class="row mb-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle"></i> 待处理通知
+                        </h5>
+                        <span class="badge bg-white text-warning" 
+                              th:text="${pendingNotifications != null ? pendingNotifications.size() : 0}">0</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Empty state -->
+                        <div th:if="${pendingNotifications == null or pendingNotifications.empty}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-check-circle" style="font-size: 4rem; color: var(--success-color);"></i>
+                            </div>
+                            <h5 class="text-muted">暂无待处理通知</h5>
+                            <p class="text-muted">所有强制任务都已完成，继续保持！</p>
+                        </div>
+
+                        <!-- Pending notifications list -->
+                        <div th:if="${pendingNotifications != null and !pendingNotifications.empty}" class="row">
+                            <div th:each="notification : ${pendingNotifications}"
+                                 class="col-md-6 mb-4">
+                                <div class="card notification-card border-warning h-100">
+                                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-exclamation-triangle"></i> 强制任务未完成</span>
+                                        <small th:text="${#temporals.format(notification.notificationTime, 'yyyy-MM-dd HH:mm')}">时间</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <h6 class="card-title" th:text="${notification.task.title}">任务名称</h6>
+                                        <p class="card-text">
+                                            <strong>小孩：</strong><span th:text="${notification.child.username}">小孩名</span><br>
+                                            <strong>任务类型：</strong>强制任务（每天完成）<br>
+                                            <strong>扣除积分：</strong><span class="text-danger fw-bold" th:text="${notification.penaltyPoints}">5</span> 分
+                                        </p>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <form th:action="@{/parent/notifications/{id}/apply-penalty(id=${notification.id})}" 
+                                                  method="post" style="flex: 1; margin-right: 10px;">
+                                                <button type="submit" class="btn btn-danger w-100"
+                                                        onclick="return confirm('确定要扣除 ' + ${notification.penaltyPoints} + ' 积分吗？此操作不可撤销！');">
+                                                    <i class="bi bi-dash-circle"></i> 执行扣分
+                                                </button>
+                                            </form>
+                                            <form th:action="@{/parent/notifications/{id}/dismiss(id=${notification.id})}" 
+                                                  method="post" style="flex: 1;">
+                                                <button type="submit" class="btn btn-secondary w-100"
+                                                        onclick="return confirm('确定要忽略此通知吗？小孩将不会被扣分。');">
+                                                    <i class="bi bi-x-circle"></i> 忽略
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Notifications History -->
+        <div class="row animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 通知历史
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Empty state -->
+                        <div th:if="${allNotifications == null or allNotifications.empty}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-inbox" style="font-size: 4rem; color: #d1d5db;"></i>
+                            </div>
+                            <h5 class="text-muted">暂无通知记录</h5>
+                        </div>
+
+                        <!-- Notifications history table -->
+                        <div th:if="${allNotifications != null and !allNotifications.empty}" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>小孩</th>
+                                        <th>任务</th>
+                                        <th>扣除积分</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="notification : ${allNotifications}">
+                                        <td th:text="${#temporals.format(notification.notificationTime, 'yyyy-MM-dd HH:mm')}">时间</td>
+                                        <td th:text="${notification.child.username}">小孩</td>
+                                        <td th:text="${notification.task.title}">任务</td>
+                                        <td>
+                                            <span th:classappend="${notification.penaltyApplied ? 'text-danger' : 'text-muted'}"
+                                                  th:text="${notification.penaltyPoints + ' 分'}">分数</span>
+                                        </td>
+                                        <td>
+                                            <span th:classappend="${notification.status == 'PENDING' ? 'badge-pending' : (notification.status == 'APPLIED' ? 'badge-applied' : 'badge-dismissed')}"
+                                                  class="badge"
+                                                  th:text="${notification.status == 'PENDING' ? '待处理' : (notification.status == 'APPLIED' ? '已扣分' : '已忽略')}">
+                                                状态
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

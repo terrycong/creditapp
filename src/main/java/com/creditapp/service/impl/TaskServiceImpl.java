@@ -5,6 +5,7 @@ import com.creditapp.entity.*;
 import com.creditapp.exception.BusinessException;
 import com.creditapp.exception.ResourceNotFoundException;
 import com.creditapp.repository.ChildRepository;
+import com.creditapp.repository.PenaltyNotificationRepository;
 import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.repository.TaskRepository;
 import com.creditapp.repository.UserRepository;
@@ -28,6 +29,7 @@ public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskCompletionRepository taskCompletionRepository;
+    private final PenaltyNotificationRepository penaltyNotificationRepository;
     private final UserRepository userRepository;
     private final ChildRepository childRepository;
 
@@ -52,6 +54,13 @@ public class TaskServiceImpl implements TaskService {
         task.setCreatedBy(createdBy);
         task.setAssignedChild(assignedChild);
         task.setActive(true);
+
+        // Set mandatory task fields if type is MANDATORY
+        if (request.getType() == TaskType.MANDATORY) {
+            task.setDeadlineType(request.getDeadlineType());
+            task.setDeadlineValue(request.getDeadlineValue());
+            task.setPenaltyPoints(request.getPenaltyPoints());
+        }
 
         Task savedTask = taskRepository.save(task);
         return toDTO(savedTask);
@@ -314,6 +323,114 @@ public class TaskServiceImpl implements TaskService {
         return toDTO(savedTask);
     }
 
+    // ========== Mandatory Task Methods ==========
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getMandatoryTaskCompletionCount(Long taskId, Long childId, LocalDateTime startDate, LocalDateTime endDate) {
+        return taskCompletionRepository.countApprovedCompletionsInDateRange(taskId, childId, startDate, endDate);
+    }
+
+    @Override
+    @Transactional
+    public void checkAndNotifyMandatoryTaskDeadline(Long parentId) {
+        log.info("Checking mandatory task deadlines for parentId={}", parentId);
+
+        // Find all MANDATORY tasks created by this parent
+        List<Task> mandatoryTasks = taskRepository.findByCreatedBy_Id(parentId).stream()
+                .filter(t -> t.getType() == TaskType.MANDATORY && t.isActive())
+                .collect(Collectors.toList());
+
+        for (Task task : mandatoryTasks) {
+            if (task.getAssignedChild() == null) {
+                continue;
+            }
+
+            Child child = task.getAssignedChild();
+            LocalDate today = LocalDate.now();
+            LocalDateTime startOfDay = today.atStartOfDay();
+            LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+
+            // Count completions for today
+            int completionsToday = taskCompletionRepository.countApprovedCompletionsInDateRange(
+                    task.getId(), child.getId(), startOfDay, endOfDay);
+
+            // For DAILY deadline type, check if completed today
+            if (task.getDeadlineType() == TaskDeadlineType.DAILY) {
+                if (completionsToday == 0) {
+                    // Not completed today, create notification if not already exists
+                    if (!penaltyNotificationRepository.existsPendingNotification(task.getId(), child.getId())) {
+                        User parent = task.getCreatedBy();
+                        PenaltyNotification notification = new PenaltyNotification(task, child, parent, task.getPenaltyPoints());
+                        penaltyNotificationRepository.save(notification);
+                        log.info("Created penalty notification for mandatory task {} not completed by child {}",
+                                task.getId(), child.getId());
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PenaltyNotification> getPendingPenaltyNotifications(Long parentId) {
+        return penaltyNotificationRepository.findByParentIdAndStatusOrderByNotificationTimeDesc(parentId, NotificationStatus.PENDING);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PenaltyNotification> getAllPenaltyNotifications(Long parentId) {
+        return penaltyNotificationRepository.findByParentIdOrderByNotificationTimeDesc(parentId);
+    }
+
+    @Override
+    @Transactional
+    public void applyPenalty(Long notificationId, Long appliedById) {
+        PenaltyNotification notification = penaltyNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("PenaltyNotification", notificationId));
+
+        if (notification.getStatus() != NotificationStatus.PENDING) {
+            throw new BusinessException("INVALID_STATUS", "通知不在待处理状态");
+        }
+
+        // Apply penalty points to child
+        Child child = notification.getChild();
+        int penalty = notification.getPenaltyPoints() != null ? notification.getPenaltyPoints() : 0;
+        if (penalty > 0) {
+            child.setPoints(child.getPoints() - penalty);
+            childRepository.save(child);
+            log.info("Applied penalty of {} points to child {}", penalty, child.getId());
+        }
+
+        // Update notification status
+        notification.setPenaltyApplied(true);
+        notification.setStatus(NotificationStatus.APPLIED);
+        notification.setAppliedAt(LocalDateTime.now());
+        notification.setAppliedById(appliedById);
+        penaltyNotificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional
+    public void dismissPenalty(Long notificationId) {
+        PenaltyNotification notification = penaltyNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("PenaltyNotification", notificationId));
+
+        if (notification.getStatus() != NotificationStatus.PENDING) {
+            throw new BusinessException("INVALID_STATUS", "通知不在待处理状态");
+        }
+
+        notification.setStatus(NotificationStatus.DISMISSED);
+        penaltyNotificationRepository.save(notification);
+        log.info("Dismissed penalty notification {}", notificationId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countPendingPenaltyNotifications(Long parentId) {
+        return penaltyNotificationRepository.countByParentIdAndStatus(parentId, NotificationStatus.PENDING);
+    }
+
     private TaskDTO toDTO(Task task) {
         return TaskDTO.builder()
                 .id(task.getId())
@@ -327,6 +444,9 @@ public class TaskServiceImpl implements TaskService {
                 .assignedChildId(task.getAssignedChild() != null ? task.getAssignedChild().getId() : null)
                 .assignedChildName(task.getAssignedChild() != null ? task.getAssignedChild().getUsername() : null)
                 .active(task.isActive())
+                .deadlineType(task.getDeadlineType())
+                .deadlineValue(task.getDeadlineValue())
+                .penaltyPoints(task.getPenaltyPoints())
                 .build();
     }
 

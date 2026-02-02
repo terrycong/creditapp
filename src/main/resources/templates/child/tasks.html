@@ -261,12 +261,14 @@
                                         <p class="card-text text-muted" th:text="${task.description}">任务描述</p>
                                         <div class="mb-3">
                                             <!-- Task type badge -->
-                                            <span class="badge bg-info task-type-badge"
-                                                  th:text="${task.type == 'ONE_TIME' ? '一次性' : (task.type == 'REPEATABLE' ? '可重复' : '每日一次')}">
-                                                任务类型
+<span class="badge bg-danger task-type-badge"
+                                                  th:text="${task.type == 'ONE_TIME' ? '一次性' : (task.type == 'REPEATABLE' ? '可重复' : (task.type == 'DAILY_ONCE' ? '每日一次' : '强制任务'))}">
+                                                 任务类型
+                                             </span>
+                                            <!-- Mandatory task indicator -->
+                                            <span th:if="${task.type == 'MANDATORY'}" class="badge bg-warning task-type-badge ms-1">
+                                                <i class="bi bi-exclamation-triangle"></i> 今日必做
                                             </span>
-                                            <!-- Status badge -->
-                                            <span class="badge bg-success task-type-badge">进行中</span>
                                         </div>
                                         <div class="d-grid">
                                             <button class="btn btn-primary complete-task-btn"

@@ -97,6 +97,16 @@
                         </a>
                     </li>
                     <li th:if="${role == 'PARENT'}" class="nav-item">
+                        <a class="nav-link" href="/parent/drafts">
+                            <i class="bi bi-file-earmark-medical"></i> 草稿审批
+                        </a>
+                    </li>
+                    <li th:if="${role == 'PARENT'}" class="nav-item">
+                        <a class="nav-link" href="/parent/notifications">
+                            <i class="bi bi-bell"></i> 通知中心
+                        </a>
+                    </li>
+                    <li th:if="${role == 'PARENT'}" class="nav-item">
                         <a class="nav-link" href="/parent/children">
                             <i class="bi bi-people"></i> 小孩管理
                         </a>

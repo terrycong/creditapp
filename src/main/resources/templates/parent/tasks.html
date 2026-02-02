@@ -144,11 +144,12 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="type" class="form-label">任务类型</label>
-                                    <select class="form-select" id="type" name="type" required>
+                                <label for="type" class="form-label">任务类型</label>
+                                    <select class="form-select" id="type" name="type" required onchange="toggleMandatoryFields()">
                                         <option value="ONE_TIME">一次性任务</option>
                                         <option value="REPEATABLE">可重复任务</option>
                                         <option value="DAILY_ONCE">每日一次</option>
+                                        <option value="MANDATORY">强制任务（未完成扣分）</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
@@ -163,11 +164,37 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="description" class="form-label">任务描述</label>
-                                <textarea class="form-control" id="description" name="description" 
-                                          rows="3" placeholder="详细描述任务要求..."></textarea>
-                            </div>
+                             <div class="mb-3">
+                                 <label for="description" class="form-label">任务描述</label>
+                                 <textarea class="form-control" id="description" name="description" 
+                                           rows="3" placeholder="详细描述任务要求..."></textarea>
+                             </div>
+                             
+                             <!-- Mandatory Task Configuration Fields -->
+                             <div id="mandatoryFields" class="card bg-light mb-3" style="display: none;">
+                                 <div class="card-header">
+                                     <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 强制任务配置</h6>
+                                 </div>
+                                 <div class="card-body">
+                                     <div class="row">
+                                         <div class="col-md-4 mb-3">
+                                             <label for="deadlineType" class="form-label">截止时间类型</label>
+                                             <select class="form-select" id="deadlineType" name="deadlineType">
+                                                 <option value="DAILY">当天完成</option>
+                                             </select>
+                                         </div>
+                                         <div class="col-md-4 mb-3">
+                                             <label for="penaltyPoints" class="form-label">未完成扣除积分</label>
+                                             <input type="number" class="form-control" id="penaltyPoints" name="penaltyPoints" 
+                                                    min="1" max="100" value="5" placeholder="例如：5">
+                                         </div>
+                                     </div>
+                                     <div class="alert alert-info mb-0">
+                                         <i class="bi bi-info-circle"></i> 强制任务必须在规定时间内完成，否则系统会通知您决定是否扣除积分。
+                                     </div>
+                                 </div>
+                             </div>
+                             
                              <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> 创建任务
                             </button>
@@ -218,10 +245,15 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <span th:classappend="${(task.type == 'ONE_TIME') ? 'bg-secondary' : (task.type == 'REPEATABLE') ? 'bg-warning' : 'bg-info'}"
+                                            <span th:classappend="${(task.type == 'ONE_TIME') ? 'bg-secondary' : (task.type == 'REPEATABLE') ? 'bg-warning' : (task.type == 'DAILY_ONCE') ? 'bg-info' : 'bg-danger'}"
                                                   class="badge"
-                                                  th:text="${(task.type == 'ONE_TIME') ? '一次性' : (task.type == 'REPEATABLE') ? '可重复' : '每日一次'}">
+                                                  th:text="${(task.type == 'ONE_TIME') ? '一次性' : (task.type == 'REPEATABLE') ? '可重复' : (task.type == 'DAILY_ONCE') ? '每日一次' : '强制任务'}">
                                                 任务类型
+                                            </span>
+                                            <!-- Show penalty info for mandatory tasks -->
+                                            <span th:if="${task.type == 'MANDATORY'}" class="badge bg-dark ms-1" 
+                                                  th:text="'扣' + ${task.penaltyPoints ?: 0} + '分'">
+                                                扣分
                                             </span>
                                         </td>
                                         <td>
@@ -270,5 +302,21 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Mandatory Task Configuration -->
+    <script>
+        function toggleMandatoryFields() {
+            const taskType = document.getElementById('type').value;
+            const mandatoryFields = document.getElementById('mandatoryFields');
+            if (mandatoryFields) {
+                mandatoryFields.style.display = (taskType === 'MANDATORY') ? 'block' : 'none';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleMandatoryFields();
+        });
+    </script>
 </body>
 </html>

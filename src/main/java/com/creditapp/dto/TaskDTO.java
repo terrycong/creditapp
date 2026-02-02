@@ -1,5 +1,6 @@
 package com.creditapp.dto;
 
+import com.creditapp.entity.TaskDeadlineType;
 import com.creditapp.entity.TaskType;
 import com.creditapp.entity.TaskStatus;
 
@@ -15,6 +16,11 @@ public class TaskDTO {
     private Long assignedChildId;
     private String assignedChildName;
     private boolean active;
+
+    // 强制任务相关字段
+    private TaskDeadlineType deadlineType;
+    private Integer deadlineValue;
+    private Integer penaltyPoints;
 
     // Getters and Setters
     public Long getId() {
@@ -105,6 +111,30 @@ public class TaskDTO {
         this.active = active;
     }
 
+    public TaskDeadlineType getDeadlineType() {
+        return deadlineType;
+    }
+
+    public void setDeadlineType(TaskDeadlineType deadlineType) {
+        this.deadlineType = deadlineType;
+    }
+
+    public Integer getDeadlineValue() {
+        return deadlineValue;
+    }
+
+    public void setDeadlineValue(Integer deadlineValue) {
+        this.deadlineValue = deadlineValue;
+    }
+
+    public Integer getPenaltyPoints() {
+        return penaltyPoints;
+    }
+
+    public void setPenaltyPoints(Integer penaltyPoints) {
+        this.penaltyPoints = penaltyPoints;
+    }
+
     // Builder
     public static Builder builder() {
         return new Builder();
@@ -122,6 +152,9 @@ public class TaskDTO {
         private Long assignedChildId;
         private String assignedChildName;
         private boolean active;
+        private TaskDeadlineType deadlineType;
+        private Integer deadlineValue;
+        private Integer penaltyPoints;
 
         public Builder id(Long id) {
             this.id = id;
@@ -178,6 +211,21 @@ public class TaskDTO {
             return this;
         }
 
+        public Builder deadlineType(TaskDeadlineType deadlineType) {
+            this.deadlineType = deadlineType;
+            return this;
+        }
+
+        public Builder deadlineValue(Integer deadlineValue) {
+            this.deadlineValue = deadlineValue;
+            return this;
+        }
+
+        public Builder penaltyPoints(Integer penaltyPoints) {
+            this.penaltyPoints = penaltyPoints;
+            return this;
+        }
+
         public TaskDTO build() {
             TaskDTO dto = new TaskDTO();
             dto.id = this.id;
@@ -191,6 +239,9 @@ public class TaskDTO {
             dto.assignedChildId = this.assignedChildId;
             dto.assignedChildName = this.assignedChildName;
             dto.active = this.active;
+            dto.deadlineType = this.deadlineType;
+            dto.deadlineValue = this.deadlineValue;
+            dto.penaltyPoints = this.penaltyPoints;
             return dto;
         }
     }

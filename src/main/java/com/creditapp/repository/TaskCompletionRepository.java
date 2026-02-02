@@ -92,4 +92,17 @@ public interface TaskCompletionRepository extends JpaRepository<TaskCompletion, 
            "AND tc.status = 'PENDING' " +
            "ORDER BY tc.completedAt DESC")
     List<TaskCompletion> findPendingCompletionsByChildId(@org.springframework.data.repository.query.Param("childId") Long childId);
+
+    // Count APPROVED completions for a task within a date range (for mandatory task tracking)
+    @Query("SELECT COUNT(tc) FROM TaskCompletion tc " +
+           "WHERE tc.task.id = :taskId " +
+           "AND tc.child.id = :childId " +
+           "AND tc.status = 'APPROVED' " +
+           "AND tc.completedAt >= :startDate " +
+           "AND tc.completedAt < :endDate")
+    int countApprovedCompletionsInDateRange(
+            @org.springframework.data.repository.query.Param("taskId") Long taskId,
+            @org.springframework.data.repository.query.Param("childId") Long childId,
+            @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate,
+            @org.springframework.data.repository.query.Param("endDate") java.time.LocalDateTime endDate);
 }

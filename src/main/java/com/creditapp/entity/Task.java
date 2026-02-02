@@ -36,6 +36,17 @@ public class Task {
     @Column(nullable = false)
     private boolean active = true;
 
+    // 强制任务相关字段
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deadline_type")
+    private TaskDeadlineType deadlineType;  // 时间限制类型：DAILY, WEEKLY_TIMES
+
+    @Column(name = "deadline_value")
+    private Integer deadlineValue;  // 时间限制值（如一周3次）
+
+    @Column(name = "penalty_points")
+    private Integer penaltyPoints;  // 未完成惩罚积分
+
     // Constructors
     public Task() {}
 
@@ -123,5 +134,29 @@ public class Task {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public TaskDeadlineType getDeadlineType() {
+        return deadlineType;
+    }
+
+    public void setDeadlineType(TaskDeadlineType deadlineType) {
+        this.deadlineType = deadlineType;
+    }
+
+    public Integer getDeadlineValue() {
+        return deadlineValue;
+    }
+
+    public void setDeadlineValue(Integer deadlineValue) {
+        this.deadlineValue = deadlineValue;
+    }
+
+    public Integer getPenaltyPoints() {
+        return penaltyPoints;
+    }
+
+    public void setPenaltyPoints(Integer penaltyPoints) {
+        this.penaltyPoints = penaltyPoints;
     }
 }
