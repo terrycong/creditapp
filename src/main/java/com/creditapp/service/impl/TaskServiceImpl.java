@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -132,20 +133,34 @@ public class TaskServiceImpl implements TaskService {
     public TaskCompletionDTO completeTask(Long taskId, Long childId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
-
+        
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new ResourceNotFoundException("Child", childId));
-
+        
         if (!task.isActive()) {
             throw new BusinessException("TASK_INACTIVE", "任务未激活");
         }
-
+        
+        // Check for DAILY_ONCE task - child can only complete once per day
+        if (task.getType() == TaskType.DAILY_ONCE) {
+            LocalDate today = LocalDate.now();
+            LocalDateTime startOfDay = today.atStartOfDay();
+            LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+            
+            boolean completedToday = taskCompletionRepository.existsCompletionToday(
+                    childId, taskId, startOfDay, endOfDay);
+            if (completedToday) {
+                throw new BusinessException("DAILY_LIMIT_EXCEEDED",
+                        "该任务每天只能完成一次，请明天再试！");
+            }
+        }
+        
         TaskCompletion completion = new TaskCompletion();
         completion.setTask(task);
         completion.setChild(child);
         completion.setStatus(CompletionStatus.PENDING);
         completion.setCompletedAt(LocalDateTime.now());
-
+        
         TaskCompletion saved = taskCompletionRepository.save(completion);
         log.info("Task {} completed by child {}, waiting for approval", taskId, childId);
         return toCompletionDTO(saved);
@@ -180,18 +195,27 @@ public class TaskServiceImpl implements TaskService {
     public TaskCompletionDTO rejectCompletion(Long completionId) {
         TaskCompletion completion = taskCompletionRepository.findById(completionId)
                 .orElseThrow(() -> new ResourceNotFoundException("TaskCompletion", completionId));
-
+        
         if (completion.getStatus() != CompletionStatus.PENDING) {
             throw new BusinessException("INVALID_STATUS", "任务不在待审核状态");
         }
-
+        
         completion.setStatus(CompletionStatus.REJECTED);
         TaskCompletion saved = taskCompletionRepository.save(completion);
-
+        
         log.info("Rejected task completion {}", completionId);
         return toCompletionDTO(saved);
     }
-
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<TaskCompletionDTO> getPendingCompletionsByParent(Long parentId) {
+        List<TaskCompletion> completions = taskCompletionRepository.findPendingCompletionsByParentId(parentId);
+        return completions.stream()
+                .map(this::toCompletionDTO)
+                .collect(Collectors.toList());
+    }
+    
     private TaskDTO toDTO(Task task) {
         return TaskDTO.builder()
                 .id(task.getId())

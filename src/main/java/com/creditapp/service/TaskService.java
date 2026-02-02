@@ -17,4 +17,5 @@ public interface TaskService {
     TaskCompletionDTO completeTask(Long taskId, Long childId);
     TaskCompletionDTO approveCompletion(Long completionId);
     TaskCompletionDTO rejectCompletion(Long completionId);
+    List<TaskCompletionDTO> getPendingCompletionsByParent(Long parentId);
 }

@@ -411,4 +411,76 @@ class TaskServiceTest {
         verify(taskRepository).findById(1L);
         verify(taskRepository).save(any(Task.class));
     }
+
+    @Test
+    void completeTask_WithDailyOnceTask_FirstCompletionShouldSucceed() {
+        // Given
+        task.setType(TaskType.DAILY_ONCE);
+        TaskCompletion completion = new TaskCompletion();
+        completion.setId(1L);
+        completion.setTask(task);
+        completion.setChild(childUser);
+        completion.setStatus(CompletionStatus.PENDING);
+        completion.setCompletedAt(LocalDateTime.now());
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
+        when(taskCompletionRepository.existsCompletionToday(anyLong(), anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(false);
+        when(taskCompletionRepository.save(any(TaskCompletion.class))).thenReturn(completion);
+
+        // When
+        TaskCompletionDTO result = taskService.completeTask(1L, 2L);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getStatus()).isEqualTo(CompletionStatus.PENDING);
+
+        verify(taskCompletionRepository).existsCompletionToday(eq(2L), eq(1L), any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(taskCompletionRepository).save(any(TaskCompletion.class));
+    }
+
+    @Test
+    void completeTask_WithDailyOnceTask_SecondCompletionSameDayShouldThrowBusinessException() {
+        // Given
+        task.setType(TaskType.DAILY_ONCE);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
+        when(taskCompletionRepository.existsCompletionToday(anyLong(), anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> taskService.completeTask(1L, 2L))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("该任务每天只能完成一次，请明天再试！")
+                .hasFieldOrPropertyWithValue("errorCode", "DAILY_LIMIT_EXCEEDED");
+
+        verify(taskCompletionRepository).existsCompletionToday(eq(2L), eq(1L), any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(taskCompletionRepository, never()).save(any(TaskCompletion.class));
+    }
+
+    @Test
+    void completeTask_WithNonDailyOnceTask_ShouldNotCheckDailyLimit() {
+        // Given
+        task.setType(TaskType.ONE_TIME); // Already ONE_TIME in setup
+        TaskCompletion completion = new TaskCompletion();
+        completion.setId(1L);
+        completion.setTask(task);
+        completion.setChild(childUser);
+        completion.setStatus(CompletionStatus.PENDING);
+        completion.setCompletedAt(LocalDateTime.now());
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
+        when(taskCompletionRepository.save(any(TaskCompletion.class))).thenReturn(completion);
+
+        // When
+        TaskCompletionDTO result = taskService.completeTask(1L, 2L);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(taskCompletionRepository, never()).existsCompletionToday(anyLong(), anyLong(), any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(taskCompletionRepository).save(any(TaskCompletion.class));
+    }
 }

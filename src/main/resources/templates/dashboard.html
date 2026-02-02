@@ -92,6 +92,11 @@
                         </a>
                     </li>
                     <li th:if="${role == 'PARENT'}" class="nav-item">
+                        <a class="nav-link" href="/parent/approvals">
+                            <i class="bi bi-check-circle"></i> 任务审批
+                        </a>
+                    </li>
+                    <li th:if="${role == 'PARENT'}" class="nav-item">
                         <a class="nav-link" href="/parent/children">
                             <i class="bi bi-people"></i> 小孩管理
                         </a>
@@ -278,24 +283,56 @@
                             <h6 class="text-success mb-3">
                                 <i class="bi bi-check-circle-fill"></i> 最近完成的任务
                             </h6>
-                            <ul class="list-unstyled mb-4">
-                                <li th:each="completion : ${dashboardStats.recentTaskCompletions}" class="mb-3">
-                                    <i class="bi bi-check-circle-fill text-success"></i>
-                                    <span th:if="${role == 'PARENT'}">
-                                        <strong th:text="${completion.childName}">小孩</strong> 完成了
-                                        <strong th:text="${completion.taskTitle}">任务</strong>，
-                                        获得 <span class="text-success" th:text="${completion.taskPoints}">0</span> 积分
-                                    </span>
-                                    <span th:if="${role == 'CHILD'}">
-                                        你完成了 <strong th:text="${completion.taskTitle}">任务</strong>，
-                                        获得 <span class="text-success" th:text="${completion.taskPoints}">0</span> 积分
-                                    </span>
-                                    <small class="text-muted d-block" 
-                                           th:text="${#temporals.format(completion.completedAt, 'yyyy-MM-dd HH:mm')}">
-                                        时间
-                                    </small>
-                                </li>
-                            </ul>
+                             <ul class="list-unstyled mb-4">
+                                 <li th:each="completion : ${dashboardStats.recentTaskCompletions}" class="mb-3">
+                                     <!-- PENDING status - waiting for approval -->
+                                     <span th:if="${completion.status == T(com.creditapp.entity.CompletionStatus).PENDING}">
+                                         <i class="bi bi-hourglass-split text-warning"></i>
+                                         <span th:if="${role == 'PARENT'}">
+                                             <strong th:text="${completion.childName}">小孩</strong> 已提交
+                                             <strong th:text="${completion.taskTitle}">任务</strong>，
+                                             <span class="text-warning">等待审批</span>
+                                         </span>
+                                         <span th:if="${role == 'CHILD'}">
+                                             你已提交 <strong th:text="${completion.taskTitle}">任务</strong>，
+                                             <span class="text-warning">等待家长审批</span>
+                                         </span>
+                                     </span>
+                                     
+                                     <!-- APPROVED status - points awarded -->
+                                     <span th:if="${completion.status == T(com.creditapp.entity.CompletionStatus).APPROVED}">
+                                         <i class="bi bi-check-circle-fill text-success"></i>
+                                         <span th:if="${role == 'PARENT'}">
+                                             <strong th:text="${completion.childName}">小孩</strong> 完成了
+                                             <strong th:text="${completion.taskTitle}">任务</strong>，
+                                             获得 <span class="text-success" th:text="${completion.taskPoints}">0</span> 积分
+                                         </span>
+                                         <span th:if="${role == 'CHILD'}">
+                                             你完成了 <strong th:text="${completion.taskTitle}">任务</strong>，
+                                             获得 <span class="text-success" th:text="${completion.taskPoints}">0</span> 积分
+                                         </span>
+                                     </span>
+                                     
+                                     <!-- REJECTED status -->
+                                     <span th:if="${completion.status == T(com.creditapp.entity.CompletionStatus).REJECTED}">
+                                         <i class="bi bi-x-circle-fill text-danger"></i>
+                                         <span th:if="${role == 'PARENT'}">
+                                             <strong th:text="${completion.childName}">小孩</strong> 提交的
+                                             <strong th:text="${completion.taskTitle}">任务</strong>
+                                             <span class="text-danger">已拒绝</span>
+                                         </span>
+                                         <span th:if="${role == 'CHILD'}">
+                                             你提交的 <strong th:text="${completion.taskTitle}">任务</strong>
+                                             <span class="text-danger">已被拒绝</span>
+                                         </span>
+                                     </span>
+                                     
+                                     <small class="text-muted d-block" 
+                                            th:text="${#temporals.format(completion.completedAt, 'yyyy-MM-dd HH:mm')}">
+                                         时间
+                                     </small>
+                                 </li>
+                             </ul>
                         </div>
                         
                         <div th:if="${dashboardStats.recentRewardRedemptions != null && !dashboardStats.recentRewardRedemptions.empty}">

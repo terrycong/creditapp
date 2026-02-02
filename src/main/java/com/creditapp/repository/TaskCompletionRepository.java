@@ -51,6 +51,29 @@ public interface TaskCompletionRepository extends JpaRepository<TaskCompletion, 
            "GROUP BY CAST(tc.completedAt AS date) " +
            "ORDER BY completionDate")
     List<Object[]> getDailyTaskCompletionStats(
-            @org.springframework.data.repository.query.Param("parentId") Long parentId,
-            @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate);
+             @org.springframework.data.repository.query.Param("parentId") Long parentId,
+             @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate);
+    
+    // Find pending task completions for parent's children
+    @Query("SELECT tc FROM TaskCompletion tc " +
+           "JOIN FETCH tc.child c " +
+           "JOIN FETCH tc.task t " +
+           "WHERE c.parent.id = :parentId " +
+           "AND tc.status = 'PENDING' " +
+           "ORDER BY tc.completedAt DESC")
+    List<TaskCompletion> findPendingCompletionsByParentId(@org.springframework.data.repository.query.Param("parentId") Long parentId);
+    
+    // Check if child has completed a specific task today (for DAILY_ONCE validation)
+    @Query("SELECT COUNT(tc) > 0 " +
+           "FROM TaskCompletion tc " +
+           "WHERE tc.child.id = :childId " +
+           "AND tc.task.id = :taskId " +
+           "AND tc.status IN ('PENDING', 'APPROVED') " +
+           "AND tc.completedAt >= :startOfDay " +
+           "AND tc.completedAt < :endOfDay")
+    boolean existsCompletionToday(
+            @org.springframework.data.repository.query.Param("childId") Long childId,
+            @org.springframework.data.repository.query.Param("taskId") Long taskId,
+            @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay,
+            @org.springframework.data.repository.query.Param("endOfDay") java.time.LocalDateTime endOfDay);
 }

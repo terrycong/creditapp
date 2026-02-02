@@ -80,16 +80,6 @@ public class ViewController {
         return "dashboard";
     }
 
-    @GetMapping("/parent/children")
-    public String parentChildren(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        String username = userDetails.getUsername();
-        User parent = userService.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
-        List<ChildDTO> children = userService.getChildrenByParentId(parent.getId());
-        model.addAttribute("children", children);
-        return "parent/children";
-    }
-
     @GetMapping("/parent/tasks")
     public String parentTasks(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         String username = userDetails.getUsername();
@@ -231,6 +221,30 @@ public class ViewController {
         model.addAttribute("rewards", rewards);
         
         return "parent/rewards";
+    }
+
+    // Parent children management page
+    @GetMapping("/parent/children")
+    public String children(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== PARENT CHILDREN CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            log.warn("UserDetails is null - user not authenticated!");
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User parent = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        // Fetch all children for this parent with task counts
+        List<ChildDTO> children = userService.getChildrenByParentId(parent.getId());
+        model.addAttribute("children", children);
+
+        // Add username for display
+        model.addAttribute("username", username);
+
+        log.info("Found {} children for parent: {}", children.size(), username);
+        return "parent/children";
     }
 
     @GetMapping("/child/tasks")
@@ -377,6 +391,64 @@ public class ViewController {
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             return "redirect:/parent/children?error=" + e.getMessage();
+        }
+    }
+    
+    // Task approvals page for parent
+    @GetMapping("/parent/approvals")
+    public String parentApprovals(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== PARENT APPROVALS CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            log.warn("UserDetails is null - user not authenticated!");
+            return "redirect:/login";
+        }
+        
+        String username = userDetails.getUsername();
+        User parent = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+        
+        // Get pending task completions for this parent's children
+        List<TaskCompletionDTO> pendingCompletions = taskService.getPendingCompletionsByParent(parent.getId());
+        model.addAttribute("pendingCompletions", pendingCompletions);
+        
+        // Add username for display
+        model.addAttribute("username", username);
+        
+        log.info("Found {} pending completions for parent: {}", pendingCompletions.size(), username);
+        return "parent/approvals";
+    }
+    
+    // Approve task completion
+    @PostMapping("/parent/approvals/{completionId}/approve")
+    public String approveCompletion(@AuthenticationPrincipal UserDetails userDetails,
+                                  @PathVariable Long completionId,
+                                  RedirectAttributes redirectAttrs) {
+        log.info("Approving completion: completionId={}", completionId);
+        try {
+            taskService.approveCompletion(completionId);
+            redirectAttrs.addFlashAttribute("success", "任务已完成，积分已发放！");
+            return "redirect:/parent/approvals";
+        } catch (Exception e) {
+            log.error("Failed to approve completion", e);
+            redirectAttrs.addFlashAttribute("error", "审批失败: " + e.getMessage());
+            return "redirect:/parent/approvals";
+        }
+    }
+    
+    // Reject task completion
+    @PostMapping("/parent/approvals/{completionId}/reject")
+    public String rejectCompletion(@AuthenticationPrincipal UserDetails userDetails,
+                                  @PathVariable Long completionId,
+                                  RedirectAttributes redirectAttrs) {
+        log.info("Rejecting completion: completionId={}", completionId);
+        try {
+            taskService.rejectCompletion(completionId);
+            redirectAttrs.addFlashAttribute("success", "任务已拒绝");
+            return "redirect:/parent/approvals";
+        } catch (Exception e) {
+            log.error("Failed to reject completion", e);
+            redirectAttrs.addFlashAttribute("error", "拒绝失败: " + e.getMessage());
+            return "redirect:/parent/approvals";
         }
     }
 }
