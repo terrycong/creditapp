@@ -226,7 +226,10 @@ public class ViewController {
         try {
             // Verify current user is the task creator (optional security check)
             TaskDTO task = taskService.getTaskById(id);
-            Long currentUserId = SecurityUtils.getCurrentUserId(childRepository);
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+            Long currentUserId = parent.getId();
             if (!task.getCreatedById().equals(currentUserId)) {
                 redirectAttrs.addFlashAttribute("error", "无权删除此任务");
                 return "redirect:/parent/tasks";
@@ -898,7 +901,10 @@ public class ViewController {
         try {
             // Verify current user is the task creator
             TaskDTO task = taskService.getTaskById(id);
-            Long currentUserId = SecurityUtils.getCurrentUserId(childRepository);
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+            Long currentUserId = parent.getId();
             if (!task.getCreatedById().equals(currentUserId)) {
                 redirectAttrs.addFlashAttribute("error", "无权隐藏此任务");
                 return "redirect:/parent/marketplace";
@@ -922,7 +928,10 @@ public class ViewController {
         try {
             // Verify current user is the task creator
             TaskDTO task = taskService.getTaskById(id);
-            Long currentUserId = SecurityUtils.getCurrentUserId(childRepository);
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+            Long currentUserId = parent.getId();
             if (!task.getCreatedById().equals(currentUserId)) {
                 redirectAttrs.addFlashAttribute("error", "无权显示此任务");
                 return "redirect:/parent/marketplace";
@@ -946,7 +955,10 @@ public class ViewController {
         try {
             // Verify current user is the task creator
             TaskDTO task = taskService.getTaskById(id);
-            Long currentUserId = SecurityUtils.getCurrentUserId(childRepository);
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+            Long currentUserId = parent.getId();
             if (!task.getCreatedById().equals(currentUserId)) {
                 redirectAttrs.addFlashAttribute("error", "无权删除此任务");
                 return "redirect:/parent/marketplace";

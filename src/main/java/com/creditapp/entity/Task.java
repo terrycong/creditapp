@@ -32,6 +32,15 @@ public class Task {
     @Column(nullable = false)
     private boolean active = true;
 
+    // Marketplace task fields
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_child_id")
+    private Child assignedChild;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "picked_by_child_id")
+    private Child pickedByChild;
+
     // 强制任务相关字段
     @Enumerated(EnumType.STRING)
     @Column(name = "deadline_type")
@@ -145,5 +154,21 @@ public class Task {
 
     public void setPenaltyPoints(Integer penaltyPoints) {
         this.penaltyPoints = penaltyPoints;
+    }
+
+    public Child getAssignedChild() {
+        return assignedChild;
+    }
+
+    public void setAssignedChild(Child assignedChild) {
+        this.assignedChild = assignedChild;
+    }
+
+    public Child getPickedByChild() {
+        return pickedByChild;
+    }
+
+    public void setPickedByChild(Child pickedByChild) {
+        this.pickedByChild = pickedByChild;
     }
 }

@@ -35,9 +35,12 @@ public interface TaskJobRepository extends JpaRepository<TaskJob, Long> {
     int countActiveJobsByChildId(@Param("childId") Long childId);
 
     /**
-     * Find a job by task and child combination
+     * Find an active job by task and child combination
+     * Only returns jobs with ASSIGNED or IN_PROGRESS status
      */
-    Optional<TaskJob> findByTaskIdAndChildId(Long taskId, Long childId);
+    @Query("SELECT tj FROM TaskJob tj WHERE tj.task.id = :taskId AND tj.child.id = :childId " +
+           "AND tj.status IN ('ASSIGNED', 'IN_PROGRESS')")
+    Optional<TaskJob> findByTaskIdAndChildId(@Param("taskId") Long taskId, @Param("childId") Long childId);
 
     /**
      * Find all jobs for a specific task (for parent view)

@@ -198,7 +198,7 @@
                         <h5 class="card-title text-success">
                             <i class="bi bi-arrow-up-circle"></i> 总获得积分
                         </h5>
-                        <h3 class="text-success" th:text="${T(java.math.BigDecimal).valueOf(pointHistory.?{[#this.isEarning()].![changePoints].![#this ? 0 : 0].![#this ? 0 : 0][0] ?: 0}).intValue() ?: 0}">0</h3>
+                        <h3 class="text-success" th:text="${#aggregates.sum(pointHistory.![isEarning ? changePoints : 0]) ?: 0}">0</h3>
                     </div>
                 </div>
             </div>
@@ -208,7 +208,7 @@
                         <h5 class="card-title text-danger">
                             <i class="bi bi-arrow-down-circle"></i> 总消耗积分
                         </h5>
-                        <h3 class="text-danger" th:text="${T(java.math.BigDecimal).valueOf(pointHistory.?{[#this.isSpending()].![changePoints].![#this ? T(java.lang.Math).abs(#this) : 0].![#this ? T(java.lang.Math).abs(#this) : 0][0] ?: 0}).intValue() ?: 0}">0</h3>
+                        <h3 class="text-danger" th:text="${#aggregates.sum(pointHistory.![isSpending ? T(java.lang.Math).abs(changePoints) : 0]) ?: 0}">0</h3>
                     </div>
                 </div>
             </div>

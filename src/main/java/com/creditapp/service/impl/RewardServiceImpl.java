@@ -2,11 +2,14 @@ package com.creditapp.service.impl;
 
 import com.creditapp.dto.*;
 import com.creditapp.entity.Child;
+import com.creditapp.entity.PointChangeType;
+import com.creditapp.entity.PointHistory;
 import com.creditapp.entity.Reward;
 import com.creditapp.entity.RewardRedemption;
 import com.creditapp.exception.BusinessException;
 import com.creditapp.exception.ResourceNotFoundException;
 import com.creditapp.repository.ChildRepository;
+import com.creditapp.repository.PointHistoryRepository;
 import com.creditapp.repository.RewardRedemptionRepository;
 import com.creditapp.repository.RewardRepository;
 import com.creditapp.service.RewardService;
@@ -29,6 +32,7 @@ public class RewardServiceImpl implements RewardService {
     private final RewardRepository rewardRepository;
     private final RewardRedemptionRepository rewardRedemptionRepository;
     private final ChildRepository childRepository;
+    private final PointHistoryRepository pointHistoryRepository;
 
     @Override
     @Transactional
@@ -115,6 +119,22 @@ public class RewardServiceImpl implements RewardService {
         rewardRedemptionRepository.save(redemption);
         childRepository.save(child);
         rewardRepository.save(reward);
+
+        // Record point history for reward redemption (consumption)
+        PointHistory history = PointHistory.builder()
+                .child(child)
+                .originalPoints(child.getPoints() + reward.getPointsRequired())
+                .changePoints(-reward.getPointsRequired())
+                .afterPoints(child.getPoints())
+                .changeType(PointChangeType.REWARD_REDEMPTION)
+                .description("兑换礼物: " + reward.getName())
+                .referenceId(redemption.getId())
+                .referenceType("REWARD_REDEMPTION")
+                .changedById(childId)
+                .createdAt(LocalDateTime.now())
+                .build();
+        pointHistoryRepository.save(history);
+        log.info("Recorded point history for reward redemption: childId={}, rewardId={}, points={}", childId, rewardId, reward.getPointsRequired());
 
         log.info("Child {} redeemed reward {}, used {} points", childId, rewardId, reward.getPointsRequired());
         return toRedemptionDTO(redemption);
