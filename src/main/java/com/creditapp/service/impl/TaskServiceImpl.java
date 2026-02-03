@@ -6,6 +6,7 @@ import com.creditapp.exception.BusinessException;
 import com.creditapp.exception.ResourceNotFoundException;
 import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.PenaltyNotificationRepository;
+import com.creditapp.repository.PointHistoryRepository;
 import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.repository.TaskJobRepository;
 import com.creditapp.repository.TaskRepository;
@@ -32,6 +33,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final TaskCompletionRepository taskCompletionRepository;
     private final TaskJobRepository taskJobRepository;
+    private final PointHistoryRepository pointHistoryRepository;
     private final PenaltyNotificationRepository penaltyNotificationRepository;
     private final UserRepository userRepository;
     private final ChildRepository childRepository;
@@ -111,7 +113,27 @@ public class TaskServiceImpl implements TaskService {
     public void deleteTask(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+        
+        List<TaskCompletion> completions = taskCompletionRepository.findByTaskId(taskId);
+        if (!completions.isEmpty()) {
+            taskCompletionRepository.deleteAll(completions);
+            log.info("Deleted {} task completions for task {}", completions.size(), taskId);
+        }
+        
+        List<TaskJob> jobs = taskJobRepository.findByTaskId(taskId);
+        if (!jobs.isEmpty()) {
+            taskJobRepository.deleteAll(jobs);
+            log.info("Deleted {} task jobs for task {}", jobs.size(), taskId);
+        }
+        
+        List<PenaltyNotification> notifications = penaltyNotificationRepository.findByTaskId(taskId);
+        if (!notifications.isEmpty()) {
+            penaltyNotificationRepository.deleteAll(notifications);
+            log.info("Deleted {} penalty notifications for task {}", notifications.size(), taskId);
+        }
+        
         taskRepository.delete(task);
+        log.info("Task {} deleted successfully", taskId);
     }
 
     @Override
@@ -247,6 +269,7 @@ public class TaskServiceImpl implements TaskService {
 
         int points = completion.getTask().getPoints();
         Child child = completion.getChild();
+        int originalPoints = child.getPoints();
         child.setPoints(child.getPoints() + points);
 
         // Update TaskJob status to COMPLETED if linked
@@ -258,6 +281,21 @@ public class TaskServiceImpl implements TaskService {
 
         taskCompletionRepository.save(completion);
         childRepository.save(child);
+
+        // Record point history
+        PointHistory history = PointHistory.builder()
+                .child(child)
+                .originalPoints(originalPoints)
+                .changePoints(points)
+                .afterPoints(child.getPoints())
+                .changeType(PointChangeType.TASK_COMPLETION)
+                .description("完成任务: " + completion.getTask().getTitle())
+                .referenceId(completion.getId())
+                .referenceType("TASK_COMPLETION")
+                .changedById(null)
+                .createdAt(LocalDateTime.now())
+                .build();
+        pointHistoryRepository.save(history);
 
         log.info("Approved task completion {}, child {} earned {} points", completionId, child.getId(), points);
         return toCompletionDTO(completion);
@@ -457,8 +495,25 @@ public class TaskServiceImpl implements TaskService {
         Child child = notification.getChild();
         int penalty = notification.getPenaltyPoints() != null ? notification.getPenaltyPoints() : 0;
         if (penalty > 0) {
+            int originalPoints = child.getPoints();
             child.setPoints(child.getPoints() - penalty);
             childRepository.save(child);
+
+            // Record point history
+            PointHistory history = PointHistory.builder()
+                    .child(child)
+                    .originalPoints(originalPoints)
+                    .changePoints(-penalty)
+                    .afterPoints(child.getPoints())
+                    .changeType(PointChangeType.PENALTY)
+                    .description("未完成任务惩罚: " + notification.getTask().getTitle())
+                    .referenceId(notificationId)
+                    .referenceType("PENALTY")
+                    .changedById(appliedById)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            pointHistoryRepository.save(history);
+
             log.info("Applied penalty of {} points to child {}", penalty, child.getId());
         }
 
@@ -617,8 +672,28 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional(readOnly = true)
     public List<TaskDTO> getMarketplaceTasksByParent(Long parentId) {
-        // Get all marketplace tasks (including picked ones - tasks stay in marketplace after being picked)
-        List<Task> tasks = taskRepository.findAllMarketplaceTasksByParentId(parentId);
+        // Get all marketplace tasks including hidden/inactive ones for parent management view
+        List<Task> tasks = taskRepository.findAllMarketplaceTasksIncludingHiddenByParentId(parentId);
         return tasks.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public TaskDTO hideTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+        task.setActive(false);
+        log.info("Task {} hidden from children", taskId);
+        return toDTO(taskRepository.save(task));
+    }
+
+    @Override
+    @Transactional
+    public TaskDTO unhideTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
+        task.setActive(true);
+        log.info("Task {} unhidden, now visible to children", taskId);
+        return toDTO(taskRepository.save(task));
     }
 }

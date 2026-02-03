@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +32,7 @@ public class UserServiceImpl implements UserService {
     private final RewardRedemptionRepository rewardRedemptionRepository;
     private final TaskRepository taskRepository;
     private final TaskJobRepository taskJobRepository;
+    private final PointHistoryRepository pointHistoryRepository;
 
     @Override
     @Transactional
@@ -61,14 +64,33 @@ public class UserServiceImpl implements UserService {
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new ResourceNotFoundException("Child", childId));
 
-        int newPoints = child.getPoints() + points;
+        int originalPoints = child.getPoints();
+        int newPoints = originalPoints + points;
         if (newPoints < 0) {
             throw new BusinessException("INSUFFICIENT_POINTS", "积分不能为负数");
         }
 
         child.setPoints(newPoints);
         childRepository.save(child);
-        log.info("Adjusted points for child {}: {} -> {}", childId, child.getPoints(), newPoints);
+
+        // Determine change type based on points direction
+        PointChangeType changeType = points > 0 ? PointChangeType.BONUS : PointChangeType.MANUAL_ADJUSTMENT;
+
+        // Record point history
+        PointHistory history = PointHistory.builder()
+                .child(child)
+                .originalPoints(originalPoints)
+                .changePoints(points)
+                .afterPoints(newPoints)
+                .changeType(changeType)
+                .description(points > 0 ? "家长奖励加分" : "家长手动调整")
+                .referenceType("MANUAL_ADJUSTMENT")
+                .changedById(child.getParent() != null ? child.getParent().getId() : null)
+                .createdAt(LocalDateTime.now())
+                .build();
+        pointHistoryRepository.save(history);
+
+        log.info("Adjusted points for child {}: {} -> {}", childId, originalPoints, newPoints);
     }
 
     @Override

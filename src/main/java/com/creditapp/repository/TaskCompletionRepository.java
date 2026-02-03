@@ -77,6 +77,9 @@ public interface TaskCompletionRepository extends JpaRepository<TaskCompletion, 
             @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay,
             @org.springframework.data.repository.query.Param("endOfDay") java.time.LocalDateTime endOfDay);
 
+    // Find completions by task ID (for cascade delete)
+    List<TaskCompletion> findByTaskId(Long taskId);
+    
     // Find only APPROVED completions for a child (for displaying in child's task history)
     @Query("SELECT tc FROM TaskCompletion tc " +
            "JOIN FETCH tc.task t " +

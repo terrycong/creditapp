@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分变化历史 - 家庭积分系统</title>
+
+    <!-- Bootstrap 5 CSS (WebJars) -->
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <!-- Bootstrap Icons (WebJars) -->
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    <!-- Animate.css (WebJars) -->
+    <link th:href="@{/webjars/animate.css/4.1.1/animate.min.css}" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --danger-color: #EF4444;
+            --warning-color: #F59E0B;
+            --info-color: #3B82F6;
+        }
+
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .history-card {
+            transition: transform 0.2s;
+        }
+
+        .history-card:hover {
+            transform: translateX(5px);
+        }
+
+        .points-badge {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .points-plus {
+            color: var(--success-color);
+        }
+
+        .points-minus {
+            color: var(--danger-color);
+        }
+
+        .change-badge {
+            width: 60px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .change-plus {
+            background-color: #D1FAE5;
+            color: #059669;
+        }
+
+        .change-minus {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .type-badge {
+            font-size: 0.85rem;
+            padding: 0.35rem 0.65rem;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 30px;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            bottom: 0;
+            width: 2px;
+            background-color: #E5E7EB;
+        }
+
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        .timeline-dot.earning {
+            background-color: var(--success-color);
+            box-shadow: 0 0 0 2px var(--success-color);
+        }
+
+        .timeline-dot.spending {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 0 2px var(--danger-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6B7280;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/tasks">
+                            <i class="bi bi-list-check"></i> 我的任务
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/marketplace">
+                            <i class="bi bi-shop"></i> 任务市场
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/rewards">
+                            <i class="bi bi-gift"></i> 兑换礼物
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/child/points/history">
+                            <i class="bi bi-graph-up"></i> 积分历史
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-graph-up"></i> 积分变化历史
+                </h1>
+                <p class="text-muted">查看你的积分变化记录</p>
+            </div>
+        </div>
+
+        <!-- Statistics Summary -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">
+                            <i class="bi bi-arrow-up-circle"></i> 总获得积分
+                        </h5>
+                        <h3 class="text-success" th:text="${T(java.math.BigDecimal).valueOf(pointHistory.?{[#this.isEarning()].![changePoints].![#this ? 0 : 0].![#this ? 0 : 0][0] ?: 0}).intValue() ?: 0}">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-danger">
+                            <i class="bi bi-arrow-down-circle"></i> 总消耗积分
+                        </h5>
+                        <h3 class="text-danger" th:text="${T(java.math.BigDecimal).valueOf(pointHistory.?{[#this.isSpending()].![changePoints].![#this ? T(java.lang.Math).abs(#this) : 0].![#this ? T(java.lang.Math).abs(#this) : 0][0] ?: 0}).intValue() ?: 0}">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">
+                            <i class="bi bi-clock-history"></i> 记录总数
+                        </h5>
+                        <h3 class="text-primary" th:text="${pointHistory.size()}">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Timeline -->
+        <div class="row animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 积分变化记录
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Empty State -->
+                        <div th:if="${pointHistory.empty}" class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <h4>暂无积分变化记录</h4>
+                            <p>完成任务或兑换礼物后将显示在这里</p>
+                            <a href="/child/tasks" class="btn btn-primary mt-3">
+                                <i class="bi bi-list-check"></i> 查看任务
+                            </a>
+                        </div>
+
+                        <!-- Timeline -->
+                        <div th:unless="${pointHistory.empty}" class="timeline">
+                            <div th:each="record : ${pointHistory}" class="timeline-item history-card">
+                                <div class="timeline-dot" th:classappend="${record.isEarning ? 'earning' : 'spending'}"></div>
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-2 text-center">
+                                                <span class="badge change-badge"
+                                                      th:classappend="${record.isEarning ? 'change-plus' : 'change-minus'}"
+                                                      th:text="${record.formattedChange}">+10</span>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <h6 class="mb-1" th:text="${record.description}">完成任务: 完成作业</h6>
+                                                <span class="badge type-badge"
+                                                      th:classappend="${record.isEarning ? 'bg-success' : 'bg-danger'}"
+                                                      th:text="${record.changeTypeName}">完成任务</span>
+                                                <small class="text-muted ms-2"
+                                                       th:text="${#temporals.format(record.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</small>
+                                            </div>
+                                            <div class="col-md-5 text-md-end">
+                                                <div class="d-flex justify-content-md-end align-items-center">
+                                                    <div class="text-end me-3">
+                                                        <small class="text-muted d-block">变化前</small>
+                                                        <span class="text-muted" th:text="${record.originalPoints}">100</span>
+                                                    </div>
+                                                    <i class="bi bi-arrow-right text-muted"></i>
+                                                    <div class="text-start ms-3">
+                                                        <small class="text-muted d-block">变化后</small>
+                                                        <strong th:classappend="${record.isEarning ? 'text-success' : 'text-danger'}"
+                                                                th:text="${record.afterPoints}">110</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <a href="/dashboard" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> 返回首页
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS (WebJars) -->
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

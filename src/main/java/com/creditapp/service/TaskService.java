@@ -45,4 +45,8 @@ public interface TaskService {
     List<TaskDTO> getMarketplaceTasks(Long childId);
     List<TaskDTO> getMarketplaceTasksByParent(Long parentId);
     List<TaskDTO> getPickedTasks(Long childId);
+
+    // Hide/Unhide marketplace task methods
+    TaskDTO hideTask(Long taskId);
+    TaskDTO unhideTask(Long taskId);
 }

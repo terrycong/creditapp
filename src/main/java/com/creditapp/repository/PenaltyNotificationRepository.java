@@ -18,6 +18,9 @@ public interface PenaltyNotificationRepository extends JpaRepository<PenaltyNoti
 
     // Find notifications for a specific child
     List<PenaltyNotification> findByChildIdOrderByNotificationTimeDesc(Long childId);
+    
+    // Find notifications by task ID (for cascade delete)
+    List<PenaltyNotification> findByTaskId(Long taskId);
 
     // Check if notification already exists for this task and child (avoid duplicates)
     @Query("SELECT COUNT(pn) > 0 FROM PenaltyNotification pn " +

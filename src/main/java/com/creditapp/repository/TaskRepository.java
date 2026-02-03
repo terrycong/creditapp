@@ -43,4 +43,21 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "AND t.status = 'APPROVED' " +
             "ORDER BY t.id DESC")
     List<Task> findAllMarketplaceTasksByParentId(@Param("parentId") Long parentId);
+
+    // Find all marketplace tasks including hidden/inactive for parent management view
+    @Query("SELECT t FROM Task t " +
+            "LEFT JOIN FETCH t.createdBy " +
+            "WHERE t.createdBy.id = :parentId " +
+            "AND t.status = 'APPROVED' " +
+            "ORDER BY t.active DESC, t.id DESC")
+    List<Task> findAllMarketplaceTasksIncludingHiddenByParentId(@Param("parentId") Long parentId);
+
+    // Find marketplace tasks visible to children (only active ones)
+    @Query("SELECT t FROM Task t " +
+            "LEFT JOIN FETCH t.createdBy " +
+            "WHERE t.createdBy.id = :parentId " +
+            "AND t.active = true " +
+            "AND t.status = 'APPROVED' " +
+            "ORDER BY t.id DESC")
+    List<Task> findVisibleMarketplaceTasksByParentId(@Param("parentId") Long parentId);
 }

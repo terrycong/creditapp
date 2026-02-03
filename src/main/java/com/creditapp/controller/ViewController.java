@@ -2,6 +2,7 @@ package com.creditapp.controller;
 
 import com.creditapp.dto.*;
 import com.creditapp.entity.PenaltyNotification;
+import com.creditapp.entity.PointHistory;
 import com.creditapp.entity.TaskCompletion;
 import com.creditapp.entity.TaskDeadlineType;
 import com.creditapp.entity.TaskType;
@@ -10,6 +11,7 @@ import com.creditapp.exception.BusinessException;
 import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.service.DashboardService;
+import com.creditapp.service.PointHistoryService;
 import com.creditapp.service.RewardService;
 import com.creditapp.service.TaskService;
 import com.creditapp.service.UserService;
@@ -37,6 +39,7 @@ public class ViewController {
     private final DashboardService dashboardService;
     private final TaskService taskService;
     private final RewardService rewardService;
+    private final PointHistoryService pointHistoryService;
     private final ChildRepository childRepository;
     private final TaskCompletionRepository taskCompletionRepository;
 
@@ -523,6 +526,32 @@ public class ViewController {
         }
     }
 
+    // ========== Point History ==========
+
+    // Get point history for child
+    @GetMapping("/child/points/history")
+    public String pointHistory(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== CHILD POINT HISTORY CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            log.warn("UserDetails is null - user not authenticated!");
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        log.info("Point history accessed by user: {}, userId: {}", username, user.getId());
+
+        // Fetch point history for this child
+        List<PointHistoryDTO> pointHistory = pointHistoryService.getPointHistoryByChildId(user.getId());
+        model.addAttribute("pointHistory", pointHistory);
+        model.addAttribute("username", username);
+        model.addAttribute("childId", user.getId());
+
+        return "child/points-history";
+    }
+
     // ========== Marketplace ==========
 
     // Get marketplace tasks for child
@@ -856,6 +885,86 @@ public class ViewController {
             redirectAttrs.addFlashAttribute("error", "拒绝失败: " + e.getMessage());
             return "redirect:/parent/drafts";
         }
+    }
+
+    // ========== Marketplace Task Management ==========
+
+    // Hide task from marketplace (set active = false)
+    @PostMapping("/parent/marketplace/{id}/hide")
+    public String hideMarketplaceTask(@AuthenticationPrincipal UserDetails userDetails,
+                                      @PathVariable Long id,
+                                      RedirectAttributes redirectAttrs) {
+        log.info("Hiding task from marketplace: taskId={}", id);
+        try {
+            // Verify current user is the task creator
+            TaskDTO task = taskService.getTaskById(id);
+            Long currentUserId = SecurityUtils.getCurrentUserId(childRepository);
+            if (!task.getCreatedById().equals(currentUserId)) {
+                redirectAttrs.addFlashAttribute("error", "无权隐藏此任务");
+                return "redirect:/parent/marketplace";
+            }
+
+            taskService.hideTask(id);
+            redirectAttrs.addFlashAttribute("success", "任务已从市场隐藏，孩子将无法看到此任务");
+        } catch (Exception e) {
+            log.error("Failed to hide task", e);
+            redirectAttrs.addFlashAttribute("error", "隐藏任务失败: " + e.getMessage());
+        }
+        return "redirect:/parent/marketplace";
+    }
+
+    // Unhide task to marketplace (set active = true)
+    @PostMapping("/parent/marketplace/{id}/unhide")
+    public String unhideMarketplaceTask(@AuthenticationPrincipal UserDetails userDetails,
+                                        @PathVariable Long id,
+                                        RedirectAttributes redirectAttrs) {
+        log.info("Unhiding task to marketplace: taskId={}", id);
+        try {
+            // Verify current user is the task creator
+            TaskDTO task = taskService.getTaskById(id);
+            Long currentUserId = SecurityUtils.getCurrentUserId(childRepository);
+            if (!task.getCreatedById().equals(currentUserId)) {
+                redirectAttrs.addFlashAttribute("error", "无权显示此任务");
+                return "redirect:/parent/marketplace";
+            }
+
+            taskService.unhideTask(id);
+            redirectAttrs.addFlashAttribute("success", "任务已重新发布到市场，孩子现在可以看到此任务");
+        } catch (Exception e) {
+            log.error("Failed to unhide task", e);
+            redirectAttrs.addFlashAttribute("error", "显示任务失败: " + e.getMessage());
+        }
+        return "redirect:/parent/marketplace";
+    }
+
+    // Delete marketplace task (hard delete)
+    @PostMapping("/parent/marketplace/{id}/delete")
+    public String deleteMarketplaceTask(@AuthenticationPrincipal UserDetails userDetails,
+                                        @PathVariable Long id,
+                                        RedirectAttributes redirectAttrs) {
+        log.info("Deleting marketplace task: taskId={}", id);
+        try {
+            // Verify current user is the task creator
+            TaskDTO task = taskService.getTaskById(id);
+            Long currentUserId = SecurityUtils.getCurrentUserId(childRepository);
+            if (!task.getCreatedById().equals(currentUserId)) {
+                redirectAttrs.addFlashAttribute("error", "无权删除此任务");
+                return "redirect:/parent/marketplace";
+            }
+
+            // Check if task is currently picked by a child
+            if (task.getPickedByChildId() != null) {
+                redirectAttrs.addFlashAttribute("error", "无法删除已被领取的任务，请先让孩子取消领取或完成任务");
+                return "redirect:/parent/marketplace";
+            }
+
+            taskService.deleteTask(id);
+            redirectAttrs.addFlashAttribute("success", "任务已永久删除");
+        } catch (Exception e) {
+            log.error("Failed to delete marketplace task", e);
+            redirectAttrs.addFlashAttribute("error", "删除任务失败: " + e.getMessage());
+        }
+        return "redirect:/parent/marketplace";
     }
 
     // ========== Penalty Notifications ==========

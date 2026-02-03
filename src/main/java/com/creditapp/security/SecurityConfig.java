@@ -32,7 +32,7 @@ public class SecurityConfig {
         http
             .userDetailsService(userDetailsService)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
+                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/webjars/**", "/h2-console/**").permitAll()
                 .requestMatchers("/parent/**", "/api/parent/**").hasRole("PARENT")
                 .requestMatchers("/child/**", "/api/child/**").hasRole("CHILD")
                 .requestMatchers("/api/**").authenticated()
