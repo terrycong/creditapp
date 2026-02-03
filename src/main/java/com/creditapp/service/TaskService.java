@@ -38,4 +38,11 @@ public interface TaskService {
     void applyPenalty(Long notificationId, Long appliedById);
     void dismissPenalty(Long notificationId);
     long countPendingPenaltyNotifications(Long parentId);
+
+    // Pick/Unpick task methods
+    TaskDTO pickTask(Long taskId, Long childId);
+    void unpickTask(Long taskId, Long childId);
+    List<TaskDTO> getMarketplaceTasks(Long childId);
+    List<TaskDTO> getMarketplaceTasksByParent(Long parentId);
+    List<TaskDTO> getPickedTasks(Long childId);
 }

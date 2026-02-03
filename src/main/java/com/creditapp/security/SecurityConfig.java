@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +23,7 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
     private final CustomUserDetailsService userDetailsService;
     private final CustomAuthenticationSuccessHandler authenticationSuccessHandler;
+    private final Environment environment;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -56,8 +58,16 @@ public class SecurityConfig {
         // H2 Console frame disable for development
         http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
-        // Disable CSRF for development - enable in production
-        http.csrf(csrf -> csrf.disable());
+        // CSRF configuration - conditionally enabled based on application properties
+        boolean csrfEnabled = environment.getProperty("spring.security.csrf.enabled", Boolean.class, true);
+        log.info("CSRF protection enabled: {}", csrfEnabled);
+        
+        if (!csrfEnabled) {
+            http.csrf(csrf -> csrf.disable());
+            log.warn("CSRF protection is DISABLED. This should only be used in development.");
+        } else {
+            log.info("CSRF protection is ENABLED for production security.");
+        }
 
         log.info("SecurityFilterChain configuration complete");
         return http.build();

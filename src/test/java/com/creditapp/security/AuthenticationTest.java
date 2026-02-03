@@ -66,6 +66,16 @@ public class AuthenticationTest {
     @Test
     @WithMockUser(username = "parent", roles = {"PARENT"})
     void testDashboardAccessWithAuthentication() throws Exception {
+        // Mock user data for the controller
+        User parentUser = new User();
+        parentUser.setId(1L);
+        parentUser.setUsername("parent");
+        parentUser.setPassword("$2a$10$BFeE1qUtBvthU1sKwEc.tOIzuFOw1D635dDscfC2cv1HcP1/Co0Su");
+        parentUser.setRole(UserRole.PARENT);
+        parentUser.setPoints(1000);
+
+        when(userService.findByUsername("parent")).thenReturn(Optional.of(parentUser));
+
         mockMvc.perform(get("/dashboard"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("dashboard"))
@@ -75,6 +85,16 @@ public class AuthenticationTest {
     @Test
     @WithMockUser(username = "parent", roles = {"PARENT"})
     void testRoleAttributeInDashboard() throws Exception {
+        // Mock user data for the controller
+        User parentUser = new User();
+        parentUser.setId(1L);
+        parentUser.setUsername("parent");
+        parentUser.setPassword("$2a$10$BFeE1qUtBvthU1sKwEc.tOIzuFOw1D635dDscfC2cv1HcP1/Co0Su");
+        parentUser.setRole(UserRole.PARENT);
+        parentUser.setPoints(1000);
+
+        when(userService.findByUsername("parent")).thenReturn(Optional.of(parentUser));
+
         mockMvc.perform(get("/dashboard"))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("role", "PARENT"));

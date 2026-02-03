@@ -29,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final TaskCompletionRepository taskCompletionRepository;
     private final RewardRedemptionRepository rewardRedemptionRepository;
     private final TaskRepository taskRepository;
+    private final TaskJobRepository taskJobRepository;
 
     @Override
     @Transactional
@@ -66,17 +67,18 @@ public class UserServiceImpl implements UserService {
         }
 
         child.setPoints(newPoints);
+        childRepository.save(child);
         log.info("Adjusted points for child {}: {} -> {}", childId, child.getPoints(), newPoints);
     }
 
     @Override
+    @Transactional
     public ChildDTO getChildById(Long id) {
         Child child = childRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Child", id));
 
-        // Get active tasks count
-        List<Task> activeTasks = taskRepository.findActiveTasksWithChild(child.getId());
-        int activeTaskCount = activeTasks.size();
+        // Get active tasks count using TaskJob
+        int activeTaskCount = taskJobRepository.countActiveJobsByChildId(child.getId());
 
         // Get completed tasks count
         List<TaskCompletion> completions = taskCompletionRepository.findByChildId(child.getId());
@@ -100,9 +102,8 @@ public class UserServiceImpl implements UserService {
         List<Child> children = childRepository.findByParentId(parentId);
         return children.stream()
                 .map(child -> {
-                    // Get active tasks count
-                    List<Task> activeTasks = taskRepository.findActiveTasksWithChild(child.getId());
-                    int activeTaskCount = activeTasks.size();
+                    // Get active tasks count using TaskJob
+                    int activeTaskCount = taskJobRepository.countActiveJobsByChildId(child.getId());
 
                     // Get completed tasks count
                     List<TaskCompletion> completions = taskCompletionRepository.findByChildId(child.getId());
@@ -185,9 +186,8 @@ public class UserServiceImpl implements UserService {
         
         Child updatedChild = childRepository.save(child);
 
-        // Get active tasks count
-        List<Task> activeTasks = taskRepository.findActiveTasksWithChild(updatedChild.getId());
-        int activeTaskCount = activeTasks.size();
+        // Get active tasks count using TaskJob
+        int activeTaskCount = taskJobRepository.countActiveJobsByChildId(updatedChild.getId());
 
         // Get completed tasks count
         List<TaskCompletion> completions = taskCompletionRepository.findByChildId(updatedChild.getId());

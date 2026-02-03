@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务市场 - 家庭积分系统</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .task-card {
+            transition: transform 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .points-badge {
+            background: linear-gradient(135deg, var(--success-color), #34D399);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+
+        .task-type-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .picked-task-row {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/marketplace">
+                            <i class="bi bi-shop"></i> 任务市场
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/approvals">
+                            <i class="bi bi-check-circle"></i> 任务审批
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/children">
+                            <i class="bi bi-people"></i> 小孩管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-shop"></i> 任务市场
+                </h1>
+                <p class="text-muted">查看和管理任务市场中的所有任务，了解孩子们领取的任务情况</p>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-md-4">
+                <div class="card text-center p-4">
+                    <div class="stat-icon mx-auto" style="background-color: rgba(79, 70, 229, 0.1); color: var(--primary-color);">
+                        <i class="bi bi-list-task"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${totalTasks != null ? totalTasks : 0}">0</h3>
+                    <p class="text-muted mb-0">市场任务总数</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center p-4">
+                    <div class="stat-icon mx-auto" style="background-color: rgba(59, 130, 246, 0.1); color: var(--info-color);">
+                        <i class="bi bi-cart-plus"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${availableTasks != null ? availableTasks : 0}">0</h3>
+                    <p class="text-muted mb-0">可挑选任务</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center p-4">
+                    <div class="stat-icon mx-auto" style="background-color: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                        <i class="bi bi-cart-check"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${pickedTasks != null ? pickedTasks : 0}">0</h3>
+                    <p class="text-muted mb-0">已被领取任务</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Tasks Section -->
+        <div class="row mb-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-shop"></i> 可挑选任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Empty state -->
+                        <div th:if="${marketplaceTasks == null or #lists.isEmpty(marketplaceTasks.?[pickedByChildId == null])}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-shop" style="font-size: 4rem; color: #d1d5db;"></i>
+                            </div>
+                            <h5 class="text-muted">暂无可挑选任务</h5>
+                            <p class="text-muted">所有任务都已被领取，您可以创建更多任务添加到市场</p>
+                        </div>
+
+                        <!-- Dynamic available task list -->
+                        <div th:if="${marketplaceTasks != null and !#lists.isEmpty(marketplaceTasks.?[pickedByChildId == null])}" class="row">
+                            <div th:each="task, iterStat : ${marketplaceTasks.?[pickedByChildId == null]}"
+                                 class="col-md-6 mb-4 animate__animated animate__fadeInUp"
+                                 th:style="'animation-delay: ' + ${iterStat.count * 100} + 'ms'">
+                                <div class="card task-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="card-title mb-0" th:text="${task.title}">任务标题</h5>
+                                            <span class="badge points-badge" th:text="${task.points + ' 积分'}">10 积分</span>
+                                        </div>
+                                        <p class="card-text text-muted" th:text="${task.description}">任务描述</p>
+                                        <div class="mb-3">
+                                            <!-- Task type badge -->
+                                            <th:block th:switch="${task.type}">
+                                                <span th:case="'ONE_TIME'" class="badge bg-info task-type-badge">一次性</span>
+                                                <span th:case="'REPEATABLE'" class="badge bg-info task-type-badge">可重复</span>
+                                                <span th:case="'DAILY_ONCE'" class="badge bg-info task-type-badge">每日一次</span>
+                                                <span th:case="'MANDATORY'" class="badge bg-info task-type-badge">强制任务</span>
+                                            </th:block>
+                                        </div>
+                                        <div class="d-grid">
+                                            <a th:href="@{/parent/tasks/{id}/edit(id=${task.id})}"
+                                               class="btn btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> 编辑任务
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Picked Tasks Section -->
+        <div class="row mb-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-cart-check"></i> 已被领取的任务
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Empty state -->
+                        <div th:if="${marketplaceTasks == null or #lists.isEmpty(marketplaceTasks.?[pickedByChildId != null])}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-cart-x" style="font-size: 4rem; color: #d1d5db;"></i>
+                            </div>
+                            <h5 class="text-muted">暂无被领取的任务</h5>
+                            <p class="text-muted">孩子们还没有领取任何市场任务</p>
+                        </div>
+
+                        <!-- Dynamic picked task list -->
+                        <div th:if="${marketplaceTasks != null and !#lists.isEmpty(marketplaceTasks.?[pickedByChildId != null])}">
+                            <div th:each="task : ${marketplaceTasks.?[pickedByChildId != null]}" class="picked-task-row p-3 mb-3 rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1" th:text="${task.title}">任务标题</h5>
+                                        <div class="mb-2">
+                                            <span class="badge bg-primary task-type-badge me-2" th:if="${task.pickedByChildName != null}"
+                                                  th:text="'👦 ' + ${task.pickedByChildName}">
+                                                 小孩
+                                             </span>
+                                            <th:block th:switch="${task.type}">
+                                                <span th:case="'ONE_TIME'" class="badge bg-info task-type-badge">一次性</span>
+                                                <span th:case="'REPEATABLE'" class="badge bg-info task-type-badge">可重复</span>
+                                                <span th:case="'DAILY_ONCE'" class="badge bg-info task-type-badge">每日一次</span>
+                                                <span th:case="'MANDATORY'" class="badge bg-info task-type-badge">强制任务</span>
+                                            </th:block>
+                                            <span class="badge points-badge" th:text="${task.points + ' 积分'}">10 积分</span>
+                                        </div>
+                                        <p class="text-muted mb-0 small" th:text="${task.description}">任务描述</p>
+                                    </div>
+                                    <div class="ms-3">
+                                        <a th:href="@{/parent/tasks/{id}/edit(id=${task.id})}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i> 编辑
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -97,6 +97,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/child/marketplace">
+                            <i class="bi bi-shop"></i> 任务市场
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/child/rewards">
                             <i class="bi bi-gift"></i> 礼物商城
                         </a>
@@ -261,10 +266,16 @@
                                         <p class="card-text text-muted" th:text="${task.description}">任务描述</p>
                                         <div class="mb-3">
                                             <!-- Task type badge -->
-<span class="badge bg-danger task-type-badge"
-                                                  th:text="${task.type == 'ONE_TIME' ? '一次性' : (task.type == 'REPEATABLE' ? '可重复' : (task.type == 'DAILY_ONCE' ? '每日一次' : '强制任务'))}">
-                                                 任务类型
-                                             </span>
+                                            <th:block th:switch="${task.type}">
+                                                <span th:case="'ONE_TIME'" class="badge bg-danger task-type-badge">一次性</span>
+                                                <span th:case="'REPEATABLE'" class="badge bg-danger task-type-badge">可重复</span>
+                                                <span th:case="'DAILY_ONCE'" class="badge bg-danger task-type-badge">每日一次</span>
+                                                <span th:case="'MANDATORY'" class="badge bg-danger task-type-badge">强制任务</span>
+                                            </th:block>
+                                            <!-- Picked status indicator -->
+                                            <span th:if="${task.pickedByChildId != null}" class="badge bg-success task-type-badge ms-1">
+                                                <i class="bi bi-check-circle"></i> 已领取
+                                            </span>
                                             <!-- Mandatory task indicator -->
                                             <span th:if="${task.type == 'MANDATORY'}" class="badge bg-warning task-type-badge ms-1">
                                                 <i class="bi bi-exclamation-triangle"></i> 今日必做

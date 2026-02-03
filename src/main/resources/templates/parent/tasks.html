@@ -85,6 +85,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/parent/marketplace">
+                            <i class="bi bi-shop"></i> 任务市场
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/parent/rewards">
                             <i class="bi bi-gift"></i> 礼物管理
                         </a>
@@ -154,10 +159,10 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="childId" class="form-label">分配给</label>
-                                    <select class="form-select" id="childId" name="childId" required>
-                                        <option value="">请选择小孩</option>
-                                        <option th:each="child : ${children}" 
-                                                th:value="${child.id}" 
+                                    <select class="form-select" id="childId" name="childId">
+                                        <option value="">不分配（任务市场）</option>
+                                        <option th:each="child : ${children}"
+                                                th:value="${child.id}"
                                                 th:text="${child.username}">
                                             小孩
                                         </option>
@@ -166,8 +171,17 @@
                             </div>
                              <div class="mb-3">
                                  <label for="description" class="form-label">任务描述</label>
-                                 <textarea class="form-control" id="description" name="description" 
+                                 <textarea class="form-control" id="description" name="description"
                                            rows="3" placeholder="详细描述任务要求..."></textarea>
+                             </div>
+                             <div class="mb-3 form-check">
+                                 <input type="checkbox" class="form-check-input" id="marketplace" name="marketplace">
+                                 <label class="form-check-label" for="marketplace">
+                                     <i class="bi bi-shop"></i> 可用在任务市场
+                                 </label>
+                                 <div class="form-text text-muted">
+                                     勾选后，小孩可以在任务市场中选择并领取此任务
+                                 </div>
                              </div>
                              
                              <!-- Mandatory Task Configuration Fields -->

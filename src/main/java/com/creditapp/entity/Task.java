@@ -29,10 +29,6 @@ public class Task {
     @JoinColumn(name = "created_by_id")
     private User createdBy;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_child_id")
-    private Child assignedChild;
-
     @Column(nullable = false)
     private boolean active = true;
 
@@ -51,7 +47,7 @@ public class Task {
     public Task() {}
 
     public Task(Long id, String title, String description, Integer points, TaskType type, TaskStatus status,
-                User createdBy, Child assignedChild, boolean active) {
+                User createdBy, boolean active) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -59,7 +55,6 @@ public class Task {
         this.type = type;
         this.status = status;
         this.createdBy = createdBy;
-        this.assignedChild = assignedChild;
         this.active = active;
     }
 
@@ -118,14 +113,6 @@ public class Task {
 
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
-    }
-
-    public Child getAssignedChild() {
-        return assignedChild;
-    }
-
-    public void setAssignedChild(Child assignedChild) {
-        this.assignedChild = assignedChild;
     }
 
     public boolean isActive() {

@@ -12,17 +12,11 @@ import java.util.List;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByCreatedBy_Id(Long userId);
-    List<Task> findByAssignedChild_Id(Long childId);
     List<Task> findByTypeAndActive(TaskType type, boolean active);
-    List<Task> findByStatusAndAssignedChild(TaskStatus status, Child child);
-
-    @Query("SELECT t FROM Task t JOIN FETCH t.assignedChild WHERE t.active = true AND t.assignedChild.id = :childId")
-    List<Task> findActiveTasksWithChild(@Param("childId") Long childId);
 
     // Find DRAFT tasks created by children (for parent approval)
     @Query("SELECT t FROM Task t " +
-           "JOIN FETCH t.assignedChild c " +
-           "WHERE c.parent.id = :parentId " +
+           "WHERE t.createdBy.id IN (SELECT c.id FROM Child c WHERE c.parent.id = :parentId) " +
            "AND t.status = 'DRAFT' " +
            "ORDER BY t.id DESC")
     List<Task> findDraftTasksByParentId(@Param("parentId") Long parentId);
@@ -30,4 +24,23 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // Find tasks created by a specific child
     @Query("SELECT t FROM Task t WHERE t.createdBy.id = :childId ORDER BY t.id DESC")
     List<Task> findByCreatedById(@Param("childId") Long childId);
+
+    // Find all marketplace tasks for parent view
+    // Tasks are marketplace tasks if they have no TaskJob assigned
+    @Query("SELECT t FROM Task t " +
+            "WHERE t.createdBy.id = :parentId " +
+            "AND t.active = true " +
+            "AND t.status = 'APPROVED' " +
+            "AND NOT EXISTS (SELECT tj FROM TaskJob tj WHERE tj.task = t AND tj.status IN ('ASSIGNED', 'IN_PROGRESS')) " +
+            "ORDER BY t.id DESC")
+    List<Task> findAvailableMarketplaceTasksByParentId(@Param("parentId") Long parentId);
+
+    // Find all marketplace tasks (available + picked) for parent view
+    @Query("SELECT t FROM Task t " +
+            "LEFT JOIN FETCH t.createdBy " +
+            "WHERE t.createdBy.id = :parentId " +
+            "AND t.active = true " +
+            "AND t.status = 'APPROVED' " +
+            "ORDER BY t.id DESC")
+    List<Task> findAllMarketplaceTasksByParentId(@Param("parentId") Long parentId);
 }

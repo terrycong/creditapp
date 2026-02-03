@@ -14,6 +14,13 @@ public class TaskCompletion {
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 
+    /**
+     * Reference to TaskJob (optional, for better tracking after migration)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_job_id")
+    private TaskJob taskJob;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "child_id", nullable = false)
     private Child child;
@@ -46,6 +53,14 @@ public class TaskCompletion {
 
     public void setTask(Task task) {
         this.task = task;
+    }
+
+    public TaskJob getTaskJob() {
+        return taskJob;
+    }
+
+    public void setTaskJob(TaskJob taskJob) {
+        this.taskJob = taskJob;
     }
 
     public Child getChild() {

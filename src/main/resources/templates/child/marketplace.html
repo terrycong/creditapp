@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务市场 - 家庭积分系统</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .task-card {
+            transition: transform 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .points-badge {
+            background: linear-gradient(135deg, var(--success-color), #34D399);
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+
+        .task-type-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .picked-task-row {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/tasks">
+                            <i class="bi bi-list-check"></i> 我的任务
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/child/marketplace">
+                            <i class="bi bi-cart4"></i> 任务市场
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/tasks/drafts">
+                            <i class="bi bi-file-earmark-medical"></i> 我的草稿
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/rewards">
+                            <i class="bi bi-gift"></i> 礼物商城
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-cart4"></i> 任务市场
+                </h1>
+                <p class="text-muted">浏览任务市场，挑选你想要完成的任务，赚取更多积分！</p>
+            </div>
+        </div>
+
+        <!-- Stats Card -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-md-6">
+                <div class="card text-center p-4">
+                    <div class="stat-icon icon-primary mx-auto" style="background-color: rgba(79, 70, 229, 0.1); color: var(--primary-color);">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${childPoints != null ? childPoints : 0} + ' 积分'">0 积分</h3>
+                    <p class="text-muted mb-0">当前积分</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card text-center p-4">
+                    <div class="stat-icon icon-success mx-auto" style="background-color: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                        <i class="bi bi-cart-fill"></i>
+                    </div>
+                    <h3 class="mb-2" th:text="${(marketplaceTasks != null ? marketplaceTasks.size() : 0) + ' 个'}">0 个</h3>
+                    <p class="text-muted mb-0">可挑选任务</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketplace Tasks -->
+        <div class="row mb-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-shop"></i> 任务市场
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Empty state -->
+                        <div th:if="${marketplaceTasks == null or marketplaceTasks.isEmpty()}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-shop" style="font-size: 4rem; color: #d1d5db;"></i>
+                            </div>
+                            <h5 class="text-muted">任务市场暂时没有任务</h5>
+                            <p class="text-muted">家长还没有发布任务到市场，请稍后再来查看吧！</p>
+                        </div>
+
+                        <!-- Dynamic marketplace task list -->
+                        <div th:if="${marketplaceTasks != null and !marketplaceTasks.isEmpty()}" class="row">
+                            <div th:each="task, iterStat : ${marketplaceTasks}"
+                                 class="col-md-6 mb-4 animate__animated animate__fadeInUp"
+                                 th:style="'animation-delay: ' + ${iterStat.count * 100} + 'ms'">
+                                <div class="card task-card h-100" 
+                                     th:classappend="${task.pickedByChildId != null ? 'bg-light' : ''}">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="card-title mb-0" th:text="${task.title}">任务标题</h5>
+                                            <span class="badge points-badge" th:text="${task.points + ' 积分'}">10 积分</span>
+                                        </div>
+                                        <p class="card-text text-muted" th:text="${task.description}">任务描述</p>
+                                        <div class="mb-3">
+                                            <!-- Task type badge -->
+                                            <th:block th:switch="${task.type}">
+                                                <span th:case="'ONE_TIME'" class="badge bg-info task-type-badge">一次性</span>
+                                                <span th:case="'REPEATABLE'" class="badge bg-info task-type-badge">可重复</span>
+                                                <span th:case="'DAILY_ONCE'" class="badge bg-info task-type-badge">每日一次</span>
+                                                <span th:case="'MANDATORY'" class="badge bg-info task-type-badge">强制任务</span>
+                                            </th:block>
+                                            <!-- Picked indicator -->
+                                            <span th:if="${task.pickedByChildId != null}" class="badge bg-success task-type-badge ms-1">
+                                                <i class="bi bi-check-circle"></i> 已选取
+                                            </span>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button th:if="${task.pickedByChildId == null}"
+                                                    class="btn btn-info pick-task-btn"
+                                                    th:attr="data-task-id=${task.id}"
+                                                    th:id="'pickBtn-' + ${task.id}">
+                                                <i class="bi bi-plus-circle"></i> 挑选任务
+                                            </button>
+                                            <button th:if="${task.pickedByChildId != null}"
+                                                    class="btn btn-secondary" disabled>
+                                                <i class="bi bi-check-circle"></i> 已选取
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation to My Tasks -->
+        <div class="row mb-5 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="mb-3">
+                            <i class="bi bi-list-check text-primary"></i> 查看已挑选的任务
+                        </h5>
+                        <p class="text-muted mb-3">你挑选的任务会在"进行中的任务"中显示，点击下方按钮查看</p>
+                        <a href="/child/tasks" class="btn btn-primary">
+                            <i class="bi bi-arrow-right-circle"></i> 前往我的任务
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Task Marketplace JavaScript -->
+    <script>
+        /*<![CDATA[*/
+        function pickTask(button, taskId) {
+            if (!confirm('确定要挑选这个任务吗？挑选后任务将出现在你的任务列表中。')) {
+                return;
+            }
+
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
+
+            fetch('/child/marketplace/' + taskId + '/pick', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.code === 'SUCCESS') {
+                    alert('任务挑选成功！现在可以在"我的任务"中查看并完成它。');
+                    window.location.href = '/child/tasks';
+                } else {
+                    throw new Error(data.message || '操作失败');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error picking task:', error);
+                alert('挑选失败: ' + (error.message || '未知错误'));
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
+
+        function unpickTask(button, taskId) {
+            if (!confirm('确定要取消挑选这个任务吗？')) {
+                return;
+            }
+
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
+
+            fetch('/child/marketplace/' + taskId + '/unpick', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.code === 'SUCCESS') {
+                    alert('已取消挑选任务。');
+                    window.location.href = '/child/marketplace';
+                } else {
+                    throw new Error(data.message || '操作失败');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error unpicking task:', error);
+                alert('取消失败: ' + (error.message || '未知错误'));
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
+
+        // Initialize click handlers for pick task buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.pick-task-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var taskId = button.getAttribute('data-task-id');
+                    pickTask(button, taskId);
+                });
+            });
+
+            document.querySelectorAll('.unpick-task-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var taskId = button.getAttribute('data-task-id');
+                    unpickTask(button, taskId);
+                });
+            });
+        });
+        /*]]>*/
+    </script>
+</body>
+</html>

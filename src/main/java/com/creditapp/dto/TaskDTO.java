@@ -15,6 +15,8 @@ public class TaskDTO {
     private String createdByName;
     private Long assignedChildId;
     private String assignedChildName;
+    private Long pickedByChildId;
+    private String pickedByChildName;
     private boolean active;
 
     // 强制任务相关字段
@@ -103,6 +105,22 @@ public class TaskDTO {
         this.assignedChildName = assignedChildName;
     }
 
+    public Long getPickedByChildId() {
+        return pickedByChildId;
+    }
+
+    public void setPickedByChildId(Long pickedByChildId) {
+        this.pickedByChildId = pickedByChildId;
+    }
+
+    public String getPickedByChildName() {
+        return pickedByChildName;
+    }
+
+    public void setPickedByChildName(String pickedByChildName) {
+        this.pickedByChildName = pickedByChildName;
+    }
+
     public boolean isActive() {
         return active;
     }
@@ -151,6 +169,8 @@ public class TaskDTO {
         private String createdByName;
         private Long assignedChildId;
         private String assignedChildName;
+        private Long pickedByChildId;
+        private String pickedByChildName;
         private boolean active;
         private TaskDeadlineType deadlineType;
         private Integer deadlineValue;
@@ -206,6 +226,16 @@ public class TaskDTO {
             return this;
         }
 
+        public Builder pickedByChildId(Long pickedByChildId) {
+            this.pickedByChildId = pickedByChildId;
+            return this;
+        }
+
+        public Builder pickedByChildName(String pickedByChildName) {
+            this.pickedByChildName = pickedByChildName;
+            return this;
+        }
+
         public Builder active(boolean active) {
             this.active = active;
             return this;
@@ -238,6 +268,8 @@ public class TaskDTO {
             dto.createdByName = this.createdByName;
             dto.assignedChildId = this.assignedChildId;
             dto.assignedChildName = this.assignedChildName;
+            dto.pickedByChildId = this.pickedByChildId;
+            dto.pickedByChildName = this.pickedByChildName;
             dto.active = this.active;
             dto.deadlineType = this.deadlineType;
             dto.deadlineValue = this.deadlineValue;

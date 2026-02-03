@@ -23,6 +23,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -104,31 +105,70 @@ public class ViewController {
         return "parent/tasks";
     }
 
+    // Parent marketplace view
+    @GetMapping("/parent/marketplace")
+    public String parentMarketplace(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== PARENT MARKETPLACE CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            log.warn("UserDetails is null - user not authenticated!");
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User parent = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        log.info("Parent marketplace accessed by user: {}, parentId: {}", username, parent.getId());
+
+        // Get all marketplace tasks (available + picked)
+        List<TaskDTO> marketplaceTasks = taskService.getMarketplaceTasksByParent(parent.getId());
+        
+        // Calculate statistics
+        int totalTasks = marketplaceTasks.size();
+        int availableTasks = (int) marketplaceTasks.stream().filter(t -> t.getPickedByChildId() == null).count();
+        int pickedTasks = totalTasks - availableTasks;
+        
+        // Get children for displaying who picked tasks
+        List<ChildDTO> children = userService.getChildrenByParentId(parent.getId());
+
+        model.addAttribute("marketplaceTasks", marketplaceTasks);
+        model.addAttribute("totalTasks", totalTasks);
+        model.addAttribute("availableTasks", availableTasks);
+        model.addAttribute("pickedTasks", pickedTasks);
+        model.addAttribute("children", children);
+        model.addAttribute("username", username);
+
+        log.info("Found {} total, {} available, {} picked marketplace tasks for parent: {}",
+                totalTasks, availableTasks, pickedTasks, username);
+        return "parent/marketplace";
+    }
+
     @PostMapping("/parent/tasks")
     public String createTask(@AuthenticationPrincipal UserDetails userDetails,
                             @RequestParam String title,
                             @RequestParam String description,
                             @RequestParam Integer points,
                             @RequestParam String type,
-                            @RequestParam Long childId,
+                            @RequestParam(required = false) Long childId,
+                            @RequestParam(required = false, defaultValue = "false") Boolean marketplace,
                             @RequestParam(required = false, defaultValue = "DAILY") String deadlineType,
                             @RequestParam(required = false, defaultValue = "5") Integer penaltyPoints,
                             RedirectAttributes redirectAttrs) {
-        log.info("Creating task: title={}, points={}, type={}, childId={}", 
-                title, points, type, childId);
-        
+        log.info("Creating task: title={}, points={}, type={}, childId={}, marketplace={}",
+                title, points, type, childId, marketplace);
+
         try {
             // Get current user (parent)
             String username = userDetails.getUsername();
             User parent = userService.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
-            
+
             // Create task request
             CreateTaskRequest request = new CreateTaskRequest();
             request.setTitle(title);
             request.setDescription(description);
             request.setPoints(points);
-            
+
             // Convert type string to TaskType enum
             TaskType taskType;
             try {
@@ -138,7 +178,15 @@ public class ViewController {
                 return "redirect:/parent/tasks";
             }
             request.setType(taskType);
-            request.setAssignedChildId(childId);
+
+            // Handle marketplace task: if marketplace is true or childId is null/empty, create as marketplace task
+            if (Boolean.TRUE.equals(marketplace) || childId == null) {
+                request.setAssignedChildId(null); // Marketplace task has no assigned child
+                log.info("Creating marketplace task: assignedChildId=null");
+            } else {
+                request.setAssignedChildId(childId);
+                log.info("Creating assigned task: assignedChildId={}", childId);
+            }
             
             // Set mandatory task fields if type is MANDATORY
             if (taskType == TaskType.MANDATORY) {
@@ -472,6 +520,99 @@ public class ViewController {
             log.error("Failed to withdraw draft task", e);
             redirectAttrs.addFlashAttribute("error", "撤回失败: " + e.getMessage());
             return "redirect:/child/tasks/drafts";
+        }
+    }
+
+    // ========== Marketplace ==========
+
+    // Get marketplace tasks for child
+    @GetMapping("/child/marketplace")
+    public String marketplace(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== CHILD MARKETPLACE CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            log.warn("UserDetails is null - user not authenticated!");
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+        log.info("Marketplace accessed by user: {}, userId: {}", username, user.getId());
+
+        // Get child's parent ID to filter marketplace tasks
+        ChildDTO child = userService.getChildById(user.getId());
+        Long parentId = child.getParentId();
+
+        // Query marketplace tasks (tasks shared by parents in the family network)
+        List<TaskDTO> marketplaceTasks = taskService.getMarketplaceTasks(user.getId());
+        model.addAttribute("marketplaceTasks", marketplaceTasks);
+
+        // Get child's picked tasks
+        List<TaskDTO> pickedTasks = taskService.getPickedTasks(user.getId());
+        model.addAttribute("pickedTasks", pickedTasks);
+
+        // Get child's current points for display
+        Integer childPoints = child.getPoints();
+        model.addAttribute("childPoints", childPoints);
+
+        // Add username for display
+        model.addAttribute("username", username);
+
+        log.info("Found {} marketplace tasks and {} picked tasks for child: {} with {} points",
+                marketplaceTasks.size(), pickedTasks.size(), username, childPoints);
+        return "child/marketplace";
+    }
+
+    // Pick a task from marketplace
+    @PostMapping("/child/marketplace/{taskId}/pick")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Void>> pickTask(@AuthenticationPrincipal UserDetails userDetails,
+                           @PathVariable Long taskId) {
+        log.info("Child picking task from marketplace: taskId={}", taskId);
+        try {
+            String username = userDetails.getUsername();
+            User user = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+            // Get child ID from user
+            Long childId = user.getId();
+
+            // Call service to pick the task
+            taskService.pickTask(taskId, childId);
+
+            log.info("Task {} picked successfully by child {}", taskId, childId);
+            return ResponseEntity.ok(ApiResponse.success("任务已成功领取！", null));
+        } catch (Exception e) {
+            log.error("Failed to pick task", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("PICK_FAILED", e.getMessage()));
+        }
+    }
+
+    // Unpick (release) a task back to marketplace
+    @PostMapping("/child/marketplace/{taskId}/unpick")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Void>> unpickTask(@AuthenticationPrincipal UserDetails userDetails,
+                             @PathVariable Long taskId) {
+        log.info("Child unpicking task: taskId={}", taskId);
+        try {
+            String username = userDetails.getUsername();
+            User user = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+
+            // Get child ID from user
+            Long childId = user.getId();
+
+            // Call service to unpick the task
+            taskService.unpickTask(taskId, childId);
+
+            log.info("Task {} unpicked successfully by child {}", taskId, childId);
+            return ResponseEntity.ok(ApiResponse.success("任务已释放！", null));
+        } catch (Exception e) {
+            log.error("Failed to unpick task", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("UNPICK_FAILED", e.getMessage()));
         }
     }
 
