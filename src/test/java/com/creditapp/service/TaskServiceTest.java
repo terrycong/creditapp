@@ -7,7 +7,9 @@ import com.creditapp.entity.*;
 import com.creditapp.exception.BusinessException;
 import com.creditapp.exception.ResourceNotFoundException;
 import com.creditapp.repository.ChildRepository;
+import com.creditapp.repository.PenaltyNotificationRepository;
 import com.creditapp.repository.TaskCompletionRepository;
+import com.creditapp.repository.TaskJobRepository;
 import com.creditapp.repository.TaskRepository;
 import com.creditapp.repository.UserRepository;
 import com.creditapp.service.impl.TaskServiceImpl;
@@ -43,6 +45,12 @@ class TaskServiceTest {
 
     @Mock
     private ChildRepository childRepository;
+
+    @Mock
+    private TaskJobRepository taskJobRepository;
+
+    @Mock
+    private PenaltyNotificationRepository penaltyNotificationRepository;
 
     @InjectMocks
     private TaskServiceImpl taskService;
@@ -95,6 +103,11 @@ class TaskServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(parentUser));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
+        when(taskJobRepository.save(any(TaskJob.class))).thenAnswer(invocation -> {
+            TaskJob job = invocation.getArgument(0);
+            job.setId(1L);
+            return job;
+        });
 
         // When
         TaskDTO result = taskService.createTask(createTaskRequest, 1L);
@@ -107,12 +120,12 @@ class TaskServiceTest {
         assertThat(result.getType()).isEqualTo(TaskType.ONE_TIME);
         assertThat(result.getStatus()).isEqualTo(TaskStatus.APPROVED);
         assertThat(result.getCreatedById()).isEqualTo(1L);
-        assertThat(result.getAssignedChildId()).isEqualTo(2L);
         assertThat(result.isActive()).isTrue();
 
         verify(userRepository).findById(1L);
         verify(childRepository).findById(2L);
         verify(taskRepository).save(any(Task.class));
+        verify(taskJobRepository).save(any(TaskJob.class));
     }
 
     @Test
@@ -281,7 +294,6 @@ class TaskServiceTest {
         updateRequest.setAssignedChildId(2L);
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
-        when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task savedTask = invocation.getArgument(0);
             return savedTask;
@@ -299,7 +311,6 @@ class TaskServiceTest {
         assertThat(result.getType()).isEqualTo(TaskType.ONE_TIME); // Original type
 
         verify(taskRepository).findById(1L);
-        verify(childRepository).findById(2L);
         verify(taskRepository).save(any(Task.class));
     }
 
@@ -307,12 +318,18 @@ class TaskServiceTest {
     void deleteTask_WithExistingTask_ShouldDeleteSuccessfully() {
         // Given
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskCompletionRepository.findByTaskId(1L)).thenReturn(Arrays.asList());
+        when(taskJobRepository.findByTaskId(1L)).thenReturn(Arrays.asList());
+        when(penaltyNotificationRepository.findByTaskId(1L)).thenReturn(Arrays.asList());
 
         // When
         taskService.deleteTask(1L);
 
         // Then
         verify(taskRepository).findById(1L);
+        verify(taskCompletionRepository).findByTaskId(1L);
+        verify(taskJobRepository).findByTaskId(1L);
+        verify(penaltyNotificationRepository).findByTaskId(1L);
         verify(taskRepository).delete(task);
     }
 
@@ -340,8 +357,20 @@ class TaskServiceTest {
         completion.setStatus(CompletionStatus.PENDING);
         completion.setCompletedAt(LocalDateTime.now());
 
+        TaskJob taskJob = TaskJob.builder()
+                .id(1L)
+                .task(task)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(task.getTitle())
+                .snapshotPoints(task.getPoints())
+                .snapshotTaskType(task.getType())
+                .build();
+
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
+        when(taskJobRepository.findByTaskIdAndChildId(1L, 2L)).thenReturn(Optional.of(taskJob));
+        when(taskJobRepository.save(any(TaskJob.class))).thenReturn(taskJob);
         when(taskCompletionRepository.save(any(TaskCompletion.class))).thenReturn(completion);
 
         // When
@@ -356,6 +385,7 @@ class TaskServiceTest {
 
         verify(taskRepository).findById(1L);
         verify(childRepository).findById(2L);
+        verify(taskJobRepository).findByTaskIdAndChildId(1L, 2L);
         verify(taskCompletionRepository).save(any(TaskCompletion.class));
     }
 
@@ -423,8 +453,20 @@ class TaskServiceTest {
         completion.setStatus(CompletionStatus.PENDING);
         completion.setCompletedAt(LocalDateTime.now());
 
+        TaskJob taskJob = TaskJob.builder()
+                .id(1L)
+                .task(task)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(task.getTitle())
+                .snapshotPoints(task.getPoints())
+                .snapshotTaskType(task.getType())
+                .build();
+
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
+        when(taskJobRepository.findByTaskIdAndChildId(1L, 2L)).thenReturn(Optional.of(taskJob));
+        when(taskJobRepository.save(any(TaskJob.class))).thenReturn(taskJob);
         when(taskCompletionRepository.existsCompletionToday(anyLong(), anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(false);
         when(taskCompletionRepository.save(any(TaskCompletion.class))).thenReturn(completion);
@@ -445,8 +487,20 @@ class TaskServiceTest {
     void completeTask_WithDailyOnceTask_SecondCompletionSameDayShouldThrowBusinessException() {
         // Given
         task.setType(TaskType.DAILY_ONCE);
+
+        TaskJob taskJob = TaskJob.builder()
+                .id(1L)
+                .task(task)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(task.getTitle())
+                .snapshotPoints(task.getPoints())
+                .snapshotTaskType(task.getType())
+                .build();
+
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
+        when(taskJobRepository.findByTaskIdAndChildId(1L, 2L)).thenReturn(Optional.of(taskJob));
         when(taskCompletionRepository.existsCompletionToday(anyLong(), anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(true);
 
@@ -471,8 +525,20 @@ class TaskServiceTest {
         completion.setStatus(CompletionStatus.PENDING);
         completion.setCompletedAt(LocalDateTime.now());
 
+        TaskJob taskJob = TaskJob.builder()
+                .id(1L)
+                .task(task)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(task.getTitle())
+                .snapshotPoints(task.getPoints())
+                .snapshotTaskType(task.getType())
+                .build();
+
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
+        when(taskJobRepository.findByTaskIdAndChildId(1L, 2L)).thenReturn(Optional.of(taskJob));
+        when(taskJobRepository.save(any(TaskJob.class))).thenReturn(taskJob);
         when(taskCompletionRepository.save(any(TaskCompletion.class))).thenReturn(completion);
 
         // When

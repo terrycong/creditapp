@@ -2,7 +2,9 @@ package com.creditapp.service;
 
 import com.creditapp.dto.TaskDTO;
 import com.creditapp.entity.Child;
+import com.creditapp.entity.JobStatus;
 import com.creditapp.entity.Task;
+import com.creditapp.entity.TaskJob;
 import com.creditapp.entity.TaskType;
 import com.creditapp.entity.TaskStatus;
 import com.creditapp.entity.User;
@@ -11,6 +13,7 @@ import com.creditapp.exception.BusinessException;
 import com.creditapp.exception.ResourceNotFoundException;
 import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.TaskCompletionRepository;
+import com.creditapp.repository.TaskJobRepository;
 import com.creditapp.repository.TaskRepository;
 import com.creditapp.repository.UserRepository;
 import com.creditapp.service.impl.TaskServiceImpl;
@@ -46,6 +49,9 @@ class TaskServiceMarketplaceTest {
 
     @Mock
     private ChildRepository childRepository;
+
+    @Mock
+    private TaskJobRepository taskJobRepository;
 
     @InjectMocks
     private TaskServiceImpl taskService;
@@ -119,7 +125,12 @@ class TaskServiceMarketplaceTest {
         // Given
         when(taskRepository.findById(100L)).thenReturn(Optional.of(marketplaceTask));
         when(childRepository.findById(10L)).thenReturn(Optional.of(childUser));
-        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(taskJobRepository.existsActiveJobByTaskIdAndChildId(100L, 10L)).thenReturn(false);
+        when(taskJobRepository.save(any(TaskJob.class))).thenAnswer(invocation -> {
+            TaskJob job = invocation.getArgument(0);
+            job.setId(1L);
+            return job;
+        });
 
         // When
         TaskDTO result = taskService.pickTask(100L, 10L);
@@ -128,17 +139,17 @@ class TaskServiceMarketplaceTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(100L);
         assertThat(result.getTitle()).isEqualTo("Marketplace Task");
-        assertThat(result.getPickedByChildId()).isEqualTo(10L);
 
         verify(taskRepository).findById(100L);
         verify(childRepository).findById(10L);
-        verify(taskRepository).save(any(Task.class));
+        verify(taskJobRepository).existsActiveJobByTaskIdAndChildId(100L, 10L);
+        verify(taskJobRepository).save(any(TaskJob.class));
     }
 
     @Test
     void pickTask_ShouldValidateParentOwnership() {
         // Given
-        marketplaceTask.setCreatedBy(otherParentUser); // Task from different family
+        marketplaceTask.setCreatedBy(otherParentUser);
         when(taskRepository.findById(100L)).thenReturn(Optional.of(marketplaceTask));
         when(childRepository.findById(10L)).thenReturn(Optional.of(childUser));
 
@@ -149,15 +160,15 @@ class TaskServiceMarketplaceTest {
 
         verify(taskRepository).findById(100L);
         verify(childRepository).findById(10L);
-        verify(taskRepository, never()).save(any(Task.class));
+        verify(taskJobRepository, never()).save(any(TaskJob.class));
     }
 
     @Test
     void pickTask_ShouldNotPickAlreadyPickedTask() {
         // Given
-        marketplaceTask.setPickedByChild(otherChildUser); // Already picked by another child
         when(taskRepository.findById(100L)).thenReturn(Optional.of(marketplaceTask));
         when(childRepository.findById(10L)).thenReturn(Optional.of(childUser));
+        when(taskJobRepository.existsActiveJobByTaskIdAndChildId(100L, 10L)).thenReturn(true); // Already picked
 
         // When & Then
         assertThatThrownBy(() -> taskService.pickTask(100L, 10L))
@@ -166,37 +177,46 @@ class TaskServiceMarketplaceTest {
 
         verify(taskRepository).findById(100L);
         verify(childRepository).findById(10L);
-        verify(taskRepository, never()).save(any(Task.class));
+        verify(taskJobRepository).existsActiveJobByTaskIdAndChildId(100L, 10L);
+        verify(taskJobRepository, never()).save(any(TaskJob.class));
     }
 
     @Test
     void unpickTask_ShouldClearPickedByChild() {
         // Given
-        marketplaceTask.setPickedByChild(childUser); // Child picked this task
-        when(taskRepository.findById(100L)).thenReturn(Optional.of(marketplaceTask));
-        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        TaskJob taskJob = TaskJob.builder()
+                .id(1L)
+                .task(marketplaceTask)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(marketplaceTask.getTitle())
+                .snapshotPoints(marketplaceTask.getPoints())
+                .snapshotTaskType(marketplaceTask.getType())
+                .build();
+
+        when(taskJobRepository.findByTaskIdAndChildId(100L, 10L)).thenReturn(Optional.of(taskJob));
+        when(taskJobRepository.save(any(TaskJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         taskService.unpickTask(100L, 10L);
 
         // Then
-        verify(taskRepository).findById(100L);
-        verify(taskRepository).save(any(Task.class));
+        verify(taskJobRepository).findByTaskIdAndChildId(100L, 10L);
+        verify(taskJobRepository).save(any(TaskJob.class));
     }
 
     @Test
     void unpickTask_ShouldValidateOwnership() {
-        // Given
-        marketplaceTask.setPickedByChild(otherChildUser); // Picked by different child
-        when(taskRepository.findById(100L)).thenReturn(Optional.of(marketplaceTask));
+        // Given - TaskJob doesn't exist for this child (different child picked it)
+        when(taskJobRepository.findByTaskIdAndChildId(100L, 10L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> taskService.unpickTask(100L, 10L))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("不能取消其他孩子认领的任务");
+                .hasMessageContaining("任务未被认领");
 
-        verify(taskRepository).findById(100L);
-        verify(taskRepository, never()).save(any(Task.class));
+        verify(taskJobRepository).findByTaskIdAndChildId(100L, 10L);
+        verify(taskJobRepository, never()).save(any(TaskJob.class));
     }
 
     @Test
@@ -239,8 +259,6 @@ class TaskServiceMarketplaceTest {
         pickedTask1.setType(TaskType.REPEATABLE);
         pickedTask1.setStatus(TaskStatus.APPROVED);
         pickedTask1.setCreatedBy(parentUser);
-        pickedTask1.setAssignedChild(null);
-        pickedTask1.setPickedByChild(childUser);
         pickedTask1.setActive(true);
 
         Task pickedTask2 = new Task();
@@ -250,12 +268,30 @@ class TaskServiceMarketplaceTest {
         pickedTask2.setType(TaskType.ONE_TIME);
         pickedTask2.setStatus(TaskStatus.APPROVED);
         pickedTask2.setCreatedBy(parentUser);
-        pickedTask2.setAssignedChild(null);
-        pickedTask2.setPickedByChild(childUser);
         pickedTask2.setActive(true);
 
-        List<Task> pickedTasks = Arrays.asList(pickedTask1, pickedTask2);
-        when(taskRepository.findPickedTasksByChildId(10L)).thenReturn(pickedTasks);
+        TaskJob job1 = TaskJob.builder()
+                .id(1L)
+                .task(pickedTask1)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(pickedTask1.getTitle())
+                .snapshotPoints(pickedTask1.getPoints())
+                .snapshotTaskType(pickedTask1.getType())
+                .build();
+
+        TaskJob job2 = TaskJob.builder()
+                .id(2L)
+                .task(pickedTask2)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(pickedTask2.getTitle())
+                .snapshotPoints(pickedTask2.getPoints())
+                .snapshotTaskType(pickedTask2.getType())
+                .build();
+
+        List<TaskJob> pickedJobs = Arrays.asList(job1, job2);
+        when(taskJobRepository.findPickedJobsByChildId(10L)).thenReturn(pickedJobs);
 
         // When
         List<TaskDTO> result = taskService.getPickedTasks(10L);
@@ -263,16 +299,24 @@ class TaskServiceMarketplaceTest {
         // Then
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getId()).isEqualTo(101L);
-        assertThat(result.get(0).getPickedByChildId()).isEqualTo(10L);
         assertThat(result.get(1).getId()).isEqualTo(102L);
-        assertThat(result.get(1).getPickedByChildId()).isEqualTo(10L);
 
-        verify(taskRepository).findPickedTasksByChildId(10L);
+        verify(taskJobRepository).findPickedJobsByChildId(10L);
     }
 
     @Test
     void getTasksByChild_ShouldIncludePickedTasks() {
         // Given
+        TaskJob job1 = TaskJob.builder()
+                .id(1L)
+                .task(assignedTask)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(assignedTask.getTitle())
+                .snapshotPoints(assignedTask.getPoints())
+                .snapshotTaskType(assignedTask.getType())
+                .build();
+
         Task pickedTask = new Task();
         pickedTask.setId(101L);
         pickedTask.setTitle("Picked Task");
@@ -280,24 +324,30 @@ class TaskServiceMarketplaceTest {
         pickedTask.setType(TaskType.REPEATABLE);
         pickedTask.setStatus(TaskStatus.APPROVED);
         pickedTask.setCreatedBy(parentUser);
-        pickedTask.setAssignedChild(null);
-        pickedTask.setPickedByChild(childUser);
         pickedTask.setActive(true);
 
-        List<Task> allTasks = Arrays.asList(assignedTask, pickedTask);
-        when(taskRepository.findActiveTasksWithChild(10L)).thenReturn(allTasks);
+        TaskJob job2 = TaskJob.builder()
+                .id(2L)
+                .task(pickedTask)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(pickedTask.getTitle())
+                .snapshotPoints(pickedTask.getPoints())
+                .snapshotTaskType(pickedTask.getType())
+                .build();
+
+        List<TaskJob> allJobs = Arrays.asList(job1, job2);
+        when(taskJobRepository.findActiveJobsByChildId(10L)).thenReturn(allJobs);
 
         // When
         List<TaskDTO> result = taskService.getTasksByChild(10L);
 
         // Then
         assertThat(result).hasSize(2);
-        // Should include assigned task
-        assertThat(result).anyMatch(task -> task.getId().equals(200L) && task.getAssignedChildId().equals(10L));
-        // Should include picked task
-        assertThat(result).anyMatch(task -> task.getId().equals(101L) && task.getPickedByChildId().equals(10L));
+        assertThat(result).anyMatch(task -> task.getId().equals(200L));
+        assertThat(result).anyMatch(task -> task.getId().equals(101L));
 
-        verify(taskRepository).findActiveTasksWithChild(10L);
+        verify(taskJobRepository).findActiveJobsByChildId(10L);
     }
 
     @Test
@@ -311,15 +361,24 @@ class TaskServiceMarketplaceTest {
         dailyOnceTask.setType(TaskType.DAILY_ONCE);
         dailyOnceTask.setStatus(TaskStatus.APPROVED);
         dailyOnceTask.setCreatedBy(parentUser);
-        dailyOnceTask.setAssignedChild(null);
-        dailyOnceTask.setPickedByChild(childUser);
         dailyOnceTask.setActive(true);
+
+        TaskJob taskJob = TaskJob.builder()
+                .id(1L)
+                .task(dailyOnceTask)
+                .child(childUser)
+                .status(JobStatus.ASSIGNED)
+                .snapshotTitle(dailyOnceTask.getTitle())
+                .snapshotPoints(dailyOnceTask.getPoints())
+                .snapshotTaskType(dailyOnceTask.getType())
+                .build();
 
         when(taskRepository.findById(400L)).thenReturn(Optional.of(dailyOnceTask));
         when(childRepository.findById(10L)).thenReturn(Optional.of(childUser));
+        when(taskJobRepository.findByTaskIdAndChildId(400L, 10L)).thenReturn(Optional.of(taskJob));
         when(taskCompletionRepository.existsCompletionToday(
                 eq(10L), eq(400L), any(java.time.LocalDateTime.class), any(java.time.LocalDateTime.class)))
-                .thenReturn(true); // Already completed today
+                .thenReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> taskService.completeTask(400L, 10L))
@@ -329,6 +388,7 @@ class TaskServiceMarketplaceTest {
 
         verify(taskRepository).findById(400L);
         verify(childRepository).findById(10L);
+        verify(taskJobRepository).findByTaskIdAndChildId(400L, 10L);
         verify(taskCompletionRepository).existsCompletionToday(
                 eq(10L), eq(400L), any(java.time.LocalDateTime.class), any(java.time.LocalDateTime.class));
         verify(taskCompletionRepository, never()).save(any());
