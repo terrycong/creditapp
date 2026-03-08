@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link th:href="@{/webjars/animate.css/4.1.1/animate.min.css}" rel="stylesheet"/>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+        }
+        
+        .register-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        .register-header {
+            background: linear-gradient(135deg, #4F46E5 0%, #6366f1 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .register-body {
+            padding: 30px;
+        }
+        
+        .btn-register {
+            background: linear-gradient(135deg, #4F46E5 0%, #6366f1 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .btn-register:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #3730a3 0%, #4f46e5 100%);
+        }
+        
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 5px;
+            transition: all 0.3s;
+        }
+        
+        .password-strength.weak {
+            background: #dc3545;
+            width: 33%;
+        }
+        
+        .password-strength.medium {
+            background: #ffc107;
+            width: 66%;
+        }
+        
+        .password-strength.strong {
+            background: #28a745;
+            width: 100%;
+        }
+        
+        .role-card {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid #e9ecef;
+        }
+        
+        .role-card:hover {
+            border-color: #4F46E5;
+            background-color: #f8f9ff;
+        }
+        
+        .role-card.selected {
+            border-color: #4F46E5;
+            background-color: #f8f9ff;
+        }
+        
+        .role-radio {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-5">
+                <div class="register-card animate__animated animate__fadeInUp">
+                    <div class="register-header">
+                        <i class="bi bi-person-plus-fill" style="font-size: 3rem;"></i>
+                        <h3 class="mt-3">创建账号</h3>
+                        <p class="mb-0">加入家庭积分系统</p>
+                    </div>
+                    
+                    <form class="register-body" th:action="@{/register}" th:object="${registerRequest}" method="post">
+                        <!-- Error Alert -->
+                        <div th:if="${error}" class="alert alert-danger animate__animated animate__shakeX" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span th:text="${error}">错误信息</span>
+                        </div>
+                        
+                        <!-- Role Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-person-badge"></i> 选择角色
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="role-card p-3 rounded w-100 text-center" onclick="selectRole('PARENT')">
+                                        <input type="radio" th:field="*{role}" value="PARENT" class="role-radio" required>
+                                        <i class="bi bi-person-workspace" style="font-size: 2rem; color: #4F46E5;"></i>
+                                        <div class="mt-2 fw-semibold">家长</div>
+                                        <small class="text-muted">创建和管理家庭</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-text text-muted mt-2">
+                                <i class="bi bi-info-circle"></i> 小孩账号需要由家长创建
+                            </div>
+                            <div th:if="${#fields.hasErrors('role')}" class="invalid-feedback d-block" th:errors="*{role}">
+                                请选择角色
+                            </div>
+                        </div>
+                        
+                        <!-- Username -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="bi bi-person"></i> 用户名
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''"
+                                   id="username" 
+                                   th:field="*{username}" 
+                                   placeholder="请输入3-20位用户名"
+                                   required>
+                            <div th:if="${#fields.hasErrors('username')}" class="invalid-feedback" th:errors="*{username}">
+                                用户名错误
+                            </div>
+                        </div>
+                        
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> 密码
+                            </label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
+                                   id="password" 
+                                   th:field="*{password}" 
+                                   placeholder="请输入至少6位密码"
+                                   oninput="checkPasswordStrength(this.value)"
+                                   required>
+                            <div class="password-strength" id="passwordStrength"></div>
+                            <small class="form-text text-muted" id="passwordHint">密码强度: 请输入密码</small>
+                            <div th:if="${#fields.hasErrors('password')}" class="invalid-feedback" th:errors="*{password}">
+                                密码错误
+                            </div>
+                        </div>
+                        
+                        <!-- Confirm Password -->
+                        <div class="mb-4">
+                            <label for="confirmPassword" class="form-label">
+                                <i class="bi bi-lock-fill"></i> 确认密码
+                            </label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid' : ''"
+                                   id="confirmPassword" 
+                                   th:field="*{confirmPassword}" 
+                                   placeholder="请再次输入密码"
+                                   oninput="checkPasswordMatch()"
+                                   required>
+                            <div class="invalid-feedback" id="passwordMatchFeedback">
+                                两次输入的密码不一致
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-register" id="submitBtn">
+                                <i class="bi bi-person-plus"></i> 注册
+                            </button>
+                        </div>
+                        
+                        <!-- Login Link -->
+                        <div class="text-center mt-4">
+                            <small class="text-muted">
+                                已有账号？ <a th:href="@{/login}" class="text-decoration-none fw-semibold">立即登录</a>
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+    
+    <script>
+        // Role selection
+        function selectRole(role) {
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            const strengthBar = document.getElementById('passwordStrength');
+            const hint = document.getElementById('passwordHint');
+            
+            if (password.length === 0) {
+                strengthBar.className = 'password-strength';
+                hint.textContent = '密码强度: 请输入密码';
+                return;
+            }
+            
+            let strength = 0;
+            if (password.length >= 6) strength++;
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            
+            strengthBar.className = 'password-strength';
+            if (strength <= 2) {
+                strengthBar.classList.add('weak');
+                hint.textContent = '密码强度: 弱 - 建议增加长度和复杂度';
+                hint.className = 'form-text text-danger';
+            } else if (strength <= 4) {
+                strengthBar.classList.add('medium');
+                hint.textContent = '密码强度: 中 - 还可以更安全';
+                hint.className = 'form-text text-warning';
+            } else {
+                strengthBar.classList.add('strong');
+                hint.textContent = '密码强度: 强 - 很好的密码！';
+                hint.className = 'form-text text-success';
+            }
+        }
+        
+        // Password match checker
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const feedback = document.getElementById('passwordMatchFeedback');
+            const confirmInput = document.getElementById('confirmPassword');
+            
+            if (confirmPassword.length === 0) {
+                confirmInput.classList.remove('is-invalid');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                confirmInput.classList.add('is-invalid');
+            } else {
+                confirmInput.classList.remove('is-invalid');
+            }
+        }
+        
+        // Form validation before submit
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const role = document.querySelector('input[name="role"]:checked');
+            
+            if (!role) {
+                e.preventDefault();
+                alert('请选择角色类型');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                document.getElementById('confirmPassword').classList.add('is-invalid');
+                return;
+            }
+            
+            // Disable submit button to prevent double submission
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 注册中...';
+        });
+    </script>
+</body>
+</html>
