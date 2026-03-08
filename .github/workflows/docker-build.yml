@@ -22,21 +22,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Sync from Gitee
-        env:
-          GITEE_REPO: https://gitee.com/terrycong/creditapp.git
-          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git remote add gitee $GITEE_REPO
-          git fetch gitee master
-          git checkout master
-          git reset --hard gitee/master
-          echo "Synced from Gitee: $(git rev-parse HEAD)"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
