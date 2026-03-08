@@ -115,6 +115,7 @@ public class RewardServiceImpl implements RewardService {
         redemption.setReward(reward);
         redemption.setChild(child);
         redemption.setRedeemedAt(LocalDateTime.now());
+        redemption.setStatus(com.creditapp.entity.RedemptionStatus.REDEEMED);
 
         rewardRedemptionRepository.save(redemption);
         childRepository.save(child);
@@ -150,6 +151,32 @@ public class RewardServiceImpl implements RewardService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public RewardRedemptionDTO useReward(Long redemptionId, Long childId) {
+        RewardRedemption redemption = rewardRedemptionRepository.findById(redemptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("RewardRedemption", redemptionId));
+
+        // Verify the redemption belongs to the child
+        if (!redemption.getChild().getId().equals(childId)) {
+            throw new BusinessException("UNAUTHORIZED", "无权操作此兑换记录");
+        }
+
+        // Check if already used
+        if (redemption.getStatus() == com.creditapp.entity.RedemptionStatus.USED) {
+            throw new BusinessException("ALREADY_USED", "此礼物已经使用过了");
+        }
+
+        // Mark as used
+        redemption.setStatus(com.creditapp.entity.RedemptionStatus.USED);
+        redemption.setUsedAt(LocalDateTime.now());
+
+        rewardRedemptionRepository.save(redemption);
+        log.info("Child {} marked reward redemption {} as used", childId, redemptionId);
+
+        return toRedemptionDTO(redemption);
+    }
+
     private RewardDTO toDTO(Reward reward) {
         return RewardDTO.builder()
                 .id(reward.getId())
@@ -172,6 +199,8 @@ public class RewardServiceImpl implements RewardService {
                 .childName(redemption.getChild().getUsername())
                 .redeemedAt(redemption.getRedeemedAt())
                 .note(redemption.getNote())
+                .status(redemption.getStatus() != null ? redemption.getStatus().name() : "REDEEMED")
+                .usedAt(redemption.getUsedAt())
                 .build();
     }
 }

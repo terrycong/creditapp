@@ -243,6 +243,38 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public User register(RegisterRequest request) {
+        // Validate password matching
+        if (!request.isPasswordMatching()) {
+            throw new BusinessException("PASSWORD_MISMATCH", "两次输入的密码不一致");
+        }
+
+        // Check username uniqueness across both users and children tables
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new BusinessException("USERNAME_EXISTS", "用户名已存在");
+        }
+
+        // Validate role - only PARENT can register through public registration
+        // CHILD accounts should be created by a parent via createChild()
+        if (request.getRole() != UserRole.PARENT) {
+            throw new BusinessException("INVALID_REGISTRATION_ROLE", "公开注册仅支持家长账号，小孩账号需要由家长创建");
+        }
+
+        // Create new parent user
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(UserRole.PARENT);
+        user.setPoints(0);
+
+        User savedUser = userRepository.save(user);
+        log.info("New user registered: username={}, role={}", savedUser.getUsername(), savedUser.getRole());
+        
+        return savedUser;
+    }
+
+    @Override
     public ChildDetailsDTO getChildDetails(Long childId) {
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new ResourceNotFoundException("Child", childId));

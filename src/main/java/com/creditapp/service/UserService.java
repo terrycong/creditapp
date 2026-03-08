@@ -18,4 +18,7 @@ public interface UserService {
     ChildDTO updateChild(Long childId, UpdateChildRequest request);
     void deleteChild(Long childId);
     ChildDetailsDTO getChildDetails(Long childId);
+    
+    // User registration
+    User register(RegisterRequest request);
 }

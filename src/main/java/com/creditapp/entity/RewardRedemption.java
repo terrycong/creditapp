@@ -23,6 +23,13 @@ public class RewardRedemption {
     @Column(length = 500)
     private String note;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RedemptionStatus status = RedemptionStatus.REDEEMED;
+
+    @Column
+    private java.time.LocalDateTime usedAt;
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -62,5 +69,21 @@ public class RewardRedemption {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public RedemptionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RedemptionStatus status) {
+        this.status = status;
+    }
+
+    public java.time.LocalDateTime getUsedAt() {
+        return usedAt;
+    }
+
+    public void setUsedAt(java.time.LocalDateTime usedAt) {
+        this.usedAt = usedAt;
     }
 }

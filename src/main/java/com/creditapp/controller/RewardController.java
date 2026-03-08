@@ -68,4 +68,13 @@ public class RewardController {
         RewardRedemptionDTO redemption = rewardService.redeemReward(id, childId);
         return ResponseEntity.ok(ApiResponse.success(redemption));
     }
+
+    @PostMapping("/redemptions/{redemptionId}/use")
+    @Operation(summary = "标记礼物为已使用")
+    public ResponseEntity<ApiResponse<RewardRedemptionDTO>> useReward(@PathVariable Long redemptionId,
+                                                                     @AuthenticationPrincipal UserDetails userDetails) {
+        Long childId = SecurityUtils.getChildIdFromUsername(userDetails.getUsername(), childRepository);
+        RewardRedemptionDTO redemption = rewardService.useReward(redemptionId, childId);
+        return ResponseEntity.ok(ApiResponse.success(redemption));
+    }
 }

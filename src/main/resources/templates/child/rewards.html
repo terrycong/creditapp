@@ -204,13 +204,63 @@
             </div>
         </div>
 
-        <!-- Redeemed Rewards -->
+        <!-- Pending Rewards (Redeemed but not used) -->
+        <div class="row mt-5 animate__animated animate__fadeInUp" th:if="${pendingRewards != null and !pendingRewards.isEmpty()}">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-gift"></i> 待使用的礼物
+                            <span class="badge bg-danger ms-2" th:text="${pendingRewards.size()}">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 
+                            以下礼物已兑换，但还未使用。使用时请点击"标记为已使用"按钮。
+                        </div>
+                        <div class="row">
+                            <div th:each="redemption : ${pendingRewards}" class="col-md-6 mb-3">
+                                <div class="card h-100 border-warning">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h5 class="card-title text-warning">
+                                                    <i class="bi bi-gift-fill"></i>
+                                                    <span th:text="${redemption.rewardName}">礼物名称</span>
+                                                </h5>
+                                                <p class="card-text">
+                                                    <span class="badge bg-warning text-dark" th:text="${redemption.pointsRequired + ' 积分'}">积分</span>
+                                                </p>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock"></i> 
+                                                    兑换时间：<span th:text="${#temporals.format(redemption.redeemedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</span>
+                                                </small>
+                                            </div>
+                                            <span class="badge bg-warning text-dark">待使用</span>
+                                        </div>
+                                        <div class="mt-3">
+                                            <button class="btn btn-success btn-sm use-reward-btn" 
+                                                    th:attr="data-redemption-id=${redemption.id}">
+                                                <i class="bi bi-check-lg"></i> 标记为已使用
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Redeemed Rewards History -->
         <div class="row mt-5 animate__animated animate__fadeInUp">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">
-                            <i class="bi bi-check-circle"></i> 已兑换的礼物
+                            <i class="bi bi-check-circle"></i> 兑换记录
                         </h5>
                     </div>
                     <div class="card-body">
@@ -229,6 +279,8 @@
                                             <th>礼物名称</th>
                                             <th>消耗积分</th>
                                             <th>兑换时间</th>
+                                            <th>状态</th>
+                                            <th>使用时间</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -237,7 +289,15 @@
                                             <td>
                                                 <span class="badge bg-warning text-dark" th:text="${redemption.pointsRequired + ' 积分'}">积分</span>
                                             </td>
-                                            <td th:text="${#temporals.format(redemption.redeemedAt, 'yyyy-MM-dd HH:mm:ss')}">2024-01-01 12:00:00</td>
+                                            <td th:text="${#temporals.format(redemption.redeemedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
+                                            <td>
+                                                <span th:if="${redemption.status == 'REDEEMED'}" class="badge bg-warning text-dark">待使用</span>
+                                                <span th:if="${redemption.status == 'USED'}" class="badge bg-success">已使用</span>
+                                            </td>
+                                            <td>
+                                                <span th:if="${redemption.usedAt != null}" th:text="${#temporals.format(redemption.usedAt, 'yyyy-MM-dd HH:mm')}">-</span>
+                                                <span th:if="${redemption.usedAt == null}" class="text-muted">-</span>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -313,7 +373,48 @@
                     redeemReward(button, rewardId, pointsRequired);
                 });
             });
+
+            // Initialize click handlers for use reward buttons
+            document.querySelectorAll('.use-reward-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var redemptionId = button.getAttribute('data-redemption-id');
+                    useReward(button, redemptionId);
+                });
+            });
         });
+
+        // Use reward function
+        function useReward(button, redemptionId) {
+            if (!confirm('确定要将此礼物标记为已使用吗？')) {
+                return;
+            }
+
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
+
+            fetch('/api/v1/rewards/redemptions/' + redemptionId + '/use', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.code === 'SUCCESS') {
+                    alert('礼物已标记为已使用！');
+                    setTimeout(function() { location.reload(); }, 1000);
+                } else {
+                    throw new Error(data.message || '操作失败');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error using reward:', error);
+                alert('操作失败: ' + (error.message || '未知错误'));
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
         /*]]>*/
     </script>
 </body>

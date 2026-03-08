@@ -11,6 +11,8 @@ public class RewardRedemptionDTO {
     private String childName;
     private LocalDateTime redeemedAt;
     private String note;
+    private String status;  // REDEEMED, USED
+    private LocalDateTime usedAt;
 
     // Getters and Setters
     public Long getId() {
@@ -77,6 +79,22 @@ public class RewardRedemptionDTO {
         this.note = note;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getUsedAt() {
+        return usedAt;
+    }
+
+    public void setUsedAt(LocalDateTime usedAt) {
+        this.usedAt = usedAt;
+    }
+
     // Builder
     public static Builder builder() {
         return new Builder();
@@ -91,6 +109,8 @@ public class RewardRedemptionDTO {
         private String childName;
         private LocalDateTime redeemedAt;
         private String note;
+        private String status;
+        private LocalDateTime usedAt;
 
         public Builder id(Long id) {
             this.id = id;
@@ -132,6 +152,16 @@ public class RewardRedemptionDTO {
             return this;
         }
 
+        public Builder status(String status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder usedAt(LocalDateTime usedAt) {
+            this.usedAt = usedAt;
+            return this;
+        }
+
         public RewardRedemptionDTO build() {
             RewardRedemptionDTO dto = new RewardRedemptionDTO();
             dto.id = this.id;
@@ -142,6 +172,8 @@ public class RewardRedemptionDTO {
             dto.childName = this.childName;
             dto.redeemedAt = this.redeemedAt;
             dto.note = this.note;
+            dto.status = this.status;
+            dto.usedAt = this.usedAt;
             return dto;
         }
     }

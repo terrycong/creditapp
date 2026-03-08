@@ -1,75 +1,111 @@
 @echo off
+REM ===================================================================
 REM Credit App Kill Script for Windows
-REM This script stops the running application
+REM Kills processes on port 8080 or specified port
+REM ===================================================================
+REM Usage:
+REM   kill.bat              - Kill process on default port 8080
+REM   kill.bat --port 8080  - Kill process on specific port
+REM   kill.bat --all        - Kill all Java processes
+REM   kill.bat --help       - Show this help message
+REM ===================================================================
 
-echo 🛑 Stopping Credit App...
+setlocal
 
 REM Default port
 set PORT=8080
+set KILLED=false
 
-REM Parse arguments
-:parse_args
-if "%1"=="" goto kill_port
-if "%1"=="--port" (
-    set PORT=%2
-    shift
-    shift
-    goto parse_args
-)
-if "%1"=="--all" (
-    echo 💀 Killing all Java processes...
-    taskkill /F /IM java.exe 2>nul
-    if %ERRORLEVEL% EQU 0 (
-        echo ✅ All Java processes killed
-    ) else (
-        echo ℹ️  No Java processes found
-    )
-    exit /b 0
-)
+REM Check for --all flag
+if "%~1"=="--all" goto kill_java
+if "%~1"=="--java" goto kill_java
+if "%~1"=="--help" goto help
+if "%~1"=="-h" goto help
 
-echo Unknown option: %1
-echo Usage: kill.bat [--port PORT] [--all]
-exit /b 1
+REM Check for --port flag
+if "%~1"=="--port" set PORT=%~2
+if "%~1"=="-p" set PORT=%~2
 
-:kill_port
-REM Find PID using the port
-set PID=
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%PORT% ^| findstr LISTENING') do (
-    set PID=%%a
-)
+:main
+echo [INFO] Searching for process on port %PORT%...
 
-if defined PID (
-    echo 🔫 Killing process %PID% on port %PORT%...
-    taskkill /F /PID %PID% 2>nul
-    timeout /t 2 /nobreak >nul
+REM Create temp file to track killed PIDs
+set "TEMP_FILE=%TEMP%\kill_pids_%RANDOM%.tmp"
+
+REM Find and kill unique PIDs on the port
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr /C":%PORT%" ^| findstr /C:"LISTENING"') do (
+    set "PID=%%a"
     
-    REM Verify process is killed
-    set PID2=
-    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%PORT% ^| findstr LISTENING') do (
-        set PID2=%%a
+    REM Check if already killed this PID
+    findstr /C:"!PID!" "%TEMP_FILE%" >nul 2>&1
+    if errorlevel 1 (
+        echo [INFO] Found process !PID! on port %PORT%
+        
+        REM Get process name
+        for /f "tokens=1" %%n in ('tasklist /FI "PID eq !PID!" /NH 2^>nul') do (
+            echo [INFO] Process name: %%n
+        )
+        
+        echo [INFO] Killing process !PID!...
+        taskkill /F /PID !PID! 2>&1
+        
+        if errorlevel 0 (
+            echo [SUCCESS] Process !PID! killed
+            set KILLED=true
+        ) else (
+            echo [ERROR] Failed to kill process !PID!
+        )
+        
+        REM Mark PID as killed
+        echo !PID! >> "%TEMP_FILE%"
     )
-    
-    if defined PID2 (
-        echo ❌ Failed to kill process on port %PORT%
-        exit /b 1
-    ) else (
-        echo ✅ Successfully killed process on port %PORT%
-    )
+)
+
+REM Cleanup temp file
+if exist "%TEMP_FILE%" del "%TEMP_FILE%"
+
+if "%KILLED%"=="false" (
+    echo [INFO] No process found on port %PORT%
 ) else (
-    echo ℹ️  No process found on port %PORT%
+    echo [SUCCESS] Port %PORT% cleanup complete
 )
 
-REM Also check for common alternative ports
-for %%p in (8081 8082 8083 8090) do (
-    set ALT_PID=
-    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%%p ^| findstr LISTENING') do (
-        set ALT_PID=%%a
-    )
-    
-    if defined ALT_PID (
-        echo ⚠️  Found process on alternative port %%p, killing...
-        taskkill /F /PID !ALT_PID! 2>nul
-    )
+goto check_status
+
+:kill_java
+echo [INFO] Killing all Java processes...
+taskkill /F /IM java.exe 2>&1
+echo [SUCCESS] Java processes cleanup complete
+goto end
+
+:check_status
+echo.
+echo [INFO] Current port status:
+netstat -ano ^| findstr /C":%PORT%" ^| findstr /C:"LISTENING" >nul 2>&1
+if errorlevel 1 (
+    echo [SUCCESS] Port %PORT% is now free
+) else (
+    echo [WARNING] Port %PORT% is still in use
+    netstat -ano ^| findstr /C":%PORT%" ^| findstr /C:"LISTENING"
 )
 
-echo ✅ Cleanup complete!
+goto end
+
+:help
+echo Credit App Kill Script for Windows
+echo.
+echo Usage: kill.bat [OPTIONS]
+echo.
+echo Options:
+echo   --port PORT, -p PORT  Kill process on specific port (default: 8080)
+echo   --all, --java         Kill all Java processes
+echo   --help, -h            Show this help message
+echo.
+echo Examples:
+echo   kill.bat              Kill process on port 8080
+echo   kill.bat --port 8081  Kill process on port 8081
+echo   kill.bat --all        Kill all Java processes
+goto end
+
+:end
+endlocal

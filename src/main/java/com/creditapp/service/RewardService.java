@@ -15,4 +15,5 @@ public interface RewardService {
     List<RewardDTO> getAllRewards();
     RewardRedemptionDTO redeemReward(Long rewardId, Long childId);
     List<RewardRedemptionDTO> getRedemptionsByChildId(Long childId);
+    RewardRedemptionDTO useReward(Long redemptionId, Long childId);
 }

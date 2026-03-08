@@ -23,9 +23,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,6 +53,42 @@ public class ViewController {
     @GetMapping("/login")
     public String login() {
         return "login";
+    }
+
+    @GetMapping("/register")
+    public String showRegistrationForm(Model model) {
+        model.addAttribute("registerRequest", new RegisterRequest());
+        return "register";
+    }
+
+    @PostMapping("/register")
+    public String registerUser(@Valid @ModelAttribute("registerRequest") RegisterRequest request,
+                               BindingResult bindingResult,
+                               RedirectAttributes redirectAttrs,
+                               Model model) {
+        // Check for validation errors
+        if (bindingResult.hasErrors()) {
+            return "register";
+        }
+
+        try {
+            // Register the user
+            User user = userService.register(request);
+            
+            // Add success message
+            redirectAttrs.addFlashAttribute("success", "注册成功！请使用新账号登录。");
+            log.info("User registered successfully: username={}", user.getUsername());
+            
+            return "redirect:/login";
+        } catch (BusinessException e) {
+            // Add error message to model
+            model.addAttribute("error", e.getMessage());
+            return "register";
+        } catch (Exception e) {
+            log.error("Registration failed", e);
+            model.addAttribute("error", "注册失败：" + e.getMessage());
+            return "register";
+        }
     }
 
     @GetMapping("/dashboard")
@@ -674,11 +712,17 @@ public class ViewController {
         List<RewardRedemptionDTO> redeemedRewards = rewardService.getRedemptionsByChildId(user.getId());
         model.addAttribute("redeemedRewards", redeemedRewards);
 
+        // Get pending rewards (redeemed but not used)
+        List<RewardRedemptionDTO> pendingRewards = redeemedRewards.stream()
+                .filter(r -> "REDEEMED".equals(r.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+        model.addAttribute("pendingRewards", pendingRewards);
+
         // Add username for display
         model.addAttribute("username", username);
 
-        log.info("Found {} rewards for child: {} with {} points and {} redemptions",
-                rewards.size(), username, child.getPoints(), redeemedRewards.size());
+        log.info("Found {} rewards for child: {} with {} points, {} total redemptions, {} pending",
+                rewards.size(), username, child.getPoints(), redeemedRewards.size(), pendingRewards.size());
         return "child/rewards";
     }
 

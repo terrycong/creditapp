@@ -90,8 +90,29 @@
                         
                         <div class="text-center mt-3">
                             <small class="text-muted">
-                                <i class="bi bi-info-circle"></i>
+                                <i class="bi bi-info-circle"></i> 还没有账号？
+                                <a th:href="@{/register}" class="text-decoration-none fw-semibold">立即注册</a>
                             </small>
+                        </div>
+                        
+                        <!-- Success message after registration -->
+                        <div th:if="${success}" class="alert alert-success mt-3 animate__animated animate__fadeIn" role="alert">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span th:text="${success}">注册成功！</span>
+                        </div>
+                        
+                        <!-- Error message -->
+                        <div th:if="${param.error}" class="alert alert-danger mt-3 animate__animated animate__shakeX" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <strong>登录失败</strong><br>
+                            <small>用户名或密码错误，请检查后重试。</small><br>
+                            <small class="text-muted">默认账号：parent / parent123 或 child / child123</small>
+                        </div>
+                        
+                        <!-- Logout message -->
+                        <div th:if="${param.logout}" class="alert alert-info mt-3 animate__animated animate__fadeIn" role="alert">
+                            <i class="bi bi-info-circle-fill"></i>
+                            您已成功退出登录
                         </div>
                     </form>
                 </div>
