@@ -43,6 +43,7 @@ public interface TaskService {
     TaskDTO pickTask(Long taskId, Long childId);
     void unpickTask(Long taskId, Long childId);
     List<TaskDTO> getMarketplaceTasks(Long childId);
+    List<TaskDTO> getMarketplaceTasksWithSearch(Long childId, String keyword);
     List<TaskDTO> getMarketplaceTasksByParent(Long parentId);
     List<TaskDTO> getPickedTasks(Long childId);
 

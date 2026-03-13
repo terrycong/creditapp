@@ -163,9 +163,23 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header bg-info text-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-shop"></i> 任务市场
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-shop"></i> 任务市场
+                            </h5>
+                            <form th:action="@{/child/marketplace}" method="get" class="d-flex">
+                                <input type="text" name="search" class="form-control form-control-sm me-2" 
+                                       placeholder="搜索任务..." 
+                                       th:value="${searchKeyword}"
+                                       style="width: 200px;">
+                                <button type="submit" class="btn btn-light btn-sm">
+                                    <i class="bi bi-search"></i> 搜索
+                                </button>
+                                <a th:href="@{/child/marketplace}" class="btn btn-outline-light btn-sm ms-1">
+                                    <i class="bi bi-x-circle"></i> 清除
+                                </a>
+                            </form>
+                        </div>
                     </div>
                     <div class="card-body">
                         <!-- Empty state -->
@@ -178,46 +192,57 @@
                         </div>
 
                         <!-- Dynamic marketplace task list -->
-                        <div th:if="${marketplaceTasks != null and !marketplaceTasks.isEmpty()}" class="row">
-                            <div th:each="task, iterStat : ${marketplaceTasks}"
-                                 class="col-md-6 mb-4 animate__animated animate__fadeInUp"
-                                 th:style="'animation-delay: ' + ${iterStat.count * 100} + 'ms'">
-                                <div class="card task-card h-100" 
-                                     th:classappend="${task.pickedByChildId != null ? 'bg-light' : ''}">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <h5 class="card-title mb-0" th:text="${task.title}">任务标题</h5>
-                                            <span class="badge points-badge" th:text="${task.points + ' 积分'}">10 积分</span>
-                                        </div>
-                                        <p class="card-text text-muted" th:text="${task.description}">任务描述</p>
-                                        <div class="mb-3">
+                        <div th:if="${marketplaceTasks != null and !marketplaceTasks.isEmpty()}" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>任务名称</th>
+                                        <th>积分</th>
+                                        <th>类型</th>
+                                        <th>描述</th>
+                                        <th style="width: 120px; text-align: right;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="task, iterStat : ${marketplaceTasks}"
+                                        class="animate__animated animate__fadeInUp"
+                                        th:classappend="${task.pickedByChildId != null ? 'table-light' : ''}"
+                                        th:style="'animation-delay: ' + ${iterStat.count * 100} + 'ms'">
+                                        <td>
+                                            <strong th:text="${task.title}">任务标题</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success" th:text="${task.points + ' 积分'}">10 积分</span>
+                                        </td>
+                                        <td>
                                             <!-- Task type badge -->
                                             <th:block th:switch="${task.type}">
-                                                <span th:case="'ONE_TIME'" class="badge bg-info task-type-badge">一次性</span>
-                                                <span th:case="'REPEATABLE'" class="badge bg-info task-type-badge">可重复</span>
-                                                <span th:case="'DAILY_ONCE'" class="badge bg-info task-type-badge">每日一次</span>
-                                                <span th:case="'MANDATORY'" class="badge bg-info task-type-badge">强制任务</span>
+                                                <span th:case="'ONE_TIME'" class="badge bg-info">一次性</span>
+                                                <span th:case="'REPEATABLE'" class="badge bg-info">可重复</span>
+                                                <span th:case="'DAILY_ONCE'" class="badge bg-info">每日一次</span>
+                                                <span th:case="'MANDATORY'" class="badge bg-info">强制任务</span>
                                             </th:block>
                                             <!-- Picked indicator -->
-                                            <span th:if="${task.pickedByChildId != null}" class="badge bg-success task-type-badge ms-1">
+                                            <span th:if="${task.pickedByChildId != null}" class="badge bg-success ms-1">
                                                 <i class="bi bi-check-circle"></i> 已选取
                                             </span>
-                                        </div>
-                                        <div class="d-grid">
+                                        </td>
+                                        <td class="text-muted" th:text="${task.description}">任务描述</td>
+                                        <td style="text-align: right;">
                                             <button th:if="${task.pickedByChildId == null}"
-                                                    class="btn btn-info pick-task-btn"
+                                                    class="btn btn-info btn-sm pick-task-btn"
                                                     th:attr="data-task-id=${task.id}"
                                                     th:id="'pickBtn-' + ${task.id}">
                                                 <i class="bi bi-plus-circle"></i> 挑选任务
                                             </button>
                                             <button th:if="${task.pickedByChildId != null}"
-                                                    class="btn btn-secondary" disabled>
+                                                    class="btn btn-secondary btn-sm" disabled>
                                                 <i class="bi bi-check-circle"></i> 已选取
                                             </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -244,77 +269,163 @@
 
     <footer class="bg-dark text-white text-center py-3 mt-5">
         <div class="container">
-            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+            <p>&copy; 2024 家庭积分系统。让爱与陪伴一起成长！</p>
         </div>
     </footer>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-question-circle text-primary"></i> 请确认
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmModalMessage">
+                    确定要执行此操作吗？
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmModalConfirm">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alertModalLabel">
+                        <i class="bi bi-info-circle text-info"></i> 提示
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="alertModalMessage">
+                    操作提示
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap JS (WebJars) -->
     <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
 
-    <!-- Task Marketplace JavaScript -->
+    <!-- Modal Helper Functions -->
     <script>
         /*<![CDATA[*/
-        function pickTask(button, taskId) {
-            if (!confirm('确定要挑选这个任务吗？挑选后任务将出现在你的任务列表中。')) {
-                return;
+        let confirmModal, alertModal;
+        let confirmCallback = null;
+
+        // Initialize modals
+        document.addEventListener('DOMContentLoaded', function() {
+            confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+
+            // Setup confirm button handler
+            document.getElementById('confirmModalConfirm').addEventListener('click', function() {
+                if (confirmCallback) {
+                    confirmCallback();
+                }
+                confirmModal.hide();
+            });
+        });
+
+        // Show confirmation modal
+        function showConfirm(message, onConfirm) {
+            document.getElementById('confirmModalMessage').textContent = message;
+            confirmCallback = onConfirm;
+            confirmModal.show();
+        }
+
+        // Show alert modal
+        function showAlert(message, type) {
+            const modalTitle = document.getElementById('alertModalLabel');
+            const icon = modalTitle.querySelector('i');
+            
+            icon.className = '';
+            if (type === 'success') {
+                icon.className = 'bi bi-check-circle text-success';
+            } else if (type === 'error') {
+                icon.className = 'bi bi-exclamation-triangle text-danger';
+            } else if (type === 'warning') {
+                icon.className = 'bi bi-exclamation-circle text-warning';
+            } else {
+                icon.className = 'bi bi-info-circle text-info';
             }
+            
+            document.getElementById('alertModalMessage').textContent = message;
+            alertModal.show();
+        }
 
-            const originalText = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
+        // Task Marketplace JavaScript
+        function pickTask(button, taskId) {
+            showConfirm('确定要挑选这个任务吗？挑选后任务将出现在你的任务列表中。', function() {
+                const originalText = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
 
-            fetch('/child/marketplace/' + taskId + '/pick', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                if (data.code === 'SUCCESS') {
-                    alert('任务挑选成功！现在可以在"我的任务"中查看并完成它。');
-                    window.location.href = '/child/tasks';
-                } else {
-                    throw new Error(data.message || '操作失败');
-                }
-            })
-            .catch(function(error) {
-                console.error('Error picking task:', error);
-                alert('挑选失败: ' + (error.message || '未知错误'));
-                button.disabled = false;
-                button.innerHTML = originalText;
+                fetch('/child/marketplace/' + taskId + '/pick', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.code === 'SUCCESS') {
+                        showAlert('任务挑选成功！现在可以在"我的任务"中查看并完成它。', 'success');
+                        setTimeout(function() {
+                            window.location.href = '/child/tasks';
+                        }, 1500);
+                    } else {
+                        throw new Error(data.message || '操作失败');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error picking task:', error);
+                    showAlert('挑选失败：' + (error.message || '未知错误'), 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                });
             });
         }
 
         function unpickTask(button, taskId) {
-            if (!confirm('确定要取消挑选这个任务吗？')) {
-                return;
-            }
+            showConfirm('确定要取消挑选这个任务吗？', function() {
+                const originalText = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
 
-            const originalText = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
-
-            fetch('/child/marketplace/' + taskId + '/unpick', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                if (data.code === 'SUCCESS') {
-                    alert('已取消挑选任务。');
-                    window.location.href = '/child/marketplace';
-                } else {
-                    throw new Error(data.message || '操作失败');
-                }
-            })
-            .catch(function(error) {
-                console.error('Error unpicking task:', error);
-                alert('取消失败: ' + (error.message || '未知错误'));
-                button.disabled = false;
-                button.innerHTML = originalText;
+                fetch('/child/marketplace/' + taskId + '/unpick', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.code === 'SUCCESS') {
+                        showAlert('已取消挑选任务。', 'success');
+                        setTimeout(function() {
+                            window.location.href = '/child/marketplace';
+                        }, 1500);
+                    } else {
+                        throw new Error(data.message || '操作失败');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error unpicking task:', error);
+                    showAlert('取消失败：' + (error.message || '未知错误'), 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                });
             });
         }
 

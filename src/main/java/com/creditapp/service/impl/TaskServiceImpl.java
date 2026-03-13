@@ -192,6 +192,7 @@ public class TaskServiceImpl implements TaskService {
                 .assignedChildId(job.getChild().getId())
                 .assignedChildName(job.getChild().getUsername())
                 .active(job.getStatus() == JobStatus.ASSIGNED || job.getStatus() == JobStatus.IN_PROGRESS)
+                .createdAt(job.getTask().getCreatedAt())
                 .deadlineType(job.getTask().getDeadlineType())
                 .deadlineValue(job.getTask().getDeadlineValue())
                 .penaltyPoints(job.getTask().getPenaltyPoints())
@@ -557,6 +558,7 @@ public class TaskServiceImpl implements TaskService {
                 .createdById(task.getCreatedBy() != null ? task.getCreatedBy().getId() : null)
                 .createdByName(task.getCreatedBy() != null ? task.getCreatedBy().getUsername() : null)
                 .active(task.isActive())
+                .createdAt(task.getCreatedAt())
                 .deadlineType(task.getDeadlineType())
                 .deadlineValue(task.getDeadlineValue())
                 .penaltyPoints(task.getPenaltyPoints())
@@ -657,6 +659,26 @@ public class TaskServiceImpl implements TaskService {
         }
 
         List<Task> tasks = taskRepository.findAvailableMarketplaceTasksByParentId(parent.getId());
+        return tasks.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TaskDTO> getMarketplaceTasksWithSearch(Long childId, String keyword) {
+        Child child = childRepository.findById(childId)
+                .orElseThrow(() -> new ResourceNotFoundException("Child", childId));
+
+        User parent = child.getParent();
+        if (parent == null) {
+            throw new BusinessException("CHILD_INVALID", "孩子没有关联的家长");
+        }
+
+        List<Task> tasks;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            tasks = taskRepository.findVisibleMarketplaceTasksByParentIdWithSearch(parent.getId(), keyword.trim());
+        } else {
+            tasks = taskRepository.findVisibleMarketplaceTasksByParentId(parent.getId());
+        }
         return tasks.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
