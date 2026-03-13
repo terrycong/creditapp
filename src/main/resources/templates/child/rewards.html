@@ -318,49 +318,131 @@
     <!-- Bootstrap JS -->
     <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
 
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-question-circle text-primary"></i> 请确认
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmModalMessage">
+                    确定要执行此操作吗？
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmModalConfirm">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alertModalLabel">
+                        <i class="bi bi-info-circle text-info"></i> 提示
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="alertModalMessage">
+                    操作提示
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Reward Redemption JavaScript -->
     <script>
         /*<![CDATA[*/
         const childPoints = [[${childPoints}]];
+        let confirmModal, alertModal;
+        let confirmCallback = null;
+
+        // Initialize modals
+        document.addEventListener('DOMContentLoaded', function() {
+            confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+
+            // Setup confirm button handler
+            document.getElementById('confirmModalConfirm').addEventListener('click', function() {
+                if (confirmCallback) {
+                    confirmCallback();
+                }
+                confirmModal.hide();
+            });
+        });
+
+        // Show confirmation modal
+        function showConfirm(message, onConfirm) {
+            document.getElementById('confirmModalMessage').textContent = message;
+            confirmCallback = onConfirm;
+            confirmModal.show();
+        }
+
+        // Show alert modal
+        function showAlert(message, type) {
+            const modalTitle = document.getElementById('alertModalLabel');
+            const icon = modalTitle.querySelector('i');
+            
+            icon.className = '';
+            if (type === 'success') {
+                icon.className = 'bi bi-check-circle text-success';
+            } else if (type === 'error') {
+                icon.className = 'bi bi-exclamation-triangle text-danger';
+            } else if (type === 'warning') {
+                icon.className = 'bi bi-exclamation-circle text-warning';
+            } else {
+                icon.className = 'bi bi-info-circle text-info';
+            }
+            
+            document.getElementById('alertModalMessage').textContent = message;
+            alertModal.show();
+        }
 
         function redeemReward(button, rewardId, pointsRequired) {
             if (childPoints < pointsRequired) {
-                alert('积分不足，无法兑换此礼物！快去完成任务赚取积分吧。');
+                showAlert('积分不足，无法兑换此礼物！快去完成任务赚取积分吧。', 'warning');
                 return;
             }
 
-            if (!confirm('确定要用 ' + pointsRequired + ' 积分兑换此礼物吗？')) {
-                return;
-            }
+            showConfirm('确定要用 ' + pointsRequired + ' 积分兑换此礼物吗？', function() {
+                const originalText = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-hourglass-split"></i> 兑换中...';
 
-            const originalText = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 兑换中...';
-
-            fetch('/api/v1/rewards/' + rewardId + '/redeem', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                if (data.code === 'SUCCESS') {
-                    alert('兑换成功！礼物已经记录到你的兑换记录中。');
-                    button.disabled = true;
-                    button.innerHTML = '<i class="bi bi-check-circle"></i> 已兑换';
-                    button.classList.remove('btn-success', 'btn-warning');
-                    button.classList.add('btn-secondary');
-                    setTimeout(function() { location.reload(); }, 1500);
-                } else {
-                    throw new Error(data.message || '操作失败');
-                }
-            })
-            .catch(function(error) {
-                console.error('Error redeeming reward:', error);
-                alert('兑换失败: ' + (error.message || '未知错误'));
-                button.disabled = false;
-                button.innerHTML = originalText;
+                fetch('/api/v1/rewards/' + rewardId + '/redeem', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.code === 'SUCCESS') {
+                        showAlert('兑换成功！礼物已经记录到你的兑换记录中。', 'success');
+                        button.disabled = true;
+                        button.innerHTML = '<i class="bi bi-check-circle"></i> 已兑换';
+                        button.classList.remove('btn-success', 'btn-warning');
+                        button.classList.add('btn-secondary');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        throw new Error(data.message || '操作失败');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error redeeming reward:', error);
+                    showAlert('兑换失败：' + (error.message || '未知错误'), 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                });
             });
         }
 
@@ -385,34 +467,32 @@
 
         // Use reward function
         function useReward(button, redemptionId) {
-            if (!confirm('确定要将此礼物标记为已使用吗？')) {
-                return;
-            }
+            showConfirm('确定要将此礼物标记为已使用吗？', function() {
+                const originalText = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
 
-            const originalText = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 处理中...';
-
-            fetch('/api/v1/rewards/redemptions/' + redemptionId + '/use', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                if (data.code === 'SUCCESS') {
-                    alert('礼物已标记为已使用！');
-                    setTimeout(function() { location.reload(); }, 1000);
-                } else {
-                    throw new Error(data.message || '操作失败');
-                }
-            })
-            .catch(function(error) {
-                console.error('Error using reward:', error);
-                alert('操作失败: ' + (error.message || '未知错误'));
-                button.disabled = false;
-                button.innerHTML = originalText;
+                fetch('/api/v1/rewards/redemptions/' + redemptionId + '/use', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.code === 'SUCCESS') {
+                        showAlert('礼物已标记为已使用！', 'success');
+                        setTimeout(function() { location.reload(); }, 1000);
+                    } else {
+                        throw new Error(data.message || '操作失败');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error using reward:', error);
+                    showAlert('操作失败：' + (error.message || '未知错误'), 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                });
             });
         }
         /*]]>*/

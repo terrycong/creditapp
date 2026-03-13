@@ -18,21 +18,22 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT t FROM Task t " +
            "WHERE t.createdBy.id IN (SELECT c.id FROM Child c WHERE c.parent.id = :parentId) " +
            "AND t.status = 'DRAFT' " +
-           "ORDER BY t.id DESC")
+           "ORDER BY t.createdAt DESC")
     List<Task> findDraftTasksByParentId(@Param("parentId") Long parentId);
 
     // Find tasks created by a specific child
-    @Query("SELECT t FROM Task t WHERE t.createdBy.id = :childId ORDER BY t.id DESC")
+    @Query("SELECT t FROM Task t WHERE t.createdBy.id = :childId ORDER BY t.createdAt DESC")
     List<Task> findByCreatedById(@Param("childId") Long childId);
 
     // Find all marketplace tasks for parent view
-    // Tasks are marketplace tasks if they have no TaskJob assigned
+    // Tasks are marketplace tasks if they have NO assignedChild and NO pickedByChild
     @Query("SELECT t FROM Task t " +
             "WHERE t.createdBy.id = :parentId " +
             "AND t.active = true " +
             "AND t.status = 'APPROVED' " +
-            "AND NOT EXISTS (SELECT tj FROM TaskJob tj WHERE tj.task = t AND tj.status IN ('ASSIGNED', 'IN_PROGRESS')) " +
-            "ORDER BY t.id DESC")
+            "AND t.assignedChild IS NULL " +
+            "AND t.pickedByChild IS NULL " +
+            "ORDER BY t.createdAt DESC")
     List<Task> findAvailableMarketplaceTasksByParentId(@Param("parentId") Long parentId);
 
     // Find all marketplace tasks (available + picked) for parent view
@@ -41,7 +42,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "WHERE t.createdBy.id = :parentId " +
             "AND t.active = true " +
             "AND t.status = 'APPROVED' " +
-            "ORDER BY t.id DESC")
+            "ORDER BY t.createdAt DESC")
     List<Task> findAllMarketplaceTasksByParentId(@Param("parentId") Long parentId);
 
     // Find all marketplace tasks including hidden/inactive for parent management view
@@ -49,23 +50,34 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "LEFT JOIN FETCH t.createdBy " +
             "WHERE t.createdBy.id = :parentId " +
             "AND t.status = 'APPROVED' " +
-            "ORDER BY t.active DESC, t.id DESC")
+            "ORDER BY t.active DESC, t.createdAt DESC")
     List<Task> findAllMarketplaceTasksIncludingHiddenByParentId(@Param("parentId") Long parentId);
 
+    // Find marketplace tasks visible to children (only active ones) with optional search
+    @Query("SELECT t FROM Task t " +
+            "LEFT JOIN FETCH t.createdBy " +
+            "WHERE t.createdBy.id = :parentId " +
+            "AND t.active = true " +
+            "AND t.status = 'APPROVED' " +
+            "AND (:keyword IS NULL OR :keyword = '' OR t.title LIKE %:keyword% OR t.description LIKE %:keyword%) " +
+            "ORDER BY t.createdAt DESC")
+    List<Task> findVisibleMarketplaceTasksByParentIdWithSearch(@Param("parentId") Long parentId,
+                                                                @Param("keyword") String keyword);
+    
     // Find marketplace tasks visible to children (only active ones)
     @Query("SELECT t FROM Task t " +
             "LEFT JOIN FETCH t.createdBy " +
             "WHERE t.createdBy.id = :parentId " +
             "AND t.active = true " +
             "AND t.status = 'APPROVED' " +
-            "ORDER BY t.id DESC")
+            "ORDER BY t.createdAt DESC")
     List<Task> findVisibleMarketplaceTasksByParentId(@Param("parentId") Long parentId);
 
-    // Find tasks picked by a specific child (from marketplace)
+    // Find tasks picked by a specific child (from marketplace) - ORDER BY picked time
     @Query("SELECT t FROM Task t " +
             "WHERE t.pickedByChild.id = :childId " +
             "AND t.active = true " +
-            "ORDER BY t.id DESC")
+            "ORDER BY t.createdAt DESC")
     List<Task> findPickedTasksByChildId(@Param("childId") Long childId);
 
     // Find active tasks with child information (for child's task list)
@@ -75,6 +87,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "WHERE t.active = true " +
             "AND t.status = 'APPROVED' " +
             "AND (t.assignedChild.id = :childId OR t.pickedByChild.id = :childId) " +
-            "ORDER BY t.id DESC")
+            "ORDER BY t.createdAt DESC")
     List<Task> findActiveTasksWithChild(@Param("childId") Long childId);
 }

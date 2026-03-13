@@ -35,6 +35,16 @@ public enum PointChangeType {
     INITIAL("初始积分"),
 
     /**
+     * Points spent on lottery draw
+     */
+    LOTTERY_DRAW("抽奖消耗"),
+
+    /**
+     * Points won from lottery
+     */
+    LOTTERY_WIN("抽奖获奖"),
+
+    /**
      * Other/unknown reason
      */
     OTHER("其他");

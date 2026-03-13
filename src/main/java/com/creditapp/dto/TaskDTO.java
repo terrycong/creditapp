@@ -3,6 +3,7 @@ package com.creditapp.dto;
 import com.creditapp.entity.TaskDeadlineType;
 import com.creditapp.entity.TaskType;
 import com.creditapp.entity.TaskStatus;
+import java.time.LocalDateTime;
 
 public class TaskDTO {
     private Long id;
@@ -18,6 +19,9 @@ public class TaskDTO {
     private Long pickedByChildId;
     private String pickedByChildName;
     private boolean active;
+    
+    // 创建时间
+    private LocalDateTime createdAt;
 
     // 强制任务相关字段
     private TaskDeadlineType deadlineType;
@@ -129,6 +133,14 @@ public class TaskDTO {
         this.active = active;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public TaskDeadlineType getDeadlineType() {
         return deadlineType;
     }
@@ -172,6 +184,7 @@ public class TaskDTO {
         private Long pickedByChildId;
         private String pickedByChildName;
         private boolean active;
+        private LocalDateTime createdAt;
         private TaskDeadlineType deadlineType;
         private Integer deadlineValue;
         private Integer penaltyPoints;
@@ -241,6 +254,11 @@ public class TaskDTO {
             return this;
         }
 
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
         public Builder deadlineType(TaskDeadlineType deadlineType) {
             this.deadlineType = deadlineType;
             return this;
@@ -271,6 +289,7 @@ public class TaskDTO {
             dto.pickedByChildId = this.pickedByChildId;
             dto.pickedByChildName = this.pickedByChildName;
             dto.active = this.active;
+            dto.createdAt = this.createdAt;
             dto.deadlineType = this.deadlineType;
             dto.deadlineValue = this.deadlineValue;
             dto.penaltyPoints = this.penaltyPoints;

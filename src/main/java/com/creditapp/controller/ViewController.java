@@ -11,6 +11,7 @@ import com.creditapp.exception.BusinessException;
 import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.service.DashboardService;
+import com.creditapp.service.LotteryService;
 import com.creditapp.service.PointHistoryService;
 import com.creditapp.service.RewardService;
 import com.creditapp.service.TaskService;
@@ -44,6 +45,7 @@ public class ViewController {
     private final PointHistoryService pointHistoryService;
     private final ChildRepository childRepository;
     private final TaskCompletionRepository taskCompletionRepository;
+    private final LotteryService lotteryService;
 
     @GetMapping("/")
     public String home() {
@@ -595,9 +597,11 @@ public class ViewController {
 
     // ========== Marketplace ==========
 
-    // Get marketplace tasks for child
+    // Get marketplace tasks for child with optional search
     @GetMapping("/child/marketplace")
-    public String marketplace(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String marketplace(@AuthenticationPrincipal UserDetails userDetails, 
+                             @RequestParam(required = false) String search,
+                             Model model) {
         log.info("=== CHILD MARKETPLACE CONTROLLER INVOKED ===");
         if (userDetails == null) {
             log.warn("UserDetails is null - user not authenticated!");
@@ -606,17 +610,24 @@ public class ViewController {
 
         String username = userDetails.getUsername();
         User user = userService.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
 
-        log.info("Marketplace accessed by user: {}, userId: {}", username, user.getId());
+        log.info("Marketplace accessed by user: {}, userId: {}, search: {}", username, user.getId(), search);
 
         // Get child's parent ID to filter marketplace tasks
         ChildDTO child = userService.getChildById(user.getId());
         Long parentId = child.getParentId();
 
-        // Query marketplace tasks (tasks shared by parents in the family network)
-        List<TaskDTO> marketplaceTasks = taskService.getMarketplaceTasks(user.getId());
+        // Query marketplace tasks with optional search
+        List<TaskDTO> marketplaceTasks;
+        if (search != null && !search.trim().isEmpty()) {
+            marketplaceTasks = taskService.getMarketplaceTasksWithSearch(user.getId(), search.trim());
+            log.info("Search keyword: '{}', found {} tasks", search, marketplaceTasks.size());
+        } else {
+            marketplaceTasks = taskService.getMarketplaceTasks(user.getId());
+        }
         model.addAttribute("marketplaceTasks", marketplaceTasks);
+        model.addAttribute("searchKeyword", search != null ? search : "");
 
         // Get child's picked tasks
         List<TaskDTO> pickedTasks = taskService.getPickedTasks(user.getId());
@@ -1103,8 +1114,56 @@ public class ViewController {
             return "redirect:/parent/notifications";
         } catch (Exception e) {
             log.error("Failed to check deadlines", e);
-            redirectAttrs.addFlashAttribute("error", "检查失败: " + e.getMessage());
+            redirectAttrs.addFlashAttribute("error", "检查失败：" + e.getMessage());
             return "redirect:/parent/notifications";
         }
+    }
+
+    // ========== Lottery Management (Parent) ==========
+
+    @GetMapping("/parent/lottery")
+    public String parentLottery(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== PARENT LOTTERY CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        // Get parent's lottery themes
+        List<LotteryThemeDTO> themes = lotteryService.getThemesByParent(user.getId());
+        model.addAttribute("themes", themes);
+        model.addAttribute("username", username);
+
+        log.info("Found {} lottery themes for parent: {}", themes.size(), username);
+        return "parent/lottery";
+    }
+
+    // ========== Lottery (Child) ==========
+
+    @GetMapping("/child/lottery")
+    public String childLottery(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== CHILD LOTTERY CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        // Get active lottery themes with prizes
+        List<LotteryThemeDTO> themes = lotteryService.getAllActiveThemesWithPrizes();
+        model.addAttribute("themes", themes);
+
+        // Get child's points
+        ChildDTO child = userService.getChildById(user.getId());
+        model.addAttribute("childPoints", child.getPoints());
+        model.addAttribute("username", username);
+
+        log.info("Found {} active lottery themes for child: {}", themes.size(), username);
+        return "child/lottery";
     }
 }
