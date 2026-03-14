@@ -44,7 +44,7 @@ public class LotteryPrize {
     /**
      * 奖品价值（积分）
      */
-    @Column(nullable = false)
+    @Column(name = "`value`", nullable = false)
     private Integer value;
 
     /**
