@@ -22,6 +22,9 @@ public class TaskDTO {
     
     // 创建时间
     private LocalDateTime createdAt;
+    
+    // 领取任务的时间（市场任务）
+    private LocalDateTime pickedAt;
 
     // 强制任务相关字段
     private TaskDeadlineType deadlineType;
@@ -141,6 +144,14 @@ public class TaskDTO {
         this.createdAt = createdAt;
     }
 
+    public LocalDateTime getPickedAt() {
+        return pickedAt;
+    }
+
+    public void setPickedAt(LocalDateTime pickedAt) {
+        this.pickedAt = pickedAt;
+    }
+
     public TaskDeadlineType getDeadlineType() {
         return deadlineType;
     }
@@ -185,6 +196,7 @@ public class TaskDTO {
         private String pickedByChildName;
         private boolean active;
         private LocalDateTime createdAt;
+        private LocalDateTime pickedAt;
         private TaskDeadlineType deadlineType;
         private Integer deadlineValue;
         private Integer penaltyPoints;
@@ -259,6 +271,11 @@ public class TaskDTO {
             return this;
         }
 
+        public Builder pickedAt(LocalDateTime pickedAt) {
+            this.pickedAt = pickedAt;
+            return this;
+        }
+
         public Builder deadlineType(TaskDeadlineType deadlineType) {
             this.deadlineType = deadlineType;
             return this;
@@ -290,6 +307,7 @@ public class TaskDTO {
             dto.pickedByChildName = this.pickedByChildName;
             dto.active = this.active;
             dto.createdAt = this.createdAt;
+            dto.pickedAt = this.pickedAt;
             dto.deadlineType = this.deadlineType;
             dto.deadlineValue = this.deadlineValue;
             dto.penaltyPoints = this.penaltyPoints;

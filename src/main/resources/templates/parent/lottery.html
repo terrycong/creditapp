@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽奖管理 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link th:href="@{/webjars/animate.css/4.1.1/animate.min.css}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/lottery">
+                            <i class="bi bi-trophy"></i> 抽奖管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/children">
+                            <i class="bi bi-people"></i> 小孩管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title animate__animated animate__fadeInLeft">
+                    <i class="bi bi-trophy"></i> 抽奖管理
+                </h1>
+                <p class="text-muted">创建抽奖活动，让小孩通过抽奖获得额外奖励！</p>
+            </div>
+        </div>
+
+        <!-- Create Theme Form -->
+        <div class="row mb-4 animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-plus-circle"></i> 创建抽奖主题
+                        </h5>
+                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#createThemeForm">
+                            <i class="bi bi-chevron-down"></i> 展开/收起
+                        </button>
+                    </div>
+                    <div class="card-body collapse" id="createThemeForm">
+                        <form id="createThemeFormEl">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="themeName" class="form-label">主题名称</label>
+                                    <input type="text" class="form-control" id="themeName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="pointsPerDraw" class="form-label">每次消耗积分</label>
+                                    <input type="number" class="form-control" id="pointsPerDraw" min="1" value="50" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="themeDescription" class="form-label">主题描述</label>
+                                <textarea class="form-control" id="themeDescription" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="themeType" class="form-label">抽奖类型</label>
+                                <select class="form-select" id="themeType">
+                                    <option value="WEIGHTED_RANDOM">权重随机</option>
+                                    <option value="FIXED_PROBABILITY">固定概率</option>
+                                    <option value="GUARANTEED">必中模式</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> 创建主题
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Themes List -->
+        <div class="row animate__animated animate__fadeInUp">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-task"></i> 我的抽奖主题
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Empty state -->
+                        <div th:if="${#lists.isEmpty(themes)}" class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="bi bi-inbox" style="font-size: 4rem; color: #d1d5db;"></i>
+                            </div>
+                            <h5 class="text-muted">暂时没有抽奖主题</h5>
+                            <p class="text-muted">点击上方"创建抽奖主题"按钮创建第一个抽奖活动！</p>
+                        </div>
+
+                        <!-- Theme list -->
+                        <div th:if="${!#lists.isEmpty(themes)}" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>主题名称</th>
+                                        <th>消耗积分</th>
+                                        <th>类型</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="theme : ${themes}">
+                                        <td>
+                                            <strong th:text="${theme.name}">主题名称</strong>
+                                            <div class="text-muted small" th:text="${theme.description}">描述</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info" th:text="${theme.pointsPerDraw + ' 积分'}">50 积分</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary" th:text="${theme.type}">WEIGHTED_RANDOM</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${theme.active}" class="badge bg-success">启用中</span>
+                                            <span th:unless="${theme.active}" class="badge bg-danger">已停用</span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" 
+                                                    th:onclick="'javascript:managePrizes(' + ${theme.id} + ', \'' + ${theme.name} + '\')'">
+                                                <i class="bi bi-gift"></i> 管理奖品
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" 
+                                                    th:onclick="'javascript:toggleTheme(' + ${theme.id} + ')'">
+                                                <i class="bi bi-toggle-on"></i> <span th:text="${theme.active ? '停用' : '启用'}"></span>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" 
+                                                    th:onclick="'javascript:deleteTheme(' + ${theme.id} + ')'">
+                                                <i class="bi bi-trash"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prize Management Modal -->
+    <div class="modal fade" id="prizeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="prizeModalTitle">
+                        <i class="bi bi-gift"></i> 管理奖品
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Add Prize Form -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">添加奖品</h6>
+                            <form id="addPrizeForm">
+                                <input type="hidden" id="prizeThemeId">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="prizeName" class="form-label">奖品名称</label>
+                                        <input type="text" class="form-control" id="prizeName" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="prizeValue" class="form-label">奖品价值（积分）</label>
+                                        <input type="number" class="form-control" id="prizeValue" min="1" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="prizeWeight" class="form-label">权重（越高越容易中）</label>
+                                        <input type="number" class="form-control" id="prizeWeight" min="1" value="10" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="prizeQuantity" class="form-label">数量（-1 为无限）</label>
+                                        <input type="number" class="form-control" id="prizeQuantity" value="-1" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-info">
+                                    <i class="bi bi-plus-circle"></i> 添加奖品
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Prize List -->
+                    <div id="prizeListContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统。让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+    
+    <script>
+        let prizeModal;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            prizeModal = new bootstrap.Modal(document.getElementById('prizeModal'));
+            
+            // Create theme form submit
+            document.getElementById('createThemeFormEl').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const data = {
+                    name: document.getElementById('themeName').value,
+                    description: document.getElementById('themeDescription').value,
+                    pointsPerDraw: parseInt(document.getElementById('pointsPerDraw').value),
+                    type: document.getElementById('themeType').value
+                };
+                
+                fetch('/api/v1/lottery/themes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 'SUCCESS') {
+                        alert('主题创建成功！');
+                        window.location.reload();
+                    } else {
+                        alert('创建失败：' + data.message);
+                    }
+                })
+                .catch(error => alert('创建失败：' + error));
+            });
+        });
+        
+        function managePrizes(themeId, themeName) {
+            document.getElementById('prizeModalTitle').innerHTML = '<i class="bi bi-gift"></i> 管理奖品 - ' + themeName;
+            document.getElementById('prizeThemeId').value = themeId;
+            prizeModal.show();
+            
+            // Load prizes for this theme
+            loadPrizes(themeId);
+        }
+        
+        function loadPrizes(themeId) {
+            fetch('/api/v1/lottery/themes/' + themeId + '/prizes')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('prizeListContainer');
+                if (data.data && data.data.length > 0) {
+                    let html = '<h6 class="mb-3">已有奖品</h6><ul class="list-group">';
+                    data.data.forEach(prize => {
+                        html += '<li class="list-group-item d-flex justify-content-between align-items-center">';
+                        html += '<div><strong>' + prize.name + '</strong> - ' + prize.value + '积分';
+                        html += '<br><small class="text-muted">权重：' + prize.weight + ', 库存：' + (prize.quantity === -1 ? '无限' : prize.quantity) + '</small></div>';
+                        html += '<button class="btn btn-sm btn-danger" onclick="deletePrize(' + prize.id + ')"><i class="bi bi-trash"></i></button>';
+                        html += '</li>';
+                    });
+                    html += '</ul>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p class="text-muted text-center">还没有奖品，请添加</p>';
+                }
+            });
+        }
+        
+        document.getElementById('addPrizeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const data = {
+                themeId: parseInt(document.getElementById('prizeThemeId').value),
+                name: document.getElementById('prizeName').value,
+                description: '',
+                value: parseInt(document.getElementById('prizeValue').value),
+                weight: parseInt(document.getElementById('prizeWeight').value),
+                quantity: parseInt(document.getElementById('prizeQuantity').value),
+                imageUrl: ''
+            };
+            
+            fetch('/api/v1/lottery/prizes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 'SUCCESS') {
+                    alert('奖品添加成功！');
+                    document.getElementById('addPrizeForm').reset();
+                    loadPrizes(data.data.themeId);
+                } else {
+                    alert('添加失败：' + data.message);
+                }
+            })
+            .catch(error => alert('添加失败：' + error));
+        });
+        
+        function deletePrize(prizeId) {
+            if (confirm('确定删除此奖品吗？')) {
+                fetch('/api/v1/lottery/prizes/' + prizeId, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 'SUCCESS') {
+                        alert('奖品已删除');
+                        loadPrizes(document.getElementById('prizeThemeId').value);
+                    } else {
+                        alert('删除失败：' + data.message);
+                    }
+                });
+            }
+        }
+        
+        function toggleTheme(themeId) {
+            fetch('/api/v1/lottery/themes/' + themeId + '/toggle', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 'SUCCESS') {
+                    alert('状态已更新');
+                    window.location.reload();
+                } else {
+                    alert('操作失败：' + data.message);
+                }
+            });
+        }
+        
+        function deleteTheme(themeId) {
+            if (confirm('确定删除此抽奖主题吗？所有相关奖品也将被删除。')) {
+                fetch('/api/v1/lottery/themes/' + themeId, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 'SUCCESS') {
+                        alert('主题已删除');
+                        window.location.reload();
+                    } else {
+                        alert('删除失败：' + data.message);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

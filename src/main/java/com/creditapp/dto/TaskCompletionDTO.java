@@ -15,6 +15,9 @@ public class TaskCompletionDTO {
     private String proof;
     private LocalDateTime completedAt;
     private LocalDateTime approvedAt;
+    
+    // 领取任务的时间（市场任务）
+    private LocalDateTime pickedAt;
 
     // Getters and Setters
     public Long getId() {
@@ -97,6 +100,14 @@ public class TaskCompletionDTO {
         this.approvedAt = approvedAt;
     }
 
+    public LocalDateTime getPickedAt() {
+        return pickedAt;
+    }
+
+    public void setPickedAt(LocalDateTime pickedAt) {
+        this.pickedAt = pickedAt;
+    }
+
     // Builder
     public static Builder builder() {
         return new Builder();
@@ -113,6 +124,7 @@ public class TaskCompletionDTO {
         private String proof;
         private LocalDateTime completedAt;
         private LocalDateTime approvedAt;
+        private LocalDateTime pickedAt;
 
         public Builder id(Long id) {
             this.id = id;
@@ -164,6 +176,11 @@ public class TaskCompletionDTO {
             return this;
         }
 
+        public Builder pickedAt(LocalDateTime pickedAt) {
+            this.pickedAt = pickedAt;
+            return this;
+        }
+
         public TaskCompletionDTO build() {
             TaskCompletionDTO dto = new TaskCompletionDTO();
             dto.id = this.id;
@@ -176,6 +193,7 @@ public class TaskCompletionDTO {
             dto.proof = this.proof;
             dto.completedAt = this.completedAt;
             dto.approvedAt = this.approvedAt;
+            dto.pickedAt = this.pickedAt;
             return dto;
         }
     }

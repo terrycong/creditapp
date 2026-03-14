@@ -559,6 +559,7 @@ public class TaskServiceImpl implements TaskService {
                 .createdByName(task.getCreatedBy() != null ? task.getCreatedBy().getUsername() : null)
                 .active(task.isActive())
                 .createdAt(task.getCreatedAt())
+                .pickedAt(task.getPickedAt())
                 .deadlineType(task.getDeadlineType())
                 .deadlineValue(task.getDeadlineValue())
                 .penaltyPoints(task.getPenaltyPoints())
@@ -577,6 +578,7 @@ public class TaskServiceImpl implements TaskService {
                 .proof(completion.getProof())
                 .completedAt(completion.getCompletedAt())
                 .approvedAt(completion.getApprovedAt())
+                .pickedAt(completion.getTask().getPickedAt())
                 .build();
     }
 
@@ -626,7 +628,12 @@ public class TaskServiceImpl implements TaskService {
                 .build();
         taskJobRepository.save(job);
 
-        log.info("Task {} picked by child {}", taskId, childId);
+        // Update task's pickedByChild and pickedAt
+        task.setPickedByChild(child);
+        task.setPickedAt(LocalDateTime.now());
+        taskRepository.save(task);
+
+        log.info("Task {} picked by child {} at {}", taskId, childId, task.getPickedAt());
         return toDTO(task);
     }
 
