@@ -26,13 +26,12 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByCreatedById(@Param("childId") Long childId);
 
     // Find all marketplace tasks for parent view
-    // Tasks are marketplace tasks if they have NO assignedChild and NO pickedByChild
+    // Tasks are marketplace tasks if they have no TaskJob assigned
     @Query("SELECT t FROM Task t " +
             "WHERE t.createdBy.id = :parentId " +
             "AND t.active = true " +
             "AND t.status = 'APPROVED' " +
-            "AND t.assignedChild IS NULL " +
-            "AND t.pickedByChild IS NULL " +
+            "AND NOT EXISTS (SELECT tj FROM TaskJob tj WHERE tj.task = t AND tj.status IN ('ASSIGNED', 'IN_PROGRESS')) " +
             "ORDER BY t.createdAt DESC")
     List<Task> findAvailableMarketplaceTasksByParentId(@Param("parentId") Long parentId);
 
@@ -59,6 +58,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "WHERE t.createdBy.id = :parentId " +
             "AND t.active = true " +
             "AND t.status = 'APPROVED' " +
+            "AND NOT EXISTS (SELECT tj FROM TaskJob tj WHERE tj.task = t AND tj.status IN ('ASSIGNED', 'IN_PROGRESS')) " +
             "AND (:keyword IS NULL OR :keyword = '' OR t.title LIKE %:keyword% OR t.description LIKE %:keyword%) " +
             "ORDER BY t.createdAt DESC")
     List<Task> findVisibleMarketplaceTasksByParentIdWithSearch(@Param("parentId") Long parentId,
@@ -70,23 +70,23 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "WHERE t.createdBy.id = :parentId " +
             "AND t.active = true " +
             "AND t.status = 'APPROVED' " +
+            "AND NOT EXISTS (SELECT tj FROM TaskJob tj WHERE tj.task = t AND tj.status IN ('ASSIGNED', 'IN_PROGRESS')) " +
             "ORDER BY t.createdAt DESC")
     List<Task> findVisibleMarketplaceTasksByParentId(@Param("parentId") Long parentId);
 
-    // Find tasks picked by a specific child (from marketplace) - ORDER BY picked time
-    @Query("SELECT t FROM Task t " +
-            "WHERE t.pickedByChild.id = :childId " +
-            "AND t.active = true " +
-            "ORDER BY t.createdAt DESC")
+    // Find tasks picked by a specific child (via TaskJob)
+    @Query("SELECT t FROM Task t INNER JOIN TaskJob tj ON t.id = tj.task.id " +
+            "WHERE tj.child.id = :childId " +
+            "AND tj.status IN ('ASSIGNED', 'IN_PROGRESS') " +
+            "ORDER BY tj.assignedAt DESC")
     List<Task> findPickedTasksByChildId(@Param("childId") Long childId);
 
-    // Find active tasks with child information (for child's task list)
-    @Query("SELECT DISTINCT t FROM Task t " +
-            "LEFT JOIN FETCH t.assignedChild " +
-            "LEFT JOIN FETCH t.pickedByChild " +
-            "WHERE t.active = true " +
+    // Find active tasks for child (via TaskJob) - simplified query
+    @Query("SELECT t FROM Task t INNER JOIN TaskJob tj ON t.id = tj.task.id " +
+            "WHERE tj.child.id = :childId " +
+            "AND t.active = true " +
             "AND t.status = 'APPROVED' " +
-            "AND (t.assignedChild.id = :childId OR t.pickedByChild.id = :childId) " +
-            "ORDER BY t.createdAt DESC")
+            "AND tj.status IN ('ASSIGNED', 'IN_PROGRESS') " +
+            "ORDER BY tj.assignedAt DESC")
     List<Task> findActiveTasksWithChild(@Param("childId") Long childId);
 }

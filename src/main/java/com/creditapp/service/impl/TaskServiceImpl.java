@@ -189,8 +189,6 @@ public class TaskServiceImpl implements TaskService {
                 .status(job.getTask().getStatus())
                 .createdById(job.getTask().getCreatedBy() != null ? job.getTask().getCreatedBy().getId() : null)
                 .createdByName(job.getTask().getCreatedBy() != null ? job.getTask().getCreatedBy().getUsername() : null)
-                .assignedChildId(job.getChild().getId())
-                .assignedChildName(job.getChild().getUsername())
                 .active(job.getStatus() == JobStatus.ASSIGNED || job.getStatus() == JobStatus.IN_PROGRESS)
                 .createdAt(job.getTask().getCreatedAt())
                 .deadlineType(job.getTask().getDeadlineType())
@@ -559,7 +557,6 @@ public class TaskServiceImpl implements TaskService {
                 .createdByName(task.getCreatedBy() != null ? task.getCreatedBy().getUsername() : null)
                 .active(task.isActive())
                 .createdAt(task.getCreatedAt())
-                .pickedAt(task.getPickedAt())
                 .deadlineType(task.getDeadlineType())
                 .deadlineValue(task.getDeadlineValue())
                 .penaltyPoints(task.getPenaltyPoints())
@@ -578,7 +575,6 @@ public class TaskServiceImpl implements TaskService {
                 .proof(completion.getProof())
                 .completedAt(completion.getCompletedAt())
                 .approvedAt(completion.getApprovedAt())
-                .pickedAt(completion.getTask().getPickedAt())
                 .build();
     }
 
@@ -628,12 +624,7 @@ public class TaskServiceImpl implements TaskService {
                 .build();
         taskJobRepository.save(job);
 
-        // Update task's pickedByChild and pickedAt
-        task.setPickedByChild(child);
-        task.setPickedAt(LocalDateTime.now());
-        taskRepository.save(task);
-
-        log.info("Task {} picked by child {} at {}", taskId, childId, task.getPickedAt());
+        log.info("Task {} picked by child {}", taskId, childId);
         return toDTO(task);
     }
 
