@@ -298,14 +298,18 @@
                                             </span>
                                         </td>
                                         <td class="text-muted" th:text="${task.description}">任务描述</td>
-                                        <td>
+                                        <td style="width: 160px;">
                                             <small class="text-muted" 
-                                                   th:if="${task.createdAt != null}"
-                                                   th:text="${#temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm')}">
+                                                   th:if="${task.pickedAt != null}"
+                                                   th:title="领取时间"
+                                                   th:text="${#temporals.format(task.pickedAt, 'yyyy-MM-dd HH:mm')}">
                                                 2024-01-01 12:00
                                             </small>
-                                            <small class="text-muted" th:unless="${task.createdAt != null}">
-                                                未知
+                                            <small class="text-muted" 
+                                                   th:unless="${task.pickedAt != null}"
+                                                   th:title="分配时间"
+                                                   th:text="${#temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm')}">
+                                                2024-01-01 12:00
                                             </small>
                                         </td>
                                         <td style="text-align: right;">

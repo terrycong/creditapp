@@ -61,6 +61,10 @@ public class Task {
     @JoinColumn(name = "picked_by_child_id")
     private Child pickedByChild;
 
+    // 领取任务的时间（市场任务被孩子领取时设置）
+    @Column(name = "picked_at")
+    private LocalDateTime pickedAt;
+
     // 强制任务相关字段
     @Enumerated(EnumType.STRING)
     @Column(name = "deadline_type")
@@ -190,6 +194,14 @@ public class Task {
 
     public void setPickedByChild(Child pickedByChild) {
         this.pickedByChild = pickedByChild;
+    }
+
+    public LocalDateTime getPickedAt() {
+        return pickedAt;
+    }
+
+    public void setPickedAt(LocalDateTime pickedAt) {
+        this.pickedAt = pickedAt;
     }
 
     public LocalDateTime getCreatedAt() {
