@@ -1589,6 +1589,257 @@ GET    /api/v1/lottery/history         - 获取抽奖历史
 
 ---
 
+## 积分过期系统 (2026-03-14)
+
+### 需求描述
+实现积分过期功能，孩子赚取的积分在 180 天后自动过期，鼓励及时使用并平衡收入/消费。
+
+### 核心设计原则
+
+**PointWallet（积分钱包）** = 独立的积分批次，每次赚取创建新批次
+**FIFO 消费** = 最早赚取的积分先消费
+**自动过期** = 每天凌晨 2 点检查所有过期积分
+
+**关键特性**：
+1. **每批次独立** - 每次赚取创建独立批次，有自己的过期日期
+2. **180 天过期** - 默认 180 天过期期
+3. **FIFO 消费** - 最早的批次先消费
+4. **容错设计** - 如果定时任务错过，下次运行会过期 ALL 已过期批次
+
+### 容错机制（重要）
+
+**问题**：如果凌晨 2 点的定时任务因故错过几天怎么办？
+
+**解决方案**：
+```java
+@Scheduled(cron = "${points.expiration.check-cron:0 0 2 * * ?}")
+public int checkAndExpirePoints() {
+    // 查找 ALL 过期批次，不只是今天过期的
+    List<PointWallet> expiredBatches = pointWalletRepository.findAllExpiredPoints(today);
+    
+    // 过期所有已过期但未标记的批次
+    for (PointWallet batch : expiredBatches) {
+        batch.markAsExpired(); // 标记为过期，清空剩余积分
+    }
+}
+```
+
+**保证**：
+- ✅ 即使任务错过 5 天，第 6 天运行时会过期所有 5 天的批次
+- ✅ 不会遗漏任何过期积分
+- ✅ 日志会记录"包含前几天错过的过期批次"
+
+### 数据库设计
+
+**point_wallet** - 积分钱包表
+```sql
+CREATE TABLE point_wallet (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    child_id BIGINT NOT NULL,
+    original_points INT NOT NULL,          -- 原始积分
+    remaining_points INT NOT NULL,         -- 剩余积分
+    earned_date DATETIME NOT NULL,         -- 赚取日期
+    expiration_date DATE,                   -- 过期日期
+    source_type VARCHAR(50),               -- 来源类型
+    source_id BIGINT,                       -- 来源 ID
+    fully_spent BOOLEAN DEFAULT FALSE,     -- 是否已用完
+    expired BOOLEAN DEFAULT FALSE,          -- 是否已过期
+    expired_date DATETIME,                  -- 过期日期
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (child_id) REFERENCES children(id)
+);
+```
+
+### 技术实现
+
+#### 实体类
+- **PointWallet** - 积分批次实体
+- **PointExpirationProperties** - 过期配置
+
+#### Repository
+- **PointWalletRepository** - 8 个查询方法：
+  - `findByChildAndRemainingPointsGreaterThanAndFullySpentFalse` - 查找可用批次
+  - `findAllExpiredPoints` - 查找所有过期批次（容错关键）
+  - `findExpiringPoints` - 查找即将过期的批次
+  - `getTotalPointsByChild` - 获取总积分
+  - `getPointsExpiringByDate` - 获取指定日期范围内过期的积分
+
+#### Service
+- **PointWalletService** - 核心业务逻辑：
+  - `addPoints()` - 添加积分批次（设置过期日期）
+  - `spendPoints()` - 消费积分（FIFO）
+  - `checkAndExpirePoints()` - 检查并过期（定时任务）
+  - `getPointsExpiringSoon()` - 获取即将过期的积分
+
+#### 配置
+```properties
+# 积分过期设置
+points.expiration.enabled=true
+points.expiration.expiration-days=180
+points.expiration.check-cron=0 0 2 * * ?  # 每天凌晨 2 点
+```
+
+### 消费算法示例
+
+**场景**：孩子消费 120 积分
+
+| 批次 | 赚取日期 | 过期日期 | 原始积分 | 消费过程 | 剩余 |
+|------|---------|---------|---------|---------|------|
+| 批次 1 | 2024-01-01 | 2024-06-29 | 100 | 消费 100 | 0 (用完) |
+| 批次 2 | 2024-02-01 | 2024-07-30 | 50 | 消费 20 | 30 |
+| 批次 3 | 2024-03-01 | 2024-08-28 | 200 | 未消费 | 200 |
+
+**结果**：
+- 总消费：120 积分
+- 批次 1：标记为 fully_spent
+- 批次 2：剩余 30 积分
+- 批次 3：未动
+
+### 过期处理示例
+
+**场景**：定时任务错过 5 天
+
+```
+第 1 天：批次 A 过期（任务错过）
+第 2 天：批次 B 过期（任务错过）
+第 3 天：批次 C 过期（任务错过）
+第 4 天：任务错过
+第 5 天：任务错过
+第 6 天：任务运行 → 过期 A, B, C 所有批次 ✅
+```
+
+**日志输出**：
+```
+WARN: Point expiration check complete: 3 batches expired with 225 total points.
+      Note: This includes points that may have expired on previous days if job missed runs.
+```
+
+### 定时任务配置
+
+**启用调度**：
+```java
+@EnableScheduling
+@SpringBootApplication
+public class CreditAppApplication {
+    // ...
+}
+```
+
+**修改执行时间**：
+```properties
+# 改为每天早上 6 点
+points.expiration.check-cron=0 0 6 * * ?
+
+# 改为每 12 小时检查
+points.expiration.check-cron=0 0 */12 * * ?
+
+# 禁用（测试用）
+points.expiration.check-cron=-
+```
+
+### 测试覆盖
+
+**单元测试**：
+- ✅ 添加积分批次
+- ✅ FIFO 消费逻辑
+- ✅ 过期检查
+- ✅ 容错场景（错过多次运行）
+
+**集成测试**：
+- ✅ 多孩子过期
+- ✅ 部分消费后过期
+- ✅ 未来过期不影响
+
+**BDD 场景** (Cucumber)：
+- ✅ 14 个完整场景覆盖所有用例
+
+### API 端点（待实现）
+
+```
+GET    /api/v1/wallet/points           - 获取总积分
+GET    /api/v1/wallet/batches          - 获取所有批次
+GET    /api/v1/wallet/expiring         - 获取即将过期的积分
+POST   /api/v1/wallet/spend            - 消费积分
+```
+
+### 前端展示（待实现）
+
+**孩子钱包页面**：
+```
+我的积分钱包
+┌─────────────────────────────────────────┐
+│ 总积分：500                              │
+│ 即将过期 (7 天内): 100                    │
+└─────────────────────────────────────────┘
+
+积分明细：
+1. [100 分] 赚取：2024-01-01, 过期：2024-06-29 ✅ 有效
+2. [50 分]  赚取：2024-02-01, 过期：2024-07-30 ✅ 有效
+3. [200 分] 赚取：2024-03-01, 过期：2024-08-28 ✅ 有效
+4. [100 分] 赚取：2023-07-01, 过期：2023-12-28 ❌ 已过期
+```
+
+**家长仪表板**：
+```
+积分过期监控
+- 本周过期：150 分
+- 下周将过期：200 分
+- 本月已过期：100 分
+```
+
+### 迁移现有积分
+
+```sql
+-- 将现有积分迁移到钱包（不设置过期，保持兼容）
+INSERT INTO point_wallet (
+    child_id, original_points, remaining_points,
+    earned_date, expiration_date, fully_spent,
+    expired, created_at
+)
+SELECT id, points, points, NOW(), NULL, FALSE, FALSE, NOW()
+FROM children
+WHERE points > 0;
+```
+
+### 实现状态
+
+**已完成**：
+- ✅ 数据库层：实体类和 Repository
+- ✅ Service 层：完整业务逻辑
+- ✅ 定时任务：容错过期检查
+- ✅ 测试：集成测试和 BDD 场景
+- ✅ 配置：可配置的过期设置
+
+**待完成**：
+- ❌ 集成到 PointHistoryService
+- ❌ API 端点
+- ❌ 前端页面
+- ❌ 过期通知
+
+### 关键日志
+
+**正常过期**：
+```
+INFO: Point expiration check complete: No expired points found
+```
+
+**有过期批次**：
+```
+INFO: Expired 100 points from batch 5 for child 小明 (expired on 2024-06-29, processed on 2024-06-30)
+WARN: Point expiration check complete: 1 batches expired with 100 total points.
+      Note: This includes points that may have expired on previous days if job missed runs.
+```
+
+**积分添加**：
+```
+INFO: Adding 50 points to child 小明 wallet from TASK_COMPLETION
+INFO: Points will expire on: 2024-12-28
+INFO: Point wallet entry created: id=10, child=小明，points=50, expires=2024-12-28
+```
+
+---
+
 ## 参考资源
 
 - Spring Boot官方文档：https://spring.io/projects/spring-boot
