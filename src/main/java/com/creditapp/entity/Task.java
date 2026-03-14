@@ -52,19 +52,6 @@ public class Task {
         updatedAt = LocalDateTime.now();
     }
 
-    // Marketplace task fields
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_child_id")
-    private Child assignedChild;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "picked_by_child_id")
-    private Child pickedByChild;
-
-    // 领取任务的时间（市场任务被孩子领取时设置）
-    @Column(name = "picked_at")
-    private LocalDateTime pickedAt;
-
     // 强制任务相关字段
     @Enumerated(EnumType.STRING)
     @Column(name = "deadline_type")
@@ -178,30 +165,6 @@ public class Task {
 
     public void setPenaltyPoints(Integer penaltyPoints) {
         this.penaltyPoints = penaltyPoints;
-    }
-
-    public Child getAssignedChild() {
-        return assignedChild;
-    }
-
-    public void setAssignedChild(Child assignedChild) {
-        this.assignedChild = assignedChild;
-    }
-
-    public Child getPickedByChild() {
-        return pickedByChild;
-    }
-
-    public void setPickedByChild(Child pickedByChild) {
-        this.pickedByChild = pickedByChild;
-    }
-
-    public LocalDateTime getPickedAt() {
-        return pickedAt;
-    }
-
-    public void setPickedAt(LocalDateTime pickedAt) {
-        this.pickedAt = pickedAt;
     }
 
     public LocalDateTime getCreatedAt() {

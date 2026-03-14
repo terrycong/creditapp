@@ -14,17 +14,10 @@ public class TaskDTO {
     private TaskStatus status;
     private Long createdById;
     private String createdByName;
-    private Long assignedChildId;
-    private String assignedChildName;
-    private Long pickedByChildId;
-    private String pickedByChildName;
     private boolean active;
     
     // 创建时间
     private LocalDateTime createdAt;
-    
-    // 领取任务的时间（市场任务）
-    private LocalDateTime pickedAt;
 
     // 强制任务相关字段
     private TaskDeadlineType deadlineType;
@@ -96,38 +89,6 @@ public class TaskDTO {
         this.createdByName = createdByName;
     }
 
-    public Long getAssignedChildId() {
-        return assignedChildId;
-    }
-
-    public void setAssignedChildId(Long assignedChildId) {
-        this.assignedChildId = assignedChildId;
-    }
-
-    public String getAssignedChildName() {
-        return assignedChildName;
-    }
-
-    public void setAssignedChildName(String assignedChildName) {
-        this.assignedChildName = assignedChildName;
-    }
-
-    public Long getPickedByChildId() {
-        return pickedByChildId;
-    }
-
-    public void setPickedByChildId(Long pickedByChildId) {
-        this.pickedByChildId = pickedByChildId;
-    }
-
-    public String getPickedByChildName() {
-        return pickedByChildName;
-    }
-
-    public void setPickedByChildName(String pickedByChildName) {
-        this.pickedByChildName = pickedByChildName;
-    }
-
     public boolean isActive() {
         return active;
     }
@@ -142,14 +103,6 @@ public class TaskDTO {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getPickedAt() {
-        return pickedAt;
-    }
-
-    public void setPickedAt(LocalDateTime pickedAt) {
-        this.pickedAt = pickedAt;
     }
 
     public TaskDeadlineType getDeadlineType() {
@@ -190,13 +143,8 @@ public class TaskDTO {
         private TaskStatus status;
         private Long createdById;
         private String createdByName;
-        private Long assignedChildId;
-        private String assignedChildName;
-        private Long pickedByChildId;
-        private String pickedByChildName;
         private boolean active;
         private LocalDateTime createdAt;
-        private LocalDateTime pickedAt;
         private TaskDeadlineType deadlineType;
         private Integer deadlineValue;
         private Integer penaltyPoints;
@@ -241,26 +189,6 @@ public class TaskDTO {
             return this;
         }
 
-        public Builder assignedChildId(Long assignedChildId) {
-            this.assignedChildId = assignedChildId;
-            return this;
-        }
-
-        public Builder assignedChildName(String assignedChildName) {
-            this.assignedChildName = assignedChildName;
-            return this;
-        }
-
-        public Builder pickedByChildId(Long pickedByChildId) {
-            this.pickedByChildId = pickedByChildId;
-            return this;
-        }
-
-        public Builder pickedByChildName(String pickedByChildName) {
-            this.pickedByChildName = pickedByChildName;
-            return this;
-        }
-
         public Builder active(boolean active) {
             this.active = active;
             return this;
@@ -268,11 +196,6 @@ public class TaskDTO {
 
         public Builder createdAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
-            return this;
-        }
-
-        public Builder pickedAt(LocalDateTime pickedAt) {
-            this.pickedAt = pickedAt;
             return this;
         }
 
@@ -301,13 +224,8 @@ public class TaskDTO {
             dto.status = this.status;
             dto.createdById = this.createdById;
             dto.createdByName = this.createdByName;
-            dto.assignedChildId = this.assignedChildId;
-            dto.assignedChildName = this.assignedChildName;
-            dto.pickedByChildId = this.pickedByChildId;
-            dto.pickedByChildName = this.pickedByChildName;
             dto.active = this.active;
             dto.createdAt = this.createdAt;
-            dto.pickedAt = this.pickedAt;
             dto.deadlineType = this.deadlineType;
             dto.deadlineValue = this.deadlineValue;
             dto.penaltyPoints = this.penaltyPoints;

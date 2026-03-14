@@ -939,7 +939,26 @@ public class TaskServiceImpl implements TaskService {
 
 ---
 
-## 任务市场功能 (2026-02-03)
+## 任务市场功能 (2026-02-03) - **已重构**
+
+**重要更新 (最新)**：
+Task 实体不再包含 `assignedChild` 或 `pickedByChild` 字段。所有任务与孩子的关联都通过 `TaskJob` 实体管理。
+
+### 核心设计理念
+
+**Task（任务定义）** = 任务模板/定义，家长创建的任务，放在市场上
+**TaskJob（任务实例）** = 孩子领取任务后创建的关联记录，一个 Task 可以对应多个 TaskJob
+
+**之前**（错误设计）：
+- Task 实体同时承担"任务模板"和"任务实例"两种角色
+- `assignedChild` 和 `pickedByChild` 语义混淆
+
+**现在**（正确设计）：
+- **Task** = 任务模板（市场任务定义），**没有** `assignedChild` 或 `pickedByChild` 字段
+- **TaskJob** = 任务实例（记录哪个孩子领取了任务），有 `childId` 和 `assignedAt` 字段
+- 家长创建任务 → Task 入库（无 assignedChild）
+- 孩子领取任务 → 创建 TaskJob 记录关联
+- 家长直接分配 → 同时创建 Task + TaskJob
 
 **需求描述**：
 实现任务市场功能，让孩子可以从市场中选择任务，完成任务后获得积分。家长可以创建任务并选择是否放入市场或直接分配给孩子。
@@ -973,11 +992,12 @@ public class TaskServiceImpl implements TaskService {
 **技术实现**：
 
 #### 数据库层
-- **Task实体**：新增 `pickedByChild` 字段（ManyToOne 关联到 Child）
-- **Repository查询**：
-  - `findAvailableMarketplaceTasksByParentId()` - 查找家长创建的可领取市场任务
-  - `findPickedTasksByChildId()` - 查找孩子已领取的任务
-  - `findActiveTasksWithChild()` - 修改为包含已分配和已领取的任务
+- **Task 实体**：**移除** `assignedChild` 和 `pickedByChild` 字段，Task 只保存任务定义
+- **TaskJob 实体**：负责任务与孩子的关联，包含 `childId`、`assignedAt`、`status` 等字段
+- **Repository 查询**：
+  - `findAvailableMarketplaceTasksByParentId()` - 查找没有 TaskJob 的任务（可领取）
+  - `findPickedTasksByChildId()` - 通过 JOIN TaskJob 查找孩子已领取的任务
+  - `findActiveTasksWithChild()` - 通过 JOIN TaskJob 查找孩子的任务
 
 #### 业务逻辑层
 - **TaskService新增方法**：
@@ -1018,17 +1038,17 @@ public class TaskServiceImpl implements TaskService {
   - 已领取任务查询正确性
 
 **实现状态**：
-- ✅ 数据库层：Task实体修改完成
-- ✅ Repository层：查询方法实现完成
-- ✅ Service层：业务逻辑实现完成
-- ✅ Controller层：端点实现完成
+- ✅ 数据库层：Task 实体修改完成（移除 assignedChild/pickedByChild）
+- ✅ Repository 层：查询方法实现完成（通过 TaskJob JOIN）
+- ✅ Service 层：业务逻辑实现完成
+- ✅ Controller 层：端点实现完成
 - ✅ 前端界面：市场页面和表单增强完成
-- ✅ 测试覆盖：9个测试用例全部通过
+- ✅ 测试覆盖：测试用例更新完成
 - ✅ 编译验证：`mvn clean compile` 成功
 - ✅ 打包验证：`mvn clean package` 成功（跳过测试）
 
 **关键设计决策**：
-1. **重用Task实体**：不创建单独的MarketplaceTask实体，使用 `pickedByChild` 字段区分
+1. **Task 与 TaskJob 分离**：Task 只保存任务定义，TaskJob 保存任务与孩子的关联
 2. **家庭隔离**：孩子只能看到/领取自己家长创建的任务
 3. **先到先得**：简单的领取机制，任务被领取后立即从市场消失
 4. **无缝集成**：领取的任务与直接分配的任务在"我的任务"列表中统一显示
@@ -1121,6 +1141,449 @@ APPROVED (正式任务) → 孩子标记完成 → PENDING (待审批) → APPRO
 **后端验证**：
 - `TaskCompletionRepository.existsCompletionToday()` 查询检查 `PENDING` 和 `APPROVED` 状态
 - 确保同一天只能有一个待审批或已批准的任务完成记录
+
+---
+
+## 任务实体重构 (2026-03-14) - **重要架构更新**
+
+### 核心设计变更
+
+**之前**（错误设计）：
+- Task 实体同时承担"任务模板"和"任务实例"双重角色
+- 包含 `assignedChild`（直接分配）和 `pickedByChild`（市场领取）字段
+- 语义混淆，职责不清
+
+**现在**（正确设计）：
+- **Task（任务定义）** = 纯粹的任务模板，家长创建的任务定义，放在市场上
+  - **没有** `assignedChild` 字段
+  - **没有** `pickedByChild` 字段
+  - **没有** `pickedAt` 字段
+  - 只保存任务的基本信息（标题、描述、积分、类型等）
+  
+- **TaskJob（任务实例）** = 任务与孩子的关联记录
+  - 包含 `childId`（哪个孩子领取/被分配）
+  - 包含 `assignedAt`（分配/领取时间）
+  - 包含 `status`（ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED）
+  - 包含快照字段（snapshotTitle, snapshotDescription 等）
+
+### 业务流程
+
+```
+家长创建任务 → Task 入库（无 assignedChild）
+孩子领取任务 → 创建 TaskJob 记录关联
+家长直接分配 → 同时创建 Task + TaskJob
+```
+
+### 数据库变更
+
+**Task 表删除字段**：
+```sql
+ALTER TABLE tasks DROP COLUMN assigned_child_id;
+ALTER TABLE tasks DROP COLUMN picked_by_child_id;
+```
+
+**TaskJob 表（已存在）**：
+```sql
+CREATE TABLE task_jobs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    task_id BIGINT NOT NULL,
+    child_id BIGINT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    assigned_at DATETIME NOT NULL,
+    snapshot_title VARCHAR(100),
+    snapshot_description VARCHAR(500),
+    snapshot_points INT,
+    snapshot_task_type VARCHAR(50),
+    FOREIGN KEY (task_id) REFERENCES tasks(id),
+    FOREIGN KEY (child_id) REFERENCES children(id)
+);
+```
+
+### 查询逻辑变更
+
+所有查询从 `WHERE t.pickedByChild.id = :childId` 改为通过 TaskJob JOIN：
+
+```java
+// 之前
+@Query("SELECT t FROM Task t WHERE t.pickedByChild.id = :childId ORDER BY t.id DESC")
+
+// 现在
+@Query("SELECT t FROM Task t INNER JOIN TaskJob tj ON t.id = tj.task.id " +
+       "WHERE tj.child.id = :childId AND tj.status IN ('ASSIGNED', 'IN_PROGRESS') " +
+       "ORDER BY tj.assignedAt DESC")
+```
+
+### 时间字段说明
+
+**Task.createdAt** = 任务创建时间（家长创建任务的时间）
+**TaskJob.assignedAt** = 任务分配/领取时间（孩子领取任务或家长分配任务的时间）
+
+**显示规则**：
+- 进行中的任务列表：显示 TaskJob.assignedAt（领取时间）
+- 如果 TaskJob.assignedAt 为空（直接分配任务）：显示 Task.createdAt
+- 家长待审批任务：同时显示"领取时间"和"完成时间"
+
+---
+
+## 任务列表排序优化 (2026-03-14)
+
+### 需求
+进行中的任务按领取时间倒序显示，最新领取的任务在前。
+
+### 实现
+所有查询统一使用 `ORDER BY tj.assignedAt DESC` 或 `ORDER BY t.createdAt DESC`：
+
+| 查询方法 | 排序字段 | 说明 |
+|---------|---------|------|
+| `findActiveTasksWithChild` | `tj.assignedAt DESC` | 孩子的任务列表 |
+| `findPickedTasksByChildId` | `tj.assignedAt DESC` | 已领取任务 |
+| `findVisibleMarketplaceTasksByParentId` | `t.createdAt DESC` | 市场任务 |
+| `findAvailableMarketplaceTasksByParentId` | `t.createdAt DESC` | 可领取任务 |
+
+### 前端显示
+
+**child/tasks.html** - 进行中的任务：
+```html
+<td>
+    <small th:if="${task.pickedAt != null}"
+           th:text="${#temporals.format(task.pickedAt, 'yyyy-MM-dd HH:mm')}">
+    </small>
+    <small th:unless="${task.pickedAt != null}"
+           th:text="${#temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm')}">
+    </small>
+</td>
+```
+
+**parent/approvals.html** - 待审批任务：
+```html
+<td>领取时间</td>  <!-- 新增列 -->
+<td>完成时间</td>
+```
+
+---
+
+## 任务市场搜索功能 (2026-03-14)
+
+### 需求
+孩子浏览任务市场时，可以通过搜索框过滤可领取的任务。
+
+### 实现
+
+**Repository 层**：
+```java
+@Query("SELECT t FROM Task t " +
+       "LEFT JOIN FETCH t.createdBy " +
+       "WHERE t.createdBy.id = :parentId " +
+       "AND t.active = true " +
+       "AND t.status = 'APPROVED' " +
+       "AND NOT EXISTS (SELECT tj FROM TaskJob tj WHERE tj.task = t AND tj.status IN ('ASSIGNED', 'IN_PROGRESS')) " +
+       "AND (:keyword IS NULL OR :keyword = '' OR t.title LIKE %:keyword% OR t.description LIKE %:keyword%) " +
+       "ORDER BY t.createdAt DESC")
+List<Task> findVisibleMarketplaceTasksByParentIdWithSearch(@Param("parentId") Long parentId,
+                                                            @Param("keyword") String keyword);
+```
+
+**Service 层**：
+```java
+public List<TaskDTO> getMarketplaceTasksWithSearch(Long childId, String keyword) {
+    // 获取孩子和家长信息
+    Child child = childRepository.findById(childId)...;
+    User parent = child.getParent()...;
+    
+    // 根据是否有搜索关键词选择查询方法
+    List<Task> tasks;
+    if (keyword != null && !keyword.trim().isEmpty()) {
+        tasks = taskRepository.findVisibleMarketplaceTasksByParentIdWithSearch(
+            parent.getId(), keyword.trim());
+    } else {
+        tasks = taskRepository.findVisibleMarketplaceTasksByParentId(parent.getId());
+    }
+    return tasks.stream().map(this::toDTO).collect(Collectors.toList());
+}
+```
+
+**Controller 层**：
+```java
+@GetMapping("/child/marketplace")
+public String marketplace(@AuthenticationPrincipal UserDetails userDetails, 
+                         @RequestParam(required = false) String search,
+                         Model model) {
+    // 处理搜索参数
+    List<TaskDTO> marketplaceTasks;
+    if (search != null && !search.trim().isEmpty()) {
+        marketplaceTasks = taskService.getMarketplaceTasksWithSearch(user.getId(), search.trim());
+    } else {
+        marketplaceTasks = taskService.getMarketplaceTasks(user.getId());
+    }
+    model.addAttribute("marketplaceTasks", marketplaceTasks);
+    model.addAttribute("searchKeyword", search != null ? search : "");
+    return "child/marketplace";
+}
+```
+
+**前端界面**：
+```html
+<form th:action="@{/child/marketplace}" method="get" class="d-flex">
+    <input type="text" name="search" class="form-control form-control-sm me-2" 
+           placeholder="搜索任务..." th:value="${searchKeyword}"
+           style="width: 200px;">
+    <button type="submit" class="btn btn-light btn-sm">
+        <i class="bi bi-search"></i> 搜索
+    </button>
+    <a th:href="@{/child/marketplace}" class="btn btn-outline-light btn-sm ms-1">
+        <i class="bi bi-x-circle"></i> 清除
+    </a>
+</form>
+```
+
+---
+
+## 抽奖系统 (2026-03-14)
+
+### 需求
+实现完整的抽奖系统，支持家长创建抽奖主题和奖品，孩子消耗积分参与抽奖。
+
+### 核心功能
+
+#### 1. 抽奖主题管理（家长端）
+- 创建多个抽奖主题（LotteryTheme）
+- 每个主题配置多个奖品（LotteryPrize）
+- 设置每个奖品的概率权重（weight）
+- 设置每次抽奖消耗的积分（pointsPerDraw）
+- 支持启用/禁用主题
+
+#### 2. 抽奖功能（小孩端）
+- 选择抽奖主题
+- 消耗积分进行抽奖
+- 显示中奖结果（可能中多个奖品）
+- 查看抽奖历史记录
+
+### 数据库设计
+
+**lottery_themes** - 抽奖主题表
+```sql
+CREATE TABLE lottery_themes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    points_per_draw INT NOT NULL,
+    type VARCHAR(50) NOT NULL,  -- FIXED_PROBABILITY, WEIGHTED_RANDOM, GUARANTEED
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_by_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (created_by_id) REFERENCES users(id)
+);
+```
+
+**lottery_prizes** - 奖品表
+```sql
+CREATE TABLE lottery_prizes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    lottery_theme_id BIGINT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    value INT NOT NULL,  -- 奖品价值（积分）
+    weight INT NOT NULL DEFAULT 1,  -- 概率权重
+    probability INT,  -- 固定概率（百分比）
+    quantity INT NOT NULL DEFAULT -1,  -- 库存（-1 为无限）
+    redeemed_count INT NOT NULL DEFAULT 0,
+    active BOOLEAN NOT NULL DEFAULT true,
+    image_url VARCHAR(500),
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (lottery_theme_id) REFERENCES lottery_themes(id)
+);
+```
+
+**lottery_draws** - 抽奖记录表
+```sql
+CREATE TABLE lottery_draws (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    lottery_theme_id BIGINT NOT NULL,
+    child_id BIGINT NOT NULL,
+    points_cost INT NOT NULL,
+    result_status VARCHAR(50) NOT NULL,  -- NO_WIN, WON, JACKPOT
+    draw_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (lottery_theme_id) REFERENCES lottery_themes(id),
+    FOREIGN KEY (child_id) REFERENCES children(id)
+);
+```
+
+**lottery_draw_results** - 抽奖结果详情表
+```sql
+CREATE TABLE lottery_draw_results (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    lottery_draw_id BIGINT NOT NULL,
+    prize_id BIGINT NOT NULL,
+    prize_name VARCHAR(100) NOT NULL,
+    prize_value INT NOT NULL,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (lottery_draw_id) REFERENCES lottery_draws(id),
+    FOREIGN KEY (prize_id) REFERENCES lottery_prizes(id)
+);
+```
+
+### 抽奖算法
+
+**权重随机模式（WEIGHTED_RANDOM）**：
+```java
+private List<LotteryPrize> performWeightedDraw(List<LotteryPrize> prizes) {
+    List<LotteryPrize> wonPrizes = new ArrayList<>();
+    
+    // 计算总权重
+    int totalWeight = prizes.stream().mapToInt(LotteryPrize::getWeight).sum();
+    if (totalWeight == 0) {
+        return wonPrizes;
+    }
+    
+    // 简单实现：抽取 1-3 个奖品
+    int numWins = RANDOM.nextInt(3) + 1; // 1-3 个奖品
+    
+    for (int i = 0; i < numWins; i++) {
+        int random = RANDOM.nextInt(totalWeight);
+        int cumulative = 0;
+        
+        for (LotteryPrize prize : prizes) {
+            cumulative += prize.getWeight();
+            if (random < cumulative && prize.hasQuantity()) {
+                wonPrizes.add(prize);
+                break;
+            }
+        }
+    }
+    
+    return wonPrizes;
+}
+```
+
+### 积分处理
+
+**抽奖消耗**：
+```java
+// 扣除小孩积分
+Integer originalPoints = child.getPoints();
+child.setPoints(originalPoints - theme.getPointsPerDraw());
+childRepository.save(child);
+
+// 记录积分扣除历史
+pointHistoryService.recordPointChange(
+    childId,
+    -theme.getPointsPerDraw(),
+    PointChangeType.LOTTERY_DRAW,
+    "抽奖消耗 - " + theme.getName(),
+    theme.getId(),
+    "LOTTERY_THEME",
+    null
+);
+```
+
+**中奖获得**：
+```java
+// 给小孩增加奖品对应的积分
+Integer totalWinPoints = wonPrizes.stream().mapToInt(LotteryPrize::getValue).sum();
+child.setPoints(child.getPoints() + totalWinPoints);
+childRepository.save(child);
+
+// 记录中奖积分
+pointHistoryService.recordPointChange(
+    childId,
+    prize.getValue(),
+    PointChangeType.LOTTERY_WIN,
+    "抽奖中奖 - " + prize.getName(),
+    prize.getId(),
+    "LOTTERY_PRIZE",
+    null
+);
+```
+
+### 枚举类型
+
+**LotteryTypeEnum** - 抽奖类型
+```java
+public enum LotteryTypeEnum {
+    FIXED_PROBABILITY("固定概率"),      // 每个奖品有固定概率
+    WEIGHTED_RANDOM("权重随机"),        // 根据权重计算概率
+    GUARANTEED("必中模式")              // 100% 中奖
+}
+```
+
+**DrawResultStatus** - 抽奖结果状态
+```java
+public enum DrawResultStatus {
+    NO_WIN("未中奖"),
+    WON("中奖"),
+    JACKPOT("特等奖")
+}
+```
+
+**PointChangeType** - 积分变动类型（新增）
+```java
+public enum PointChangeType {
+    TASK_COMPLETION("任务完成"),
+    REWARD_REDEMPTION("礼物兑换"),
+    LOTTERY_DRAW("抽奖消耗"),          // 新增
+    LOTTERY_WIN("抽奖获奖"),           // 新增
+    INITIAL("初始积分"),
+    OTHER("其他")
+}
+```
+
+### REST API
+
+**家长端**：
+```
+POST   /api/v1/lottery/themes          - 创建抽奖主题
+GET    /api/v1/lottery/themes          - 获取主题列表
+PUT    /api/v1/lottery/themes/{id}     - 更新主题
+DELETE /api/v1/lottery/themes/{id}     - 删除主题
+POST   /api/v1/lottery/themes/{id}/toggle - 启用/禁用主题
+
+POST   /api/v1/lottery/prizes          - 创建奖品
+PUT    /api/v1/lottery/prizes/{id}     - 更新奖品
+DELETE /api/v1/lottery/prizes/{id}     - 删除奖品
+GET    /api/v1/lottery/themes/{id}/prizes - 获取奖品列表
+```
+
+**小孩端**：
+```
+GET    /api/v1/lottery/themes/active   - 获取可用抽奖主题
+POST   /api/v1/lottery/themes/{id}/draw - 执行抽奖
+GET    /api/v1/lottery/history         - 获取抽奖历史
+```
+
+### 前端页面
+
+**parent/lottery.html** - 家长抽奖管理
+- 创建抽奖主题表单
+- 主题列表展示
+- 管理奖品弹窗
+- 启用/禁用主题
+- 删除主题
+
+**child/lottery.html** - 需要创建
+- 抽奖主题卡片展示
+- 抽奖按钮
+- 抽奖结果弹窗动画
+- 抽奖历史记录
+
+### 实现状态
+
+**已完成**：
+- ✅ 数据库层：所有实体类和枚举类
+- ✅ Repository 层：所有查询接口
+- ✅ Service 层：完整业务逻辑（包括抽奖算法）
+- ✅ Controller 层：REST API 端点
+- ✅ DTO 层：所有数据传输对象
+- ✅ 家长端页面：完整管理界面
+- ✅ 积分集成：自动扣除和发放
+- ✅ 历史记录：完整记录每次抽奖
+
+**待完成**：
+- ❌ 小孩端页面：`child/lottery.html`
+- ❌ 抽奖动画效果
+- ❌ 集成测试
 
 ---
 

@@ -102,8 +102,8 @@ class TaskServiceMarketplaceTest {
         marketplaceTask.setType(TaskType.REPEATABLE);
         marketplaceTask.setStatus(TaskStatus.APPROVED);
         marketplaceTask.setCreatedBy(parentUser);
-        marketplaceTask.setAssignedChild(null); // Marketplace task - no assigned child
-        marketplaceTask.setPickedByChild(null); // Not picked yet
+        // Removed: Task no longer has assignedChild // Marketplace task - no assigned child
+        // Removed: Task no longer has pickedByChild // Not picked yet
         marketplaceTask.setActive(true);
 
         // Setup assigned task (has assigned child)
@@ -115,8 +115,8 @@ class TaskServiceMarketplaceTest {
         assignedTask.setType(TaskType.ONE_TIME);
         assignedTask.setStatus(TaskStatus.APPROVED);
         assignedTask.setCreatedBy(parentUser);
-        assignedTask.setAssignedChild(childUser);
-        assignedTask.setPickedByChild(null);
+        // Removed: Task no longer has assignedChild
+        // Removed: Task no longer has pickedByChild
         assignedTask.setActive(true);
     }
 
@@ -229,8 +229,8 @@ class TaskServiceMarketplaceTest {
         otherFamilyTask.setType(TaskType.REPEATABLE);
         otherFamilyTask.setStatus(TaskStatus.APPROVED);
         otherFamilyTask.setCreatedBy(otherParentUser);
-        otherFamilyTask.setAssignedChild(null);
-        otherFamilyTask.setPickedByChild(null);
+        // Removed: Task no longer has assignedChild
+        // Removed: setPickedByChild no longer exists
         otherFamilyTask.setActive(true);
 
         List<Task> marketplaceTasks = Arrays.asList(marketplaceTask);

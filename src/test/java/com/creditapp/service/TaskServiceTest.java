@@ -85,7 +85,7 @@ class TaskServiceTest {
         task.setType(TaskType.ONE_TIME);
         task.setStatus(TaskStatus.APPROVED);
         task.setCreatedBy(parentUser);
-        task.setAssignedChild(childUser);
+        // task.setAssignedChild(childUser); - Removed: Task no longer has assignedChild field
         task.setActive(true);
 
         // Setup create task request
@@ -105,7 +105,7 @@ class TaskServiceTest {
         when(taskRepository.save(any(Task.class))).thenReturn(task);
         when(taskJobRepository.save(any(TaskJob.class))).thenAnswer(invocation -> {
             TaskJob job = invocation.getArgument(0);
-            job.setId(1L);
+            //
             return job;
         });
 
@@ -146,7 +146,6 @@ class TaskServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getTitle()).isEqualTo("Test Task");
-        assertThat(result.getAssignedChildId()).isNull();
 
         verify(userRepository).findById(1L);
         verify(childRepository, never()).findById(anyLong());
@@ -291,7 +290,7 @@ class TaskServiceTest {
         updateRequest.setDescription("Updated Description");
         updateRequest.setPoints(20);
         updateRequest.setType(TaskType.REPEATABLE);
-        updateRequest.setAssignedChildId(2L);
+        // updateRequest.setAssignedChildId - Removed(2L);
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
@@ -366,6 +365,7 @@ class TaskServiceTest {
                 .snapshotPoints(task.getPoints())
                 .snapshotTaskType(task.getType())
                 .build();
+                ;
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
@@ -462,6 +462,7 @@ class TaskServiceTest {
                 .snapshotPoints(task.getPoints())
                 .snapshotTaskType(task.getType())
                 .build();
+                ;
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
@@ -497,6 +498,7 @@ class TaskServiceTest {
                 .snapshotPoints(task.getPoints())
                 .snapshotTaskType(task.getType())
                 .build();
+                ;
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
@@ -534,6 +536,7 @@ class TaskServiceTest {
                 .snapshotPoints(task.getPoints())
                 .snapshotTaskType(task.getType())
                 .build();
+                ;
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(childRepository.findById(2L)).thenReturn(Optional.of(childUser));
