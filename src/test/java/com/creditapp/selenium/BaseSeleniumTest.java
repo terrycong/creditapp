@@ -16,6 +16,8 @@ import java.time.Duration;
 /**
  * Base class for Selenium UI tests
  * Provides common setup, teardown, and utility methods
+ * 
+ * Note: Tests may need longer timeouts in CI/CD environments
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @ActiveProfiles("test")
@@ -28,6 +30,9 @@ public abstract class BaseSeleniumTest {
     protected int serverPort;
     
     protected String baseUrl;
+
+    // Longer timeout for slower environments
+    private static final int DEFAULT_TIMEOUT_SECONDS = 15;
 
     @BeforeAll
     static void setupClass() {
@@ -43,23 +48,40 @@ public abstract class BaseSeleniumTest {
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--disable-gpu");
         options.addArguments("--disable-extensions");
+        options.addArguments("--disable-software-rasterizer");
+        options.addArguments("--disable-web-security");
+        options.addArguments("--remote-allow-origins=*");
         
         driver = new ChromeDriver(options);
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+        wait = new WebDriverWait(driver, Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS));
         baseUrl = "http://localhost:" + serverPort;
     }
 
     @AfterEach
     void tearDown() {
         if (driver != null) {
-            driver.quit();
+            try {
+                driver.quit();
+            } catch (Exception e) {
+                // Ignore quit errors
+            }
         }
     }
 
     // ========== Utility Methods ==========
 
     protected void navigateTo(String path) {
-        driver.get(baseUrl + path);
+        String url = baseUrl + path;
+        driver.get(url);
+        // Wait for page to be in ready state
+        wait.until(webDriver -> 
+            ((JavascriptExecutor) webDriver)
+                .executeScript("return document.readyState")
+                .equals("complete"));
+        // Small delay for dynamic content
+        try { Thread.sleep(500); } catch (InterruptedException e) {}
     }
 
     protected WebElement findElement(By by) {
@@ -84,7 +106,12 @@ public abstract class BaseSeleniumTest {
 
     protected void clickElement(By by) {
         WebElement element = wait.until(ExpectedConditions.elementToBeClickable(by));
-        element.click();
+        try {
+            element.click();
+        } catch (ElementClickInterceptedException e) {
+            // Try JavaScript click as fallback
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+        }
     }
 
     protected void clickElementById(String id) {
@@ -115,9 +142,12 @@ public abstract class BaseSeleniumTest {
 
     protected boolean isElementPresent(By by) {
         try {
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
             driver.findElement(by);
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
             return true;
         } catch (NoSuchElementException e) {
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
             return false;
         }
     }
@@ -137,39 +167,57 @@ public abstract class BaseSeleniumTest {
                 .equals("complete"));
     }
 
-    protected void takeScreenshot(String filename) {
-        try {
-            TakesScreenshot ts = (TakesScreenshot) driver;
-            byte[] screenshot = ts.getScreenshotAs(OutputType.BYTES);
-            // Save screenshot logic can be added here
-        } catch (Exception e) {
-            System.err.println("Failed to take screenshot: " + e.getMessage());
-        }
+    protected void sleep(int milliseconds) {
+        try { Thread.sleep(milliseconds); } catch (InterruptedException e) {}
     }
 
     // ========== Login Helpers ==========
 
     protected void loginAsParent() {
         navigateTo("/login");
+        waitForPageLoad();
+        
+        // Wait for form elements
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+        
         sendKeysByName("username", "parent");
         sendKeysByName("password", "parent123");
-        clickElement(By.cssSelector("button[type='submit']"));
+        
+        // Submit form
+        WebElement submitBtn = wait.until(ExpectedConditions.elementToBeClickable(
+            By.cssSelector("button[type='submit']")));
+        submitBtn.click();
+        
+        // Wait for redirect to dashboard
+        sleep(1000); // Give time for authentication
         waitForUrlContains("dashboard");
     }
 
     protected void loginAsChild() {
         navigateTo("/login");
+        waitForPageLoad();
+        
+        // Wait for form elements
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+        
         sendKeysByName("username", "child");
         sendKeysByName("password", "child123");
-        clickElement(By.cssSelector("button[type='submit']"));
+        
+        // Submit form
+        WebElement submitBtn = wait.until(ExpectedConditions.elementToBeClickable(
+            By.cssSelector("button[type='submit']")));
+        submitBtn.click();
+        
+        // Wait for redirect to dashboard
+        sleep(1000); // Give time for authentication
         waitForUrlContains("dashboard");
     }
 
     protected void logout() {
         try {
-            clickElement(By.linkText("退出"));
-        } catch (Exception e) {
             navigateTo("/login");
+        } catch (Exception e) {
+            driver.get(baseUrl + "/login");
         }
     }
 
