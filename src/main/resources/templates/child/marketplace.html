@@ -206,7 +206,6 @@
                                 <tbody>
                                     <tr th:each="task, iterStat : ${marketplaceTasks}"
                                         class="animate__animated animate__fadeInUp"
-                                        th:classappend="${task.pickedByChildId != null ? 'table-light' : ''}"
                                         th:style="'animation-delay: ' + ${iterStat.count * 100} + 'ms'">
                                         <td>
                                             <strong th:text="${task.title}">任务标题</strong>
@@ -222,22 +221,13 @@
                                                 <span th:case="'DAILY_ONCE'" class="badge bg-info">每日一次</span>
                                                 <span th:case="'MANDATORY'" class="badge bg-info">强制任务</span>
                                             </th:block>
-                                            <!-- Picked indicator -->
-                                            <span th:if="${task.pickedByChildId != null}" class="badge bg-success ms-1">
-                                                <i class="bi bi-check-circle"></i> 已选取
-                                            </span>
                                         </td>
                                         <td class="text-muted" th:text="${task.description}">任务描述</td>
                                         <td style="text-align: right;">
-                                            <button th:if="${task.pickedByChildId == null}"
-                                                    class="btn btn-info btn-sm pick-task-btn"
+                                            <button class="btn btn-info btn-sm pick-task-btn"
                                                     th:attr="data-task-id=${task.id}"
                                                     th:id="'pickBtn-' + ${task.id}">
                                                 <i class="bi bi-plus-circle"></i> 挑选任务
-                                            </button>
-                                            <button th:if="${task.pickedByChildId != null}"
-                                                    class="btn btn-secondary btn-sm" disabled>
-                                                <i class="bi bi-check-circle"></i> 已选取
                                             </button>
                                         </td>
                                     </tr>
