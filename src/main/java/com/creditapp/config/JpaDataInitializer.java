@@ -15,11 +15,14 @@ import java.time.LocalDateTime;
 /**
  * JPA-based Data Initializer
  * Replaces SQL import scripts with type-safe Java code
- * Only runs in 'dev' profile
+ * Runs in all profiles except 'test' (to avoid interfering with tests)
+ * 
+ * Note: Previously this was @Profile("dev") only, which meant marketplace tasks
+ * were not created in production. Now it runs in all non-test profiles.
  */
 @Slf4j
 @Configuration
-@Profile("dev")
+@Profile("!test")
 @RequiredArgsConstructor
 public class JpaDataInitializer {
 
