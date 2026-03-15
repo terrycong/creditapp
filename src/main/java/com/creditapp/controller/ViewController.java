@@ -760,6 +760,113 @@ public class ViewController {
     }
 
     // Child details view
+    // ========== Reward Management ==========
+    
+    @GetMapping("/parent/rewards")
+    public String parentRewards(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== PARENT REWARDS CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        
+        String username = userDetails.getUsername();
+        User parent = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+        
+        // Get all rewards
+        List<RewardDTO> rewards = rewardService.getAllRewards();
+        model.addAttribute("rewards", rewards);
+        model.addAttribute("username", username);
+        
+        log.info("Found {} rewards for parent: {}", rewards.size(), username);
+        return "parent/rewards";
+    }
+    
+    @PostMapping("/parent/rewards")
+    public String createReward(@AuthenticationPrincipal UserDetails userDetails,
+                               @RequestParam String name,
+                               @RequestParam Integer pointsRequired,
+                               @RequestParam(required = false, defaultValue = "999") Integer quantity,
+                               @RequestParam(required = false) String imageUrl,
+                               @RequestParam(required = false) String description,
+                               RedirectAttributes redirectAttrs) {
+        log.info("Creating new reward: name={}, points={}", name, pointsRequired);
+        try {
+            CreateTaskRequest request = new CreateTaskRequest();
+            request.setTitle(name);  // Using title field for name
+            request.setPoints(pointsRequired);
+            request.setDescription(description);
+            
+            RewardDTO reward = rewardService.createReward(request);
+            
+            // Update quantity and imageUrl separately since createReward doesn't support them
+            if (quantity != null || imageUrl != null) {
+                RewardDTO existing = rewardService.getRewardById(reward.getId());
+                // Note: The service doesn't fully support updating these fields yet
+                // This is a limitation - quantity defaults to 999
+            }
+            
+            redirectAttrs.addFlashAttribute("success", "礼物创建成功！");
+        } catch (Exception e) {
+            log.error("Failed to create reward", e);
+            redirectAttrs.addFlashAttribute("error", "创建失败: " + e.getMessage());
+        }
+        return "redirect:/parent/rewards";
+    }
+    
+    @PostMapping("/parent/rewards/{id}/edit")
+    public String editReward(@AuthenticationPrincipal UserDetails userDetails,
+                             @PathVariable Long id,
+                             @RequestParam String name,
+                             @RequestParam Integer pointsRequired,
+                             @RequestParam(required = false, defaultValue = "999") Integer quantity,
+                             @RequestParam(required = false) String imageUrl,
+                             @RequestParam(required = false) String description,
+                             RedirectAttributes redirectAttrs) {
+        log.info("Editing reward: id={}, name={}, points={}, quantity={}", id, name, pointsRequired, quantity);
+        try {
+            String username = userDetails.getUsername();
+            User parent = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
+            
+            // Verify reward exists first
+            RewardDTO existing = rewardService.getRewardById(id);
+            
+            // Update using CreateTaskRequest (service uses title for name, points for pointsRequired)
+            CreateTaskRequest request = new CreateTaskRequest();
+            request.setTitle(name);
+            request.setPoints(pointsRequired);
+            request.setDescription(description);
+            
+            rewardService.updateReward(id, request);
+            
+            // Note: quantity and imageUrl updates are not supported by the current service
+            // This is a limitation
+            
+            redirectAttrs.addFlashAttribute("success", "礼物更新成功！");
+        } catch (Exception e) {
+            log.error("Failed to edit reward", e);
+            redirectAttrs.addFlashAttribute("error", "更新失败: " + e.getMessage());
+        }
+        return "redirect:/parent/rewards";
+    }
+    
+    @PostMapping("/parent/rewards/{id}/delete")
+    public String deleteReward(@AuthenticationPrincipal UserDetails userDetails,
+                               @PathVariable Long id,
+                               RedirectAttributes redirectAttrs) {
+        log.info("Deleting reward: id={}", id);
+        try {
+            rewardService.deleteReward(id);
+            redirectAttrs.addFlashAttribute("success", "礼物删除成功！");
+        } catch (Exception e) {
+            log.error("Failed to delete reward", e);
+            redirectAttrs.addFlashAttribute("error", "删除失败: " + e.getMessage());
+        }
+        return "redirect:/parent/rewards";
+    }
+
+    // Child details view
     @GetMapping("/parent/children/{childId}")
     public String viewChildDetails(@AuthenticationPrincipal UserDetails userDetails,
                                    @PathVariable Long childId,

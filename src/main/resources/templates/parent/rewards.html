@@ -220,7 +220,8 @@
                             </span>
                         </div>
                         <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary w-100 mb-2" disabled>
+                            <button class="btn btn-sm btn-outline-primary w-100 mb-2" 
+                                    th:onclick="'openEditModal(' + ${reward.id} + ', \'' + ${reward.name} + '\', ' + ${reward.pointsRequired} + ', ' + ${reward.quantity} + ', \'' + ${reward.description} + '\')'">
                                 <i class="bi bi-pencil"></i> 编辑
                             </button>
                             <form th:action="@{/parent/rewards/{id}/delete(id=${reward.id})}" 
@@ -252,5 +253,70 @@
 
     <!-- Bootstrap JS -->
     <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+    
+    <!-- Edit Reward Modal -->
+    <div class="modal fade" id="editRewardModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil"></i> 编辑礼物
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/parent/rewards/{id}/edit(id=${reward.id})}" method="post" id="editRewardForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editRewardId" name="id">
+                        
+                        <div class="mb-3">
+                            <label for="editName" class="form-label">礼物名称</label>
+                            <input type="text" class="form-control" id="editName" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editPointsRequired" class="form-label">所需积分</label>
+                            <input type="number" class="form-control" id="editPointsRequired" name="pointsRequired" 
+                                   min="1" max="10000" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editDescription" class="form-label">礼物描述</label>
+                            <textarea class="form-control" id="editDescription" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <!-- Hidden fields for quantity and imageUrl (not editable in current version) -->
+                        <input type="hidden" id="editQuantity" name="quantity" value="999">
+                        <input type="hidden" id="editImageUrl" name="imageUrl" value="">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> 保存修改
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let editModal;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            editModal = new bootstrap.Modal(document.getElementById('editRewardModal'));
+        });
+        
+        function openEditModal(id, name, pointsRequired, quantity, description) {
+            document.getElementById('editRewardId').value = id;
+            document.getElementById('editName').value = name || '';
+            document.getElementById('editPointsRequired').value = pointsRequired || 20;
+            document.getElementById('editDescription').value = description || '';
+            
+            // Set form action
+            document.getElementById('editRewardForm').action = '/parent/rewards/' + id + '/edit';
+            
+            editModal.show();
+        }
+    </script>
 </body>
 </html>
