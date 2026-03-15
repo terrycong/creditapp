@@ -157,6 +157,22 @@
             <artifactId>chart.js</artifactId>
             <version>4.4.1</version>
         </dependency>
+
+        <!-- Selenium WebDriver for UI Testing -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>4.18.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- WebDriverManager for automatic driver management -->
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
