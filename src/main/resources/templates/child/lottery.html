@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸运抽奖 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link th:href="@{/webjars/animate.css/4.1.1/animate.min.css}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+            --gold-color: #FFD700;
+            --purple-color: #8B5CF6;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        
+        .navbar {
+            background: rgba(255,255,255,0.1) !important;
+            backdrop-filter: blur(10px);
+        }
+        
+        .navbar .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+        }
+        
+        .navbar .nav-link:hover,
+        .navbar .nav-link.active {
+            color: white !important;
+            font-weight: bold;
+        }
+        
+        .points-card {
+            background: linear-gradient(135deg, var(--gold-color), #FFA500);
+            border-radius: 20px;
+            padding: 20px;
+            color: #333;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .points-card h2 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .theme-card {
+            border: none;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+            background: white;
+        }
+        
+        .theme-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        
+        .theme-header {
+            background: linear-gradient(135deg, var(--purple-color), #6366F1);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .theme-header h4 {
+            margin: 0;
+            font-weight: bold;
+        }
+        
+        .prize-list {
+            padding: 20px;
+        }
+        
+        .prize-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .prize-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--success-color), #34D399);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 15px;
+        }
+        
+        .draw-btn {
+            background: linear-gradient(135deg, var(--danger-color), #F97316);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+        }
+        
+        .draw-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);
+        }
+        
+        .draw-btn:disabled {
+            background: #9CA3AF;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .cost-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .section-title {
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* Lottery Animation */
+        .lottery-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .lottery-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .lottery-box h3 {
+            color: var(--purple-color);
+            margin-bottom: 20px;
+        }
+        
+        .lottery-spinner {
+            width: 100px;
+            height: 100px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--purple-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .win-result {
+            animation: bounceIn 0.5s;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .prize-won {
+            background: linear-gradient(135deg, var(--gold-color), #FFA500);
+            color: #333;
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .history-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/tasks">
+                            <i class="bi bi-list-check"></i> 我的任务
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/marketplace">
+                            <i class="bi bi-shop"></i> 任务市场
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/child/lottery">
+                            <i class="bi bi-trophy"></i> 幸运抽奖
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/rewards">
+                            <i class="bi bi-gift"></i> 礼物商店
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- Points Display -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="points-card animate__animated animate__pulse">
+                    <p class="mb-1"><i class="bi bi-star-fill"></i> 我的积分</p>
+                    <h2 th:text="${childPoints}">0</h2>
+                    <p class="mb-0 small">参与抽奖赢取更多奖励！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Title -->
+        <h3 class="section-title mb-4 animate__animated animate__fadeInLeft">
+            <i class="bi bi-trophy-fill"></i> 幸运抽奖
+        </h3>
+
+        <!-- Empty State -->
+        <div th:if="${#lists.isEmpty(themes)}" class="empty-state animate__animated animate__fadeIn">
+            <i class="bi bi-emoji-frown"></i>
+            <h4>暂时没有抽奖活动</h4>
+            <p>等待家长创建抽奖活动吧！</p>
+            <a href="/child/tasks" class="btn btn-light mt-3">
+                <i class="bi bi-arrow-left"></i> 返回任务列表
+            </a>
+        </div>
+
+        <!-- Lottery Themes -->
+        <div th:if="${!#lists.isEmpty(themes)}" class="row">
+            <div th:each="theme : ${themes}" class="col-md-6 col-lg-4 mb-4">
+                <div class="theme-card animate__animated animate__fadeInUp">
+                    <div class="theme-header">
+                        <h4 th:text="${theme.name}">抽奖主题</h4>
+                        <p class="mb-0 mt-2">
+                            <span class="cost-badge">
+                                <i class="bi bi-lightning-fill"></i>
+                                消耗 <strong th:text="${theme.pointsPerDraw}">50</strong> 积分
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <div class="prize-list">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-gift"></i> 奖品池
+                        </h6>
+                        
+                        <div th:if="${#lists.isEmpty(theme.prizes)}" class="text-center text-muted py-3">
+                            <small>暂无奖品</small>
+                        </div>
+                        
+                        <div th:if="${!#lists.isEmpty(theme.prizes)}">
+                            <div th:each="prize, iterStat : ${theme.prizes}" class="prize-item" th:if="${iterStat.index < 4}">
+                                <div class="prize-icon">
+                                    <i class="bi bi-gift-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <strong th:text="${prize.name}">奖品名称</strong>
+                                    <div class="text-muted small">
+                                        <span th:text="${prize.value}">100</span> 积分
+                                        <span th:if="${prize.quantity > 0}" class="ms-2">
+                                            (库存: <span th:text="${prize.quantity}">5</span>)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:if="${#lists.size(theme.prizes) > 4}" class="text-center text-muted small">
+                                还有 <span th:text="${#lists.size(theme.prizes) - 4}">更多</span> 个奖品...
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button class="draw-btn" 
+                                    th:disabled="${childPoints < theme.pointsPerDraw}"
+                                    th:onclick="'drawLottery(' + ${theme.id} + ', ' + ${theme.pointsPerDraw} + ')'">
+                                <i class="bi bi-stars"></i> 立即抽奖
+                            </button>
+                            <div th:if="${childPoints < theme.pointsPerDraw}" class="text-danger small mt-2">
+                                <i class="bi bi-exclamation-circle"></i> 积分不足
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div th:if="${!#lists.isEmpty(themes)}" class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history text-primary"></i> 我的抽奖记录
+                        </h5>
+                    </div>
+                    <div class="card-body" id="historyContainer">
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mt-2">暂无抽奖记录</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lottery Animation Modal -->
+    <div class="lottery-animation" id="lotteryModal">
+        <div class="lottery-box">
+            <h3 id="lotteryTitle">
+                <i class="bi bi-stars"></i> 抽奖中...
+            </h3>
+            <div class="lottery-spinner" id="lotterySpinner"></div>
+            <div id="lotteryResult" style="display: none;">
+                <!-- Result will be shown here -->
+            </div>
+            <button class="btn btn-primary mt-3" id="closeModalBtn" style="display: none;" onclick="closeModal()">
+                <i class="bi bi-check-circle"></i> 确定
+            </button>
+        </div>
+    </div>
+
+    <footer class="text-white text-center py-3 mt-5" style="background: rgba(0,0,0,0.2);">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 家庭积分系统。祝你好运！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+    
+    <script>
+        let currentPoints = /*[[${childPoints}]]*/ 0;
+        
+        function drawLottery(themeId, cost) {
+            if (currentPoints < cost) {
+                alert('积分不足！需要 ' + cost + ' 积分，当前只有 ' + currentPoints + ' 积分。');
+                return;
+            }
+            
+            if (!confirm('确定花费 ' + cost + ' 积分进行抽奖吗？')) {
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('lotteryModal').style.display = 'flex';
+            document.getElementById('lotterySpinner').style.display = 'block';
+            document.getElementById('lotteryResult').style.display = 'none';
+            document.getElementById('lotteryTitle').innerHTML = '<i class="bi bi-stars"></i> 抽奖中...';
+            document.getElementById('closeModalBtn').style.display = 'none';
+            
+            // Call API
+            fetch('/api/v1/lottery/themes/' + themeId + '/draw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide spinner
+                document.getElementById('lotterySpinner').style.display = 'none';
+                
+                if (data.code === 'SUCCESS') {
+                    const result = data.data;
+                    currentPoints -= cost;
+                    
+                    // Update points display
+                    document.querySelector('.points-card h2').textContent = currentPoints;
+                    
+                    // Show result
+                    let resultHtml = '<div class="win-result">';
+                    
+                    if (result.drawResults && result.drawResults.length > 0) {
+                        resultHtml += '<h4 class="text-success"><i class="bi bi-trophy-fill"></i> 恭喜中奖！</h4>';
+                        
+                        let totalWin = 0;
+                        result.drawResults.forEach(prize => {
+                            resultHtml += '<div class="prize-won">';
+                            resultHtml += '<i class="bi bi-gift-fill"></i> ' + prize.prizeName;
+                            resultHtml += '<br><small>价值 ' + prize.prizeValue + ' 积分</small>';
+                            resultHtml += '</div>';
+                            totalWin += prize.prizeValue;
+                        });
+                        
+                        // Add won points
+                        currentPoints += totalWin;
+                        document.querySelector('.points-card h2').textContent = currentPoints;
+                        
+                        resultHtml += '<p class="text-muted">获得 ' + totalWin + ' 积分！</p>';
+                    } else {
+                        resultHtml += '<h4 class="text-muted"><i class="bi bi-emoji-smile"></i> 很遗憾</h4>';
+                        resultHtml += '<p>这次没有中奖，再接再厉！</p>';
+                    }
+                    
+                    resultHtml += '</div>';
+                    
+                    document.getElementById('lotteryResult').innerHTML = resultHtml;
+                    document.getElementById('lotteryResult').style.display = 'block';
+                    document.getElementById('lotteryTitle').innerHTML = '<i class="bi bi-star-fill"></i> 抽奖结果';
+                    
+                    // Reload page to update
+                    setTimeout(() => {
+                        loadHistory();
+                    }, 1000);
+                } else {
+                    document.getElementById('lotteryResult').innerHTML = 
+                        '<div class="text-danger"><i class="bi bi-exclamation-circle"></i> ' + 
+                        (data.message || '抽奖失败') + '</div>';
+                    document.getElementById('lotteryResult').style.display = 'block';
+                }
+                
+                document.getElementById('closeModalBtn').style.display = 'inline-block';
+            })
+            .catch(error => {
+                document.getElementById('lotterySpinner').style.display = 'none';
+                document.getElementById('lotteryResult').innerHTML = 
+                    '<div class="text-danger"><i class="bi bi-exclamation-circle"></i> 抽奖失败：' + error + '</div>';
+                document.getElementById('lotteryResult').style.display = 'block';
+                document.getElementById('closeModalBtn').style.display = 'inline-block';
+            });
+        }
+        
+        function closeModal() {
+            document.getElementById('lotteryModal').style.display = 'none';
+            window.location.reload();
+        }
+        
+        function loadHistory() {
+            fetch('/api/v1/lottery/history')
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 'SUCCESS' && data.data && data.data.length > 0) {
+                    let html = '<ul class="list-group list-group-flush">';
+                    data.data.slice(0, 10).forEach(record => {
+                        html += '<li class="list-group-item d-flex justify-content-between align-items-center">';
+                        html += '<div>';
+                        html += '<strong>' + (record.themeName || '抽奖') + '</strong>';
+                        html += '<br><small class="text-muted">' + formatDate(record.drawAt) + '</small>';
+                        html += '</div>';
+                        html += '<div class="text-end">';
+                        html += '<span class="badge bg-warning">-' + record.pointsCost + '</span>';
+                        if (record.drawResults && record.drawResults.length > 0) {
+                            let total = record.drawResults.reduce((sum, p) => sum + p.prizeValue, 0);
+                            html += ' <span class="badge bg-success">+' + total + '</span>';
+                        }
+                        html += '</div>';
+                        html += '</li>';
+                    });
+                    html += '</ul>';
+                    document.getElementById('historyContainer').innerHTML = html;
+                }
+            });
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+        
+        // Load history on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistory();
+        });
+    </script>
+</body>
+</html>
