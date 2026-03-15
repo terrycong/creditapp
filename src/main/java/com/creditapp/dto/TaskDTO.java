@@ -24,6 +24,12 @@ public class TaskDTO {
     private Integer deadlineValue;
     private Integer penaltyPoints;
 
+    // 任务领取信息（用于家长市场页面显示）
+    private String pickedByChildName;
+
+    // 任务分配信息（用于家长任务列表显示）
+    private String assignedChildName;
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -129,6 +135,22 @@ public class TaskDTO {
         this.penaltyPoints = penaltyPoints;
     }
 
+    public String getPickedByChildName() {
+        return pickedByChildName;
+    }
+
+    public void setPickedByChildName(String pickedByChildName) {
+        this.pickedByChildName = pickedByChildName;
+    }
+
+    public String getAssignedChildName() {
+        return assignedChildName;
+    }
+
+    public void setAssignedChildName(String assignedChildName) {
+        this.assignedChildName = assignedChildName;
+    }
+
     // Builder
     public static Builder builder() {
         return new Builder();
@@ -148,6 +170,8 @@ public class TaskDTO {
         private TaskDeadlineType deadlineType;
         private Integer deadlineValue;
         private Integer penaltyPoints;
+        private String pickedByChildName;
+        private String assignedChildName;
 
         public Builder id(Long id) {
             this.id = id;
@@ -214,6 +238,16 @@ public class TaskDTO {
             return this;
         }
 
+        public Builder pickedByChildName(String pickedByChildName) {
+            this.pickedByChildName = pickedByChildName;
+            return this;
+        }
+
+        public Builder assignedChildName(String assignedChildName) {
+            this.assignedChildName = assignedChildName;
+            return this;
+        }
+
         public TaskDTO build() {
             TaskDTO dto = new TaskDTO();
             dto.id = this.id;
@@ -229,6 +263,8 @@ public class TaskDTO {
             dto.deadlineType = this.deadlineType;
             dto.deadlineValue = this.deadlineValue;
             dto.penaltyPoints = this.penaltyPoints;
+            dto.pickedByChildName = this.pickedByChildName;
+            dto.assignedChildName = this.assignedChildName;
             return dto;
         }
     }

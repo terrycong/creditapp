@@ -189,7 +189,7 @@
                     </div>
                     <div class="card-body">
                         <!-- Empty state -->
-                        <div th:if="${marketplaceTasks == null or #lists.isEmpty(marketplaceTasks.?[pickedByChildId == null])}" class="text-center py-5">
+                        <div th:if="${marketplaceTasks == null or #lists.isEmpty(marketplaceTasks.?[pickedByChildName == null])}" class="text-center py-5">
                             <div class="mb-3">
                                 <i class="bi bi-shop" style="font-size: 4rem; color: #d1d5db;"></i>
                             </div>
@@ -198,8 +198,8 @@
                         </div>
 
                         <!-- Dynamic available task list -->
-                        <div th:if="${marketplaceTasks != null and !#lists.isEmpty(marketplaceTasks.?[pickedByChildId == null])}" class="row">
-                            <div th:each="task, iterStat : ${marketplaceTasks.?[pickedByChildId == null]}"
+                        <div th:if="${marketplaceTasks != null and !#lists.isEmpty(marketplaceTasks.?[pickedByChildName == null])}" class="row">
+                            <div th:each="task, iterStat : ${marketplaceTasks.?[pickedByChildName == null]}"
                                  class="col-md-6 mb-4 animate__animated animate__fadeInUp"
                                  th:style="'animation-delay: ' + ${iterStat.count * 100} + 'ms'">
                                 <div class="card task-card h-100">

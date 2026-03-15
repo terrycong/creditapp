@@ -200,7 +200,19 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskDTO> getTasksByParent(Long parentId) {
         List<Task> tasks = taskRepository.findByCreatedBy_Id(parentId);
-        return tasks.stream().map(this::toDTO).collect(Collectors.toList());
+        
+        // Build a map of taskId -> assignedChildName for tasks that have TaskJob
+        java.util.Map<Long, String> taskAssignmentMap = new java.util.HashMap<>();
+        List<TaskJob> jobs = taskJobRepository.findJobsByParentId(parentId);
+        for (TaskJob job : jobs) {
+            // Only store if not already present (keep first assignment)
+            taskAssignmentMap.putIfAbsent(job.getTask().getId(), job.getChild().getUsername());
+        }
+        
+        // Convert to DTO with assignment info
+        return tasks.stream()
+                .map(task -> toDTOWithAssignedInfo(task, taskAssignmentMap.get(task.getId())))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -563,6 +575,44 @@ public class TaskServiceImpl implements TaskService {
                 .build();
     }
 
+    private TaskDTO toDTOWithPickedInfo(Task task, String pickedByChildName) {
+        return TaskDTO.builder()
+                .id(task.getId())
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .points(task.getPoints())
+                .type(task.getType())
+                .status(task.getStatus())
+                .createdById(task.getCreatedBy() != null ? task.getCreatedBy().getId() : null)
+                .createdByName(task.getCreatedBy() != null ? task.getCreatedBy().getUsername() : null)
+                .active(task.isActive())
+                .createdAt(task.getCreatedAt())
+                .deadlineType(task.getDeadlineType())
+                .deadlineValue(task.getDeadlineValue())
+                .penaltyPoints(task.getPenaltyPoints())
+                .pickedByChildName(pickedByChildName)
+                .build();
+    }
+
+    private TaskDTO toDTOWithAssignedInfo(Task task, String assignedChildName) {
+        return TaskDTO.builder()
+                .id(task.getId())
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .points(task.getPoints())
+                .type(task.getType())
+                .status(task.getStatus())
+                .createdById(task.getCreatedBy() != null ? task.getCreatedBy().getId() : null)
+                .createdByName(task.getCreatedBy() != null ? task.getCreatedBy().getUsername() : null)
+                .active(task.isActive())
+                .createdAt(task.getCreatedAt())
+                .deadlineType(task.getDeadlineType())
+                .deadlineValue(task.getDeadlineValue())
+                .penaltyPoints(task.getPenaltyPoints())
+                .assignedChildName(assignedChildName)
+                .build();
+    }
+
     private TaskCompletionDTO toCompletionDTO(TaskCompletion completion) {
         return TaskCompletionDTO.builder()
                 .id(completion.getId())
@@ -694,7 +744,18 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDTO> getMarketplaceTasksByParent(Long parentId) {
         // Get all marketplace tasks including hidden/inactive ones for parent management view
         List<Task> tasks = taskRepository.findAllMarketplaceTasksIncludingHiddenByParentId(parentId);
-        return tasks.stream().map(this::toDTO).collect(Collectors.toList());
+        
+        // Build a map of taskId -> pickedByChildName for tasks that have been picked
+        java.util.Map<Long, String> taskPickMap = new java.util.HashMap<>();
+        List<TaskJob> activeJobs = taskJobRepository.findActiveJobsByParentId(parentId);
+        for (TaskJob job : activeJobs) {
+            taskPickMap.put(job.getTask().getId(), job.getChild().getUsername());
+        }
+        
+        // Convert to DTO with picked info
+        return tasks.stream()
+                .map(task -> toDTOWithPickedInfo(task, taskPickMap.get(task.getId())))
+                .collect(Collectors.toList());
     }
 
     @Override

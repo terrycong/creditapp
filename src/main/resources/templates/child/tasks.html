@@ -288,10 +288,6 @@
                                                 <span th:case="'DAILY_ONCE'" class="badge bg-info">每日一次</span>
                                                 <span th:case="'MANDATORY'" class="badge bg-warning">强制任务</span>
                                             </th:block>
-                                            <!-- Picked status indicator -->
-                                            <span th:if="${task.pickedByChildId != null}" class="badge bg-success ms-1">
-                                                <i class="bi bi-check-circle"></i> 已领取
-                                            </span>
                                             <!-- Mandatory task indicator -->
                                             <span th:if="${task.type == 'MANDATORY'}" class="badge bg-warning ms-1">
                                                 <i class="bi bi-exclamation-triangle"></i> 今日必做
@@ -300,14 +296,7 @@
                                         <td class="text-muted" th:text="${task.description}">任务描述</td>
                                         <td style="width: 160px;">
                                             <small class="text-muted" 
-                                                   th:if="${task.pickedAt != null}"
-                                                   th:title="领取时间"
-                                                   th:text="${#temporals.format(task.pickedAt, 'yyyy-MM-dd HH:mm')}">
-                                                2024-01-01 12:00
-                                            </small>
-                                            <small class="text-muted" 
-                                                   th:unless="${task.pickedAt != null}"
-                                                   th:title="分配时间"
+                                                   th:title="创建时间"
                                                    th:text="${#temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm')}">
                                                 2024-01-01 12:00
                                             </small>
