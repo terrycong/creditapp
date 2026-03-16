@@ -850,21 +850,6 @@ public class ViewController {
         }
         return "redirect:/parent/rewards";
     }
-    
-    @PostMapping("/parent/rewards/{id}/delete")
-    public String deleteReward(@AuthenticationPrincipal UserDetails userDetails,
-                               @PathVariable Long id,
-                               RedirectAttributes redirectAttrs) {
-        log.info("Deleting reward: id={}", id);
-        try {
-            rewardService.deleteReward(id);
-            redirectAttrs.addFlashAttribute("success", "礼物删除成功！");
-        } catch (Exception e) {
-            log.error("Failed to delete reward", e);
-            redirectAttrs.addFlashAttribute("error", "删除失败: " + e.getMessage());
-        }
-        return "redirect:/parent/rewards";
-    }
 
     // Child details view
     @GetMapping("/parent/children/{childId}")
