@@ -250,14 +250,6 @@ public class ViewController {
         }
     }
 
-    @GetMapping("/parent/rewards")
-    public String parentRewards(Model model) {
-        // Get all active rewards
-        List<RewardDTO> rewards = rewardService.getAllRewards();
-        model.addAttribute("rewards", rewards);
-        return "parent/rewards";
-    }
-
     @PostMapping("/parent/tasks/{id}/delete")
     public String deleteTask(@AuthenticationPrincipal UserDetails userDetails,
                            @PathVariable Long id,
@@ -351,40 +343,6 @@ public class ViewController {
             redirectAttrs.addFlashAttribute("error", "删除礼物失败: " + e.getMessage());
         }
         return "redirect:/parent/rewards";
-    }
-
-    @PostMapping("/parent/rewards")
-    public String createReward(@AuthenticationPrincipal UserDetails userDetails,
-                             @RequestParam String name,
-                             @RequestParam String description,
-                             @RequestParam Integer pointsRequired,
-                             @RequestParam(required = false) Integer quantity,
-                             @RequestParam(required = false) String imageUrl,
-                             Model model) {
-        log.info("Creating reward: name={}, pointsRequired={}, quantity={}, imageUrl={}", 
-                name, pointsRequired, quantity, imageUrl);
-        
-        try {
-            // Create task request (misnamed - should be CreateRewardRequest)
-            CreateTaskRequest request = new CreateTaskRequest();
-            request.setTitle(name);  // RewardService expects title for name
-            request.setDescription(description);
-            request.setPoints(pointsRequired);  // RewardService expects points for pointsRequired
-            
-            // Call reward service
-            rewardService.createReward(request);
-            
-            model.addAttribute("success", "礼物添加成功！");
-        } catch (Exception e) {
-            log.error("Failed to create reward", e);
-            model.addAttribute("error", "添加礼物失败: " + e.getMessage());
-        }
-        
-        // Re-fetch rewards to show the new one
-        List<RewardDTO> rewards = rewardService.getAllRewards();
-        model.addAttribute("rewards", rewards);
-        
-        return "parent/rewards";
     }
 
     // Parent children management page
