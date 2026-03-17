@@ -52,6 +52,7 @@ public class LotteryPrize {
      * 总概率 = 该奖品权重 / 所有奖品权重之和
      */
     @Column(nullable = false)
+    @Builder.Default
     private Integer weight = 1;
 
     /**
@@ -65,18 +66,21 @@ public class LotteryPrize {
      * 奖品库存数量（-1 表示无限）
      */
     @Column(nullable = false)
+    @Builder.Default
     private Integer quantity = -1;
 
     /**
      * 已兑换数量
      */
     @Column(nullable = false)
+    @Builder.Default
     private Integer redeemedCount = 0;
 
     /**
      * 是否启用
      */
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     /**

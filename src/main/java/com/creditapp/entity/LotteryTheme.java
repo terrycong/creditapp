@@ -53,6 +53,7 @@ public class LotteryTheme {
      * 是否启用
      */
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     /**
