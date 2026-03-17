@@ -215,6 +215,10 @@
                 <version>3.2.5</version>
                 <configuration>
                     <argLine>@{argLine} -Dspring.profiles.active=test</argLine>
+                    <!-- Skip Selenium tests by default (slow, require browser) -->
+                    <excludes>
+                        <exclude>**/selenium/**</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <!-- JaCoCo Test Coverage Plugin - Runs on every build -->
@@ -242,5 +246,30 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- Profiles for different test configurations -->
+    <profiles>
+        <!-- Selenium UI Tests Profile -->
+        <!-- Run with: mvn clean install -Pselenium-tests -->
+        <profile>
+            <id>selenium-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.2.5</version>
+                        <configuration>
+                            <argLine>@{argLine} -Dspring.profiles.active=test</argLine>
+                            <!-- Include Selenium tests when profile is active -->
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
