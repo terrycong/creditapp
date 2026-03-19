@@ -268,7 +268,7 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form th:action="@{/parent/rewards/{id}/edit(id=${reward.id})}" method="post" id="editRewardForm">
+                <form th:action="@{/parent/rewards/edit}" method="post" id="editRewardForm">
                     <div class="modal-body">
                         <input type="hidden" id="editRewardId" name="id">
                         
