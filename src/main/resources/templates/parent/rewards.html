@@ -220,8 +220,12 @@
                             </span>
                         </div>
                         <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary w-100 mb-2" 
-                                    th:onclick="'openEditModal(' + ${reward.id} + ', \'' + ${reward.name} + '\', ' + ${reward.pointsRequired} + ', ' + ${reward.quantity} + ', \'' + ${reward.description} + '\')'">
+                            <button class="btn btn-sm btn-outline-primary w-100 mb-2 edit-btn"
+                                    th:data-id="${reward.id}"
+                                    th:data-name="${reward.name}"
+                                    th:data-points="${reward.pointsRequired}"
+                                    th:data-quantity="${reward.quantity}"
+                                    th:data-description="${reward.description} ?: ''">
                                 <i class="bi bi-pencil"></i> 编辑
                             </button>
                             <form th:action="@{/parent/rewards/{id}/delete(id=${reward.id})}" 
@@ -304,19 +308,26 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             editModal = new bootstrap.Modal(document.getElementById('editRewardModal'));
+            
+            // Add event listeners to all edit buttons
+            document.querySelectorAll('.edit-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+                    const points = this.getAttribute('data-points');
+                    const quantity = this.getAttribute('data-quantity');
+                    const description = this.getAttribute('data-description');
+                    
+                    document.getElementById('editRewardId').value = id;
+                    document.getElementById('editName').value = name || '';
+                    document.getElementById('editPointsRequired').value = points || 20;
+                    document.getElementById('editDescription').value = description || '';
+                    document.getElementById('editRewardForm').action = '/parent/rewards/' + id + '/edit';
+                    
+                    editModal.show();
+                });
+            });
         });
-        
-        function openEditModal(id, name, pointsRequired, quantity, description) {
-            document.getElementById('editRewardId').value = id;
-            document.getElementById('editName').value = name || '';
-            document.getElementById('editPointsRequired').value = pointsRequired || 20;
-            document.getElementById('editDescription').value = description || '';
-            
-            // Set form action
-            document.getElementById('editRewardForm').action = '/parent/rewards/' + id + '/edit';
-            
-            editModal.show();
-        }
     </script>
 </body>
 </html>
