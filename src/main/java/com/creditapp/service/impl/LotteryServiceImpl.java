@@ -6,6 +6,7 @@ import com.creditapp.exception.BusinessException;
 import com.creditapp.repository.*;
 import com.creditapp.service.LotteryService;
 import com.creditapp.service.PointHistoryService;
+import com.creditapp.service.PointWalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class LotteryServiceImpl implements LotteryService {
     private final ChildRepository childRepository;
     private final UserRepository userRepository;
     private final PointHistoryService pointHistoryService;
+    private final PointWalletService pointWalletService;
     
     private static final Random RANDOM = new Random();
 
@@ -227,10 +229,10 @@ public class LotteryServiceImpl implements LotteryService {
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new BusinessException("CHILD_NOT_FOUND", "小孩不存在"));
         
-        // 检查积分是否足够
-        if (child.getPoints() < theme.getPointsPerDraw()) {
+        int availablePoints = pointWalletService.getTotalPoints(child);
+        if (availablePoints < theme.getPointsPerDraw()) {
             throw new BusinessException("INSUFFICIENT_POINTS", 
-                    "积分不足，需要 " + theme.getPointsPerDraw() + " 积分，当前只有 " + child.getPoints() + " 积分");
+                    "积分不足，需要 " + theme.getPointsPerDraw() + " 积分，当前只有 " + availablePoints + " 积分");
         }
         
         // 获取所有可用奖品
@@ -242,10 +244,11 @@ public class LotteryServiceImpl implements LotteryService {
         // 执行抽奖算法（权重随机）
         List<LotteryPrize> wonPrizes = performWeightedDraw(prizes);
         
-        // 扣除小孩积分
-        Integer originalPoints = child.getPoints();
-        child.setPoints(originalPoints - theme.getPointsPerDraw());
-        childRepository.save(child);
+        int pointsSpent = pointWalletService.spendPoints(child, theme.getPointsPerDraw());
+        if (pointsSpent < theme.getPointsPerDraw()) {
+            throw new BusinessException("INSUFFICIENT_POINTS", 
+                    "积分不足，需要 " + theme.getPointsPerDraw() + " 积分，但只能支出 " + pointsSpent + " 积分");
+        }
         
         // 记录积分扣除历史
         pointHistoryService.recordPointChange(

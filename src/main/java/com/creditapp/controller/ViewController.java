@@ -1,6 +1,7 @@
 package com.creditapp.controller;
 
 import com.creditapp.dto.*;
+import com.creditapp.entity.Child;
 import com.creditapp.entity.PenaltyNotification;
 import com.creditapp.entity.PointHistory;
 import com.creditapp.entity.TaskCompletion;
@@ -12,6 +13,7 @@ import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.service.DashboardService;
 import com.creditapp.service.LotteryService;
+import com.creditapp.service.PointWalletService;
 import com.creditapp.service.PointHistoryService;
 import com.creditapp.service.RewardService;
 import com.creditapp.service.TaskService;
@@ -46,6 +48,7 @@ public class ViewController {
     private final ChildRepository childRepository;
     private final TaskCompletionRepository taskCompletionRepository;
     private final LotteryService lotteryService;
+    private final PointWalletService pointWalletService;
 
     @GetMapping("/")
     public String home() {
@@ -1205,9 +1208,11 @@ public class ViewController {
         List<LotteryThemeDTO> themes = lotteryService.getAllActiveThemesWithPrizes();
         model.addAttribute("themes", themes);
 
-        // Get child's points
         ChildDTO child = userService.getChildById(user.getId());
-        model.addAttribute("childPoints", child.getPoints());
+        Child childEntity = childRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("Child entity not found: " + user.getId()));
+        int availablePoints = pointWalletService.getTotalPoints(childEntity);
+        model.addAttribute("childPoints", availablePoints);
         model.addAttribute("username", username);
 
         log.info("Found {} active lottery themes for child: {}", themes.size(), username);
