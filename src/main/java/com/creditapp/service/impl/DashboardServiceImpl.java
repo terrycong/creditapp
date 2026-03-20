@@ -2,8 +2,10 @@ package com.creditapp.service.impl;
 
 import com.creditapp.dto.*;
 import com.creditapp.entity.*;
+import com.creditapp.entity.PointWallet;
 import com.creditapp.repository.*;
 import com.creditapp.service.DashboardService;
+import com.creditapp.service.PointWalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +31,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final RewardRepository rewardRepository;
     private final TaskCompletionRepository taskCompletionRepository;
     private final RewardRedemptionRepository rewardRedemptionRepository;
+    private final PointWalletService pointWalletService;
 
     @Override
     public DashboardStatsDTO getParentDashboardStats(Long parentId) {
@@ -179,6 +182,30 @@ public class DashboardServiceImpl implements DashboardService {
                .weeklyRewardsRedeemed(weeklyRewardsRedeemed)
                .weeklyPointsEarned(weeklyPointsEarned)
                .weeklyPointsSpent(weeklyPointsSpent);
+        
+        // Get point expiration statistics
+        int totalExpiredPoints = 0;
+        int totalExpiringSoonPoints = 0;
+        Map<String, Integer> expiredPointsByChild = new LinkedHashMap<>();
+        Map<String, Integer> expiringSoonPointsByChild = new LinkedHashMap<>();
+        
+        for (Child child : children) {
+            int expired = pointWalletService.getTotalExpiredPoints(child);
+            List<PointWallet> expiringSoonList = pointWalletService.getPointsExpiringSoon(child, 7);
+            int expiringSoon = expiringSoonList.stream()
+                    .mapToInt(PointWallet::getRemainingPoints)
+                    .sum();
+            
+            expiredPointsByChild.put(child.getUsername(), expired);
+            expiringSoonPointsByChild.put(child.getUsername(), expiringSoon);
+            totalExpiredPoints += expired;
+            totalExpiringSoonPoints += expiringSoon;
+        }
+        
+        builder.totalExpiredPoints(totalExpiredPoints)
+               .totalExpiringSoonPoints(totalExpiringSoonPoints)
+               .expiredPointsByChild(expiredPointsByChild)
+               .expiringSoonPointsByChild(expiringSoonPointsByChild);
         
         return builder.build();
     }
