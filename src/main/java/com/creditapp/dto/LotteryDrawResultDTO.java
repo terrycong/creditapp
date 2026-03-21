@@ -27,4 +27,9 @@ public class LotteryDrawResultDTO {
      * 奖品价值
      */
     private Integer prizeValue;
+    
+    /**
+     * 关联的礼物 ID（如果奖品是实物礼物）
+     */
+    private Long rewardId;
 }

@@ -27,9 +27,11 @@ public class LotteryServiceImpl implements LotteryService {
     private final LotteryDrawRepository lotteryDrawRepository;
     private final LotteryDrawResultRepository lotteryDrawResultRepository;
     private final ChildRepository childRepository;
-    private final UserRepository userRepository;
     private final PointHistoryService pointHistoryService;
+    private final RewardRepository rewardRepository;
+    private final RewardRedemptionRepository rewardRedemptionRepository;
     private final PointWalletService pointWalletService;
+    private final UserRepository userRepository;
     
     private static final Random RANDOM = new Random();
 
@@ -229,7 +231,8 @@ public class LotteryServiceImpl implements LotteryService {
         Child child = childRepository.findById(childId)
                 .orElseThrow(() -> new BusinessException("CHILD_NOT_FOUND", "小孩不存在"));
         
-        int availablePoints = pointWalletService.getTotalPoints(child);
+        // Use legacy points field for consistency
+        int availablePoints = child.getPoints() != null ? child.getPoints() : 0;
         if (availablePoints < theme.getPointsPerDraw()) {
             throw new BusinessException("INSUFFICIENT_POINTS", 
                     "积分不足，需要 " + theme.getPointsPerDraw() + " 积分，当前只有 " + availablePoints + " 积分");
@@ -244,16 +247,15 @@ public class LotteryServiceImpl implements LotteryService {
         // 执行抽奖算法（权重随机）
         List<LotteryPrize> wonPrizes = performWeightedDraw(prizes);
         
-        int pointsSpent = pointWalletService.spendPoints(child, theme.getPointsPerDraw());
-        if (pointsSpent < theme.getPointsPerDraw()) {
-            throw new BusinessException("INSUFFICIENT_POINTS", 
-                    "积分不足，需要 " + theme.getPointsPerDraw() + " 积分，但只能支出 " + pointsSpent + " 积分");
-        }
+        // Deduct points from legacy points field
+        int pointsToSpend = theme.getPointsPerDraw();
+        child.setPoints(child.getPoints() - pointsToSpend);
+        childRepository.save(child);
         
-        // 记录积分扣除历史
+        // Record point change history
         pointHistoryService.recordPointChange(
                 childId,
-                -theme.getPointsPerDraw(),
+                -pointsToSpend,
                 PointChangeType.LOTTERY_DRAW,
                 "抽奖消耗 - " + theme.getName(),
                 theme.getId(),
@@ -286,6 +288,7 @@ public class LotteryServiceImpl implements LotteryService {
                         .prize(prize)
                         .prizeName(prize.getName())
                         .prizeValue(prize.getValue())
+                        .rewardId(prize.getRewardId())
                         .build();
                 lotteryDrawResultRepository.save(result);
                 
@@ -294,24 +297,57 @@ public class LotteryServiceImpl implements LotteryService {
                         .prizeId(prize.getId())
                         .prizeName(prize.getName())
                         .prizeValue(prize.getValue())
+                        .rewardId(prize.getRewardId())
                         .build());
                 
-                // 记录中奖积分
-                pointHistoryService.recordPointChange(
-                        childId,
-                        prize.getValue(),
-                        PointChangeType.LOTTERY_WIN,
-                        "抽奖中奖 - " + prize.getName(),
-                        prize.getId(),
-                        "LOTTERY_PRIZE",
-                        null
-                );
+                // 如果奖品关联了实物礼物，创建兑换记录
+                if (prize.getRewardId() != null) {
+                    Reward reward = rewardRepository.findById(prize.getRewardId())
+                            .orElseThrow(() -> new BusinessException("REWARD_NOT_FOUND", 
+                                    "礼物不存在：" + prize.getRewardId()));
+                    
+                    // 减少礼物库存
+                    if (reward.getQuantity() > 0) {
+                        reward.setQuantity(reward.getQuantity() - 1);
+                        rewardRepository.save(reward);
+                    }
+                    
+                    // 创建礼物兑换记录
+                    RewardRedemption redemption = new RewardRedemption();
+                    redemption.setReward(reward);
+                    redemption.setChild(child);
+                    redemption.setRedeemedAt(LocalDateTime.now());
+                    redemption.setStatus(RedemptionStatus.REDEEMED);
+                    redemption.setNote("抽奖中奖 - " + reward.getName());
+                    rewardRedemptionRepository.save(redemption);
+                    
+                    log.info("Lottery prize redeemed as reward: childId={}, rewardId={}, rewardName={}", 
+                            childId, reward.getId(), reward.getName());
+                } else {
+                    // 记录中奖积分（纯积分奖励）
+                    pointHistoryService.recordPointChange(
+                            childId,
+                            prize.getValue(),
+                            PointChangeType.LOTTERY_WIN,
+                            "抽奖中奖 - " + prize.getName(),
+                            prize.getId(),
+                            "LOTTERY_PRIZE",
+                            null
+                    );
+                }
             }
             
-            // 给小孩增加奖品对应的积分
-            Integer totalWinPoints = wonPrizes.stream().mapToInt(LotteryPrize::getValue).sum();
-            child.setPoints(child.getPoints() + totalWinPoints);
-            childRepository.save(child);
+            // 给小孩增加奖品对应的积分（只给没有关联实物的奖品的积分）
+            Integer totalWinPoints = wonPrizes.stream()
+                    .filter(prize -> prize.getRewardId() == null)  // 只有纯积分奖励才给积分
+                    .mapToInt(LotteryPrize::getValue)
+                    .sum();
+            
+            if (totalWinPoints > 0) {
+                child.setPoints(child.getPoints() + totalWinPoints);
+                childRepository.save(child);
+                log.info("Added {} points from lottery winnings to child: id={}", totalWinPoints, childId);
+            }
         }
         
         log.info("Lottery draw completed: themeId={}, childId={}, won {} prizes", 

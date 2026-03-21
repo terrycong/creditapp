@@ -273,6 +273,16 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="/child/points/history">
+                            <i class="bi bi-graph-up"></i> 积分历史
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/wallet">
+                            <i class="bi bi-wallet2"></i> 积分钱包
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/login">
                             <i class="bi bi-box-arrow-right"></i> 退出
                         </a>
@@ -416,11 +426,7 @@
         let currentPoints = /*[[${childPoints}]]*/ 0;
         
         function drawLottery(themeId, cost) {
-            if (currentPoints < cost) {
-                alert('积分不足！需要 ' + cost + ' 积分，当前只有 ' + currentPoints + ' 积分。');
-                return;
-            }
-            
+            // Remove frontend validation - let backend handle points validation
             if (!confirm('确定花费 ' + cost + ' 积分进行抽奖吗？')) {
                 return;
             }

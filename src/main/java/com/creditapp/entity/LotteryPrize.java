@@ -89,6 +89,13 @@ public class LotteryPrize {
     @Column(length = 500)
     private String imageUrl;
 
+    /**
+     * 关联的可兑换礼物 ID（可选）
+     * 如果设置了此字段，中奖时会获得实际礼物并创建兑换记录
+     */
+    @Column(name = "reward_id")
+    private Long rewardId;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

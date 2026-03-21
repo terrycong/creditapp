@@ -48,6 +48,12 @@ public class LotteryDrawResult {
     @Column(nullable = false)
     private Integer prizeValue;
 
+    /**
+     * 关联的礼物 ID（如果奖品是实物礼物）
+     */
+    @Column(name = "reward_id")
+    private Long rewardId;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

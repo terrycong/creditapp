@@ -75,12 +75,13 @@ public class DataInitializer {
         // Check if child already exists
         Optional<Child> existingChild = childRepository.findByUsername(username);
         if (existingChild.isPresent()) {
-            log.info("Default child user '{}' already exists. Updating password...", username);
-            // Update password to ensure it's correct
+            log.info("Default child user '{}' already exists. Updating password and points...", username);
+            // Update password to ensure it's correct and set points to 100
             Child child = existingChild.get();
             child.setPassword(correctPasswordHash);
+            child.setPoints(100);
             childRepository.save(child);
-            log.info("Updated password for child user: {}", username);
+            log.info("Updated password and points for child user: {}", username);
             return;
         }
         
@@ -96,9 +97,9 @@ public class DataInitializer {
         child.setPassword(correctPasswordHash);
         child.setRole(UserRole.CHILD);
         child.setParent(parentOpt.get());
-        child.setPoints(0);
+        child.setPoints(100);
         
         childRepository.save(child);
-        log.info("Created default child user: {} (password: child123)", username);
+        log.info("Created default child user: {} (password: child123, initial points: 100)", username);
     }
 }
