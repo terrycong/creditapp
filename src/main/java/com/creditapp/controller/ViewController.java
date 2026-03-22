@@ -13,6 +13,7 @@ import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.service.DashboardService;
 import com.creditapp.service.LotteryService;
+import com.creditapp.service.PenaltyService;
 import com.creditapp.service.PointHistoryService;
 import com.creditapp.service.RewardService;
 import com.creditapp.service.TaskService;
@@ -50,6 +51,7 @@ public class ViewController {
     private final ChildRepository childRepository;
     private final TaskCompletionRepository taskCompletionRepository;
     private final LotteryService lotteryService;
+    private final PenaltyService penaltyService;
 
     @GetMapping("/")
     public String home() {
@@ -1217,5 +1219,152 @@ public class ViewController {
 
         log.info("Found {} active lottery themes for child: {}", themes.size(), username);
         return "child/lottery";
+    }
+
+    // ========== Penalty Management (Parent) ==========
+
+    @GetMapping("/parent/penalties")
+    public String penaltyRules(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        List<PenaltyRuleDTO> rules = penaltyService.getRulesByParent(user.getId());
+        List<PenaltyRecordDTO> records = penaltyService.getPenaltyRecordsByParent(user.getId());
+
+        model.addAttribute("rules", rules);
+        model.addAttribute("records", records);
+        model.addAttribute("username", username);
+
+        return "parent/penalties";
+    }
+
+    @PostMapping("/parent/penalties")
+    public String createPenaltyRule(@AuthenticationPrincipal UserDetails userDetails,
+                                    @Valid @ModelAttribute("createPenaltyRuleRequest") CreatePenaltyRuleRequest request,
+                                    BindingResult bindingResult,
+                                    RedirectAttributes redirectAttrs) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        if (bindingResult.hasErrors()) {
+            redirectAttrs.addFlashAttribute("error", "请检查输入：" + bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return "redirect:/parent/penalties";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        try {
+            penaltyService.createRule(request, user.getId());
+            redirectAttrs.addFlashAttribute("success", "扣分规则创建成功！");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "创建失败：" + e.getMessage());
+        }
+
+        return "redirect:/parent/penalties";
+    }
+
+    @GetMapping("/parent/penalties/apply")
+    public String showApplyPenalty(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        List<ChildDTO> children = userService.getChildrenByParentId(user.getId());
+        List<PenaltyRuleDTO> rules = penaltyService.getRulesByParent(user.getId());
+
+        model.addAttribute("children", children);
+        model.addAttribute("rules", rules);
+        model.addAttribute("username", username);
+
+        return "parent/apply-penalty";
+    }
+
+    @PostMapping("/parent/penalties/apply")
+    public String applyPenalty(@AuthenticationPrincipal UserDetails userDetails,
+                               @Valid @ModelAttribute("applyPenaltyRequest") ApplyPenaltyRequest request,
+                               BindingResult bindingResult,
+                               RedirectAttributes redirectAttrs) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        if (bindingResult.hasErrors()) {
+            redirectAttrs.addFlashAttribute("error", "请检查输入：" + bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return "redirect:/parent/penalties/apply";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        try {
+            penaltyService.applyPenalty(request, user.getId());
+            redirectAttrs.addFlashAttribute("success", "扣分成功！");
+        } catch (BusinessException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "扣分失败：" + e.getMessage());
+        }
+
+        return "redirect:/parent/penalties";
+    }
+
+    @PostMapping("/parent/penalties/{ruleId}/delete")
+    public String deletePenaltyRule(@AuthenticationPrincipal UserDetails userDetails,
+                                    @PathVariable Long ruleId,
+                                    RedirectAttributes redirectAttrs) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        try {
+            penaltyService.deleteRule(ruleId, user.getId());
+            redirectAttrs.addFlashAttribute("success", "规则已删除！");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "删除失败：" + e.getMessage());
+        }
+
+        return "redirect:/parent/penalties";
+    }
+
+    // ========== Penalty View (Child) ==========
+
+    @GetMapping("/child/penalties")
+    public String childPenalties(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        // Get penalty rules set by parent (for child to see what behaviors to avoid)
+        List<PenaltyRuleDTO> rules = penaltyService.getRulesByChild(user.getId());
+        
+        // Get child's own penalty records
+        List<PenaltyRecordDTO> records = penaltyService.getPenaltyRecordsByChild(user.getId());
+
+        model.addAttribute("rules", rules);
+        model.addAttribute("records", records);
+        model.addAttribute("username", username);
+
+        return "child/penalties";
     }
 }

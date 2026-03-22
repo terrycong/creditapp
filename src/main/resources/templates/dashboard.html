@@ -113,6 +113,11 @@
                         </a>
                     </li>
                     <li th:if="${role == 'PARENT'}" class="nav-item">
+                        <a class="nav-link" href="/parent/penalties">
+                            <i class="bi bi-exclamation-triangle"></i> 违规扣分
+                        </a>
+                    </li>
+                    <li th:if="${role == 'PARENT'}" class="nav-item">
                         <a class="nav-link" href="/parent/children">
                             <i class="bi bi-people"></i> 小孩管理
                         </a>
@@ -123,6 +128,16 @@
                         </a>
                     </li>
                     <li th:if="${role == 'CHILD'}" class="nav-item">
+                        <a class="nav-link" href="/child/tasks/drafts">
+                            <i class="bi bi-file-earmark-medical"></i> 我的草稿
+                        </a>
+                    </li>
+                    <li th:if="${role == 'CHILD'}" class="nav-item">
+                        <a class="nav-link" href="/child/marketplace">
+                            <i class="bi bi-shop"></i> 任务市场
+                        </a>
+                    </li>
+                    <li th:if="${role == 'CHILD'}" class="nav-item">
                         <a class="nav-link" href="/child/rewards">
                             <i class="bi bi-gift"></i> 礼物商城
                         </a>
@@ -130,6 +145,18 @@
                     <li th:if="${role == 'CHILD'}" class="nav-item">
                         <a class="nav-link" href="/child/lottery">
                             <i class="bi bi-trophy"></i> 幸运抽奖
+                        </a>
+                    </li>
+                    <li th:if="${role == 'CHILD'}" class="nav-item">
+                        <a class="nav-link" href="/child/points/history">
+                            <i class="bi bi-graph-up"></i> 积分历史
+                        </a>
+                    </li>
+                    <li th:if="${role == 'CHILD'}" class="nav-item">
+                        <a class="nav-link" href="/child/penalties">
+                            <i class="bi bi-exclamation-triangle"></i> 违规记录
+                        </a>
+                    </li>
                         </a>
                     </li>
                     <li class="nav-item">

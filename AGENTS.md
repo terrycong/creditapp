@@ -1840,6 +1840,157 @@ INFO: Point wallet entry created: id=10, child=小明，points=50, expires=2024-
 
 ---
 
+## 违规扣分系统 (2026-03-24) - **已实现**
+
+### 需求描述
+
+当小孩犯错时，家长需要扣除小孩的积分。但扣分不应是即兴的，应为每个具体犯错的事件制定具体的扣分分值，确保规则透明、教育性。
+
+### 核心设计
+
+**PenaltyRule（扣分规则）** = 预定义的违规类型和对应扣分分值
+- 家长可创建常用扣分规则，如"打人 -10分"、"说脏话 -5分"等
+- 规则可复用，避免每次即兴决定扣分
+
+**PenaltyRecord（扣分记录）** = 已执行的扣分记录
+- 记录哪个小孩被扣分
+- 记录使用的规则和扣分分值
+- 记录备注说明
+- 记录操作人和时间
+
+### 具体功能
+
+#### 1. 规则管理
+- 家长创建扣分规则（名称、描述、分值）
+- 查看所有规则列表
+- 删除不再使用的规则
+- 规则仅创建者可见（家庭隔离）
+
+#### 2. 执行扣分
+- 选择小孩
+- 选择预定义的扣分规则
+- 可选添加备注说明
+- 系统自动扣除积分
+- 如果积分不足，操作失败
+
+#### 3. 记录查看
+- 查看所有扣分记录
+- 显示时间、小孩、规则、分值、备注
+- 按时间倒序排列
+
+### 技术实现
+
+#### 数据库层
+
+**penalty_rules** - 扣分规则表
+```sql
+CREATE TABLE penalty_rules (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    points INT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_by_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    FOREIGN KEY (created_by_id) REFERENCES users(id)
+);
+```
+
+**penalty_records** - 扣分记录表
+```sql
+CREATE TABLE penalty_records (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    child_id BIGINT NOT NULL,
+    penalty_rule_id BIGINT NOT NULL,
+    points INT NOT NULL,
+    note VARCHAR(500),
+    applied_by_id BIGINT NOT NULL,
+    applied_at DATETIME NOT NULL,
+    FOREIGN KEY (child_id) REFERENCES children(id),
+    FOREIGN KEY (penalty_rule_id) REFERENCES penalty_rules(id),
+    FOREIGN KEY (applied_by_id) REFERENCES users(id)
+);
+```
+
+#### Entity 层
+- `PenaltyRule.java` - 扣分规则实体
+- `PenaltyRecord.java` - 扣分记录实体
+
+#### Repository 层
+- `PenaltyRuleRepository.java` - 规则查询（按创建者ID查询活跃规则）
+- `PenaltyRecordRepository.java` - 记录查询（按家长ID或小孩ID查询）
+
+#### Service 层
+- `PenaltyService.java` - 服务接口
+- `PenaltyServiceImpl.java` - 业务逻辑
+  - `createRule()` - 创建规则
+  - `getRulesByParent()` - 获取规则列表
+  - `deleteRule()` - 删除规则
+  - `applyPenalty()` - 执行扣分
+  - `getPenaltyRecordsByParent()` - 获取扣分记录
+
+#### DTO 层
+- `PenaltyRuleDTO.java` - 规则DTO
+- `PenaltyRecordDTO.java` - 记录DTO
+- `CreatePenaltyRuleRequest.java` - 创建规则请求
+- `ApplyPenaltyRequest.java` - 执行扣分请求
+
+#### Controller 层
+
+**ViewController 新增端点：**
+- `GET /parent/penalties` - 规则管理和记录查看页面
+- `POST /parent/penalties` - 创建规则
+- `GET /parent/penalties/apply` - 执行扣分页面
+- `POST /parent/penalties/apply` - 执行扣分
+- `POST /parent/penalties/{ruleId}/delete` - 删除规则
+
+#### 前端页面
+- `parent/penalties.html` - 规则管理+记录查看
+- `parent/apply-penalty.html` - 执行扣分
+
+### 使用流程
+
+```
+家长创建规则 → "打人" -10分
+          ↓
+家长执行扣分 → 选择小孩小明
+          ↓
+          选择规则 "打人"
+          ↓
+          可选添加备注
+          ↓
+          系统自动扣除10分
+          ↓
+          创建扣分记录
+```
+
+### 页面访问
+- 管理规则：`/parent/penalties`
+- 执行扣分：`/parent/penalties/apply`
+
+### 导航链接
+在家长导航栏添加：
+```html
+<li class="nav-item">
+    <a class="nav-link" href="/parent/penalties">
+        <i class="bi bi-exclamation-triangle"></i> 违规扣分
+    </a>
+</li>
+```
+
+### 实现状态
+- ✅ Entity 层：`PenaltyRule`、`PenaltyRecord`
+- ✅ Repository 层：`PenaltyRuleRepository`、`PenaltyRecordRepository`
+- ✅ Service 层：完整业务逻辑
+- ✅ DTO 层：所有DTO和Request类
+- ✅ Controller 层：ViewController 新增端点
+- ✅ 前端页面：`penalties.html`、`apply-penalty.html`
+- ✅ 导航链接：已添加到 dashboard.html
+- ✅ 编译验证：`mvn clean compile` 成功
+
+---
+
 ## 参考资源
 
 - Spring Boot官方文档：https://spring.io/projects/spring-boot

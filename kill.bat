@@ -2,7 +2,7 @@
 REM ===================================================================
 REM Credit App Kill Script for Windows
 REM Kills processes on port 8080 or specified port
-REM ===================================================================
+REM ===================================================================我的积分钱包
 REM Usage:
 REM   kill.bat              - Kill process on default port 8080
 REM   kill.bat --port 8080  - Kill process on specific port
