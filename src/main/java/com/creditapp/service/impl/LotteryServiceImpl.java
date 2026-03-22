@@ -6,7 +6,6 @@ import com.creditapp.exception.BusinessException;
 import com.creditapp.repository.*;
 import com.creditapp.service.LotteryService;
 import com.creditapp.service.PointHistoryService;
-import com.creditapp.service.PointWalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +29,6 @@ public class LotteryServiceImpl implements LotteryService {
     private final PointHistoryService pointHistoryService;
     private final RewardRepository rewardRepository;
     private final RewardRedemptionRepository rewardRedemptionRepository;
-    private final PointWalletService pointWalletService;
     private final UserRepository userRepository;
     
     private static final Random RANDOM = new Random();

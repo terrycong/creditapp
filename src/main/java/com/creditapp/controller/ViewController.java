@@ -4,7 +4,6 @@ import com.creditapp.dto.*;
 import com.creditapp.entity.Child;
 import com.creditapp.entity.PenaltyNotification;
 import com.creditapp.entity.PointHistory;
-import com.creditapp.entity.PointWallet;
 import com.creditapp.entity.TaskCompletion;
 import com.creditapp.entity.TaskDeadlineType;
 import com.creditapp.entity.TaskType;
@@ -14,7 +13,6 @@ import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.TaskCompletionRepository;
 import com.creditapp.service.DashboardService;
 import com.creditapp.service.LotteryService;
-import com.creditapp.service.PointWalletService;
 import com.creditapp.service.PointHistoryService;
 import com.creditapp.service.RewardService;
 import com.creditapp.service.TaskService;
@@ -34,7 +32,6 @@ import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -53,7 +50,6 @@ public class ViewController {
     private final ChildRepository childRepository;
     private final TaskCompletionRepository taskCompletionRepository;
     private final LotteryService lotteryService;
-    private final PointWalletService pointWalletService;
 
     @GetMapping("/")
     public String home() {
@@ -559,89 +555,6 @@ public class ViewController {
         model.addAttribute("childId", user.getId());
 
         return "child/points-history";
-    }
-
-    // ========== Point Wallet ==========
-
-    @GetMapping("/child/wallet")
-    public String wallet(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        if (userDetails == null) {
-            return "redirect:/login";
-        }
-
-        String username = userDetails.getUsername();
-        User user = userService.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
-
-        log.info("Wallet page accessed by user: {}, userId: {}", username, user.getId());
-
-        // Get child entity
-        Child child = childRepository.findById(user.getId())
-                .orElseThrow(() -> new RuntimeException("Child not found: " + user.getId()));
-
-        // Get wallet statistics
-        int totalPoints = pointWalletService.getTotalPoints(child);
-        int expiredPoints = pointWalletService.getTotalExpiredPoints(child);
-
-        // Get all point batches and enrich with expiration info
-        List<PointWallet> allBatches = pointWalletService.getAllPointBatches(child);
-        List<PointWalletDTO> walletDTOs = allBatches.stream()
-                .map(wallet -> {
-                    PointWalletDTO dto = toWalletDTO(wallet);
-                    // Calculate days until expiration
-                    if (wallet.getExpirationDate() != null && !wallet.isExpired()) {
-                        long daysUntilExpiration = ChronoUnit.DAYS.between(
-                                LocalDate.now(), 
-                                wallet.getExpirationDate());
-                        dto.setDaysUntilExpiration((int) daysUntilExpiration);
-                        dto.setExpiringSoon(daysUntilExpiration <= 7);
-                    }
-                    return dto;
-                })
-                .sorted((a, b) -> {
-                    // Sort by expiration date (expiring soon first), then by earned date
-                    if (a.getExpirationDate() == null) return 1;
-                    if (b.getExpirationDate() == null) return -1;
-                    return a.getExpirationDate().compareTo(b.getExpirationDate());
-                })
-                .collect(Collectors.toList());
-
-        // Calculate expiring soon points (within 7 days)
-        int expiringSoonPoints = walletDTOs.stream()
-                .filter(dto -> dto.getDaysUntilExpiration() != null && 
-                               dto.getDaysUntilExpiration() > 0 && 
-                               dto.getDaysUntilExpiration() <= 7 &&
-                               !dto.getExpired() &&
-                               dto.getRemainingPoints() > 0)
-                .mapToInt(PointWalletDTO::getRemainingPoints)
-                .sum();
-
-        model.addAttribute("totalPoints", totalPoints);
-        model.addAttribute("expiringSoonPoints", expiringSoonPoints);
-        model.addAttribute("expiredPoints", expiredPoints);
-        model.addAttribute("walletBatches", walletDTOs);
-        model.addAttribute("username", username);
-
-        return "child/wallet";
-    }
-
-    // Helper method to convert PointWallet to DTO
-    private PointWalletDTO toWalletDTO(PointWallet wallet) {
-        PointWalletDTO dto = new PointWalletDTO();
-        dto.setId(wallet.getId());
-        dto.setChildId(wallet.getChild().getId());
-        dto.setOriginalPoints(wallet.getOriginalPoints());
-        dto.setRemainingPoints(wallet.getRemainingPoints());
-        dto.setEarnedDate(wallet.getEarnedDate());
-        dto.setExpirationDate(wallet.getExpirationDate());
-        dto.setSourceType(wallet.getSourceType());
-        dto.setSourceId(wallet.getSourceId());
-        dto.setFullySpent(wallet.isFullySpent());
-        dto.setExpired(wallet.isExpired());
-        dto.setExpiredDate(wallet.getExpiredDate());
-        dto.setCreatedAt(wallet.getCreatedAt());
-        dto.setUpdatedAt(wallet.getUpdatedAt());
-        return dto;
     }
 
     // ========== Marketplace ==========

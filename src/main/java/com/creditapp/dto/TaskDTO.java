@@ -28,6 +28,7 @@ public class TaskDTO {
     private String pickedByChildName;
 
     // 任务分配信息（用于家长任务列表显示）
+    private Long assignedChildId;
     private String assignedChildName;
 
     // Getters and Setters
@@ -143,6 +144,14 @@ public class TaskDTO {
         this.pickedByChildName = pickedByChildName;
     }
 
+    public Long getAssignedChildId() {
+        return assignedChildId;
+    }
+
+    public void setAssignedChildId(Long assignedChildId) {
+        this.assignedChildId = assignedChildId;
+    }
+
     public String getAssignedChildName() {
         return assignedChildName;
     }
@@ -171,6 +180,7 @@ public class TaskDTO {
         private Integer deadlineValue;
         private Integer penaltyPoints;
         private String pickedByChildName;
+        private Long assignedChildId;
         private String assignedChildName;
 
         public Builder id(Long id) {
@@ -243,6 +253,11 @@ public class TaskDTO {
             return this;
         }
 
+        public Builder assignedChildId(Long assignedChildId) {
+            this.assignedChildId = assignedChildId;
+            return this;
+        }
+
         public Builder assignedChildName(String assignedChildName) {
             this.assignedChildName = assignedChildName;
             return this;
@@ -264,6 +279,7 @@ public class TaskDTO {
             dto.deadlineValue = this.deadlineValue;
             dto.penaltyPoints = this.penaltyPoints;
             dto.pickedByChildName = this.pickedByChildName;
+            dto.assignedChildId = this.assignedChildId;
             dto.assignedChildName = this.assignedChildName;
             return dto;
         }

@@ -53,12 +53,6 @@ public class DashboardStatsDTO {
     // Point distribution by child
     private Map<String, Integer> pointsDistributionByChild;
     
-    // Point expiration statistics
-    private Integer totalExpiredPoints;
-    private Integer totalExpiringSoonPoints;
-    private Map<String, Integer> expiredPointsByChild;
-    private Map<String, Integer> expiringSoonPointsByChild;
-    
     @Data
     @Builder
     public static class DailyActivityDTO {

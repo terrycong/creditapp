@@ -201,17 +201,21 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDTO> getTasksByParent(Long parentId) {
         List<Task> tasks = taskRepository.findByCreatedBy_Id(parentId);
         
-        // Build a map of taskId -> assignedChildName for tasks that have TaskJob
-        java.util.Map<Long, String> taskAssignmentMap = new java.util.HashMap<>();
+        // Build a map of taskId -> child info for tasks that have TaskJob
+        java.util.Map<Long, Long> taskChildIdMap = new java.util.HashMap<>();
+        java.util.Map<Long, String> taskChildNameMap = new java.util.HashMap<>();
         List<TaskJob> jobs = taskJobRepository.findJobsByParentId(parentId);
         for (TaskJob job : jobs) {
             // Only store if not already present (keep first assignment)
-            taskAssignmentMap.putIfAbsent(job.getTask().getId(), job.getChild().getUsername());
+            taskChildIdMap.putIfAbsent(job.getTask().getId(), job.getChild().getId());
+            taskChildNameMap.putIfAbsent(job.getTask().getId(), job.getChild().getUsername());
         }
         
         // Convert to DTO with assignment info
         return tasks.stream()
-                .map(task -> toDTOWithAssignedInfo(task, taskAssignmentMap.get(task.getId())))
+                .map(task -> toDTOWithAssignedInfo(task, 
+                        taskChildIdMap.get(task.getId()), 
+                        taskChildNameMap.get(task.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -594,7 +598,7 @@ public class TaskServiceImpl implements TaskService {
                 .build();
     }
 
-    private TaskDTO toDTOWithAssignedInfo(Task task, String assignedChildName) {
+    private TaskDTO toDTOWithAssignedInfo(Task task, Long assignedChildId, String assignedChildName) {
         return TaskDTO.builder()
                 .id(task.getId())
                 .title(task.getTitle())
@@ -609,6 +613,7 @@ public class TaskServiceImpl implements TaskService {
                 .deadlineType(task.getDeadlineType())
                 .deadlineValue(task.getDeadlineValue())
                 .penaltyPoints(task.getPenaltyPoints())
+                .assignedChildId(assignedChildId)
                 .assignedChildName(assignedChildName)
                 .build();
     }
