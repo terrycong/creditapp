@@ -209,16 +209,17 @@
                                             <span th:unless="${theme.active}" class="badge bg-danger">已停用</span>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-primary" 
-                                                    th:onclick="'javascript:managePrizes(' + ${theme.id} + ', \'' + ${theme.name} + '\')'">
+                                            <button class="btn btn-sm btn-primary manage-prizes-btn" 
+                                                    th:data-theme-id="${theme.id}" 
+                                                    th:data-theme-name="${theme.name}">
                                                 <i class="bi bi-gift"></i> 管理奖品
                                             </button>
-                                            <button class="btn btn-sm btn-warning" 
-                                                    th:onclick="'javascript:toggleTheme(' + ${theme.id} + ')'">
+                                            <button class="btn btn-sm btn-warning toggle-theme-btn" 
+                                                    th:data-theme-id="${theme.id}">
                                                 <i class="bi bi-toggle-on"></i> <span th:text="${theme.active ? '停用' : '启用'}"></span>
                                             </button>
-                                            <button class="btn btn-sm btn-danger" 
-                                                    th:onclick="'javascript:deleteTheme(' + ${theme.id} + ')'">
+                                            <button class="btn btn-sm btn-danger delete-theme-btn" 
+                                                    th:data-theme-id="${theme.id}">
                                                 <i class="bi bi-trash"></i> 删除
                                             </button>
                                         </td>
@@ -298,6 +299,31 @@
         document.addEventListener('DOMContentLoaded', function() {
             prizeModal = new bootstrap.Modal(document.getElementById('prizeModal'));
             
+            // Event delegation for manage prizes buttons
+            document.querySelectorAll('.manage-prizes-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const themeId = this.getAttribute('data-theme-id');
+                    const themeName = this.getAttribute('data-theme-name');
+                    managePrizes(themeId, themeName);
+                });
+            });
+            
+            // Event delegation for toggle theme buttons
+            document.querySelectorAll('.toggle-theme-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const themeId = this.getAttribute('data-theme-id');
+                    toggleTheme(themeId);
+                });
+            });
+            
+            // Event delegation for delete theme buttons
+            document.querySelectorAll('.delete-theme-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const themeId = this.getAttribute('data-theme-id');
+                    deleteTheme(themeId);
+                });
+            });
+            
             // Create theme form submit
             document.getElementById('createThemeFormEl').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -347,11 +373,19 @@
                         html += '<li class="list-group-item d-flex justify-content-between align-items-center">';
                         html += '<div><strong>' + prize.name + '</strong>';
                         html += '<br><small class="text-muted">权重：' + prize.weight + ', 库存：' + (prize.quantity === -1 ? '无限' : prize.quantity) + '</small></div>';
-                        html += '<button class="btn btn-sm btn-danger" onclick="deletePrize(' + prize.id + ')"><i class="bi bi-trash"></i></button>';
+                        html += '<button class="btn btn-sm btn-danger delete-prize-btn" data-prize-id="' + prize.id + '"><i class="bi bi-trash"></i></button>';
                         html += '</li>';
                     });
                     html += '</ul>';
                     container.innerHTML = html;
+                    
+                    // Add event listeners to delete buttons
+                    container.querySelectorAll('.delete-prize-btn').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            const prizeId = this.getAttribute('data-prize-id');
+                            deletePrize(prizeId);
+                        });
+                    });
                 } else {
                     container.innerHTML = '<p class="text-muted text-center">还没有奖品，请添加</p>';
                 }

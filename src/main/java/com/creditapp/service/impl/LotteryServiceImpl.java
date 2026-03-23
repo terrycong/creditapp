@@ -337,8 +337,8 @@ public class LotteryServiceImpl implements LotteryService {
             return wonPrizes;
         }
         
-        // 简单实现：抽取 1-3 个奖品
-        int numWins = RANDOM.nextInt(3) + 1; // 1-3 个奖品
+        // 每次抽奖只抽取 1 个奖品
+        int numWins = 1; // 固定 1 个奖品
         
         for (int i = 0; i < numWins; i++) {
             int random = RANDOM.nextInt(totalWeight);
