@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-create-lottery-draws-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: lottery_draws
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: lottery_theme_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_lottery_draws_theme
+                    references: lottery_themes(id)
+              - column:
+                  name: child_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_lottery_draws_child
+                    references: children(id)
+              - column:
+                  name: points_cost
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: result_status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: draw_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP

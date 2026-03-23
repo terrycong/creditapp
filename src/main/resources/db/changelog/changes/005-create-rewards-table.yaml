@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-rewards-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: rewards
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(500)
+              - column:
+                  name: quantity
+                  type: int
+                  defaultValueNumeric: -1
+              - column:
+                  name: points_required
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+              - column:
+                  name: image_url
+                  type: varchar(500)
+              - column:
+                  name: created_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: datetime

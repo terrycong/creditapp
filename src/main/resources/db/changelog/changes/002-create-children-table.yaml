@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-children-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: children
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_children_parent
+                    references: users(id)
+              - column:
+                  name: points
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: created_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: datetime

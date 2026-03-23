@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-tasks-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: tasks
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(1000)
+              - column:
+                  name: points
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(50)
+                  defaultValue: PENDING
+              - column:
+                  name: created_by_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: fk_tasks_creator
+                    references: users(id)
+              - column:
+                  name: approved_by_id
+                  type: bigint
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+              - column:
+                  name: daily_limit
+                  type: int
+                  defaultValueNumeric: -1
+              - column:
+                  name: created_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: approved_at
+                  type: datetime

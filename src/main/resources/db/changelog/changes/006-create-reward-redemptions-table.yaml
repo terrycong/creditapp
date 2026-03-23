@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-reward-redemptions-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: reward_redemptions
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: reward_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_redemptions_reward
+                    references: rewards(id)
+              - column:
+                  name: child_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_redemptions_child
+                    references: children(id)
+              - column:
+                  name: redeemed_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: varchar(500)

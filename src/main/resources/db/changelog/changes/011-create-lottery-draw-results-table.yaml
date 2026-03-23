@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 011-create-lottery-draw-results-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: lottery_draw_results
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: lottery_draw_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_lottery_draw_results_draw
+                    references: lottery_draws(id)
+              - column:
+                  name: prize_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_lottery_draw_results_prize
+                    references: lottery_prizes(id)
+              - column:
+                  name: prize_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reward_id
+                  type: bigint
+              - column:
+                  name: created_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP

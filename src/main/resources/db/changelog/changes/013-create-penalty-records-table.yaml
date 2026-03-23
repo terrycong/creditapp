@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-create-penalty-records-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: penalty_records
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: rule_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_penalty_records_rule
+                    references: penalty_rules(id)
+              - column:
+                  name: child_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_penalty_records_child
+                    references: children(id)
+              - column:
+                  name: applied_by_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_penalty_records_applier
+                    references: users(id)
+              - column:
+                  name: points_deducted
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reason
+                  type: varchar(500)
+              - column:
+                  name: applied_at
+                  type: datetime
+                  defaultValueComputed: CURRENT_TIMESTAMP
