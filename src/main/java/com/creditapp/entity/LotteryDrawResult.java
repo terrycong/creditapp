@@ -43,12 +43,6 @@ public class LotteryDrawResult {
     private String prizeName;
 
     /**
-     * 奖品价值
-     */
-    @Column(nullable = false)
-    private Integer prizeValue;
-
-    /**
      * 关联的礼物 ID（如果奖品是实物礼物）
      */
     @Column(name = "reward_id")

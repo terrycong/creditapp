@@ -24,11 +24,6 @@ public class LotteryPrizeDTO {
     private String description;
     
     /**
-     * 奖品价值（积分）
-     */
-    private Integer value;
-    
-    /**
      * 概率权重
      */
     private Integer weight;

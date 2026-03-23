@@ -350,7 +350,7 @@
                                 <div class="flex-grow-1">
                                     <strong th:text="${prize.name}">奖品名称</strong>
                                     <div class="text-muted small">
-                                        <span th:text="${prize.value}">100</span> 积分
+                                        
                                         <span th:if="${prize.quantity > 0}" class="ms-2">
                                             (库存: <span th:text="${prize.quantity}">5</span>)
                                         </span>
@@ -465,9 +465,7 @@
                         result.drawResults.forEach(prize => {
                             resultHtml += '<div class="prize-won">';
                             resultHtml += '<i class="bi bi-gift-fill"></i> ' + prize.prizeName;
-                            resultHtml += '<br><small>价值 ' + prize.prizeValue + ' 积分</small>';
                             resultHtml += '</div>';
-                            totalWin += prize.prizeValue;
                         });
                         
                         // Add won points
@@ -528,7 +526,6 @@
                         html += '<div class="text-end">';
                         html += '<span class="badge bg-warning">-' + record.pointsCost + '</span>';
                         if (record.drawResults && record.drawResults.length > 0) {
-                            let total = record.drawResults.reduce((sum, p) => sum + p.prizeValue, 0);
                             html += ' <span class="badge bg-success">+' + total + '</span>';
                         }
                         html += '</div>';

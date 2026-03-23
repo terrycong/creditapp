@@ -146,7 +146,6 @@ public class LotteryServiceImpl implements LotteryService {
                 .lotteryTheme(theme)
                 .name(request.getName())
                 .description(request.getDescription())
-                .value(request.getValue())
                 .weight(request.getWeight())
                 .probability(request.getProbability())
                 .quantity(request.getQuantity())
@@ -172,9 +171,6 @@ public class LotteryServiceImpl implements LotteryService {
         }
         if (request.getDescription() != null) {
             prize.setDescription(request.getDescription());
-        }
-        if (request.getValue() != null) {
-            prize.setValue(request.getValue());
         }
         if (request.getWeight() != null) {
             prize.setWeight(request.getWeight());
@@ -285,7 +281,6 @@ public class LotteryServiceImpl implements LotteryService {
                         .lotteryDraw(draw)
                         .prize(prize)
                         .prizeName(prize.getName())
-                        .prizeValue(prize.getValue())
                         .rewardId(prize.getRewardId())
                         .build();
                 lotteryDrawResultRepository.save(result);
@@ -294,7 +289,6 @@ public class LotteryServiceImpl implements LotteryService {
                         .id(result.getId())
                         .prizeId(prize.getId())
                         .prizeName(prize.getName())
-                        .prizeValue(prize.getValue())
                         .rewardId(prize.getRewardId())
                         .build());
                 
@@ -321,30 +315,7 @@ public class LotteryServiceImpl implements LotteryService {
                     
                     log.info("Lottery prize redeemed as reward: childId={}, rewardId={}, rewardName={}", 
                             childId, reward.getId(), reward.getName());
-                } else {
-                    // 记录中奖积分（纯积分奖励）
-                    pointHistoryService.recordPointChange(
-                            childId,
-                            prize.getValue(),
-                            PointChangeType.LOTTERY_WIN,
-                            "抽奖中奖 - " + prize.getName(),
-                            prize.getId(),
-                            "LOTTERY_PRIZE",
-                            null
-                    );
                 }
-            }
-            
-            // 给小孩增加奖品对应的积分（只给没有关联实物的奖品的积分）
-            Integer totalWinPoints = wonPrizes.stream()
-                    .filter(prize -> prize.getRewardId() == null)  // 只有纯积分奖励才给积分
-                    .mapToInt(LotteryPrize::getValue)
-                    .sum();
-            
-            if (totalWinPoints > 0) {
-                child.setPoints(child.getPoints() + totalWinPoints);
-                childRepository.save(child);
-                log.info("Added {} points from lottery winnings to child: id={}", totalWinPoints, childId);
             }
         }
         
@@ -433,7 +404,6 @@ public class LotteryServiceImpl implements LotteryService {
                 .id(prize.getId())
                 .name(prize.getName())
                 .description(prize.getDescription())
-                .value(prize.getValue())
                 .weight(prize.getWeight())
                 .probability(prize.getProbability())
                 .quantity(prize.getQuantity())
@@ -449,7 +419,7 @@ public class LotteryServiceImpl implements LotteryService {
                         .id(result.getId())
                         .prizeId(result.getPrize().getId())
                         .prizeName(result.getPrizeName())
-                        .prizeValue(result.getPrizeValue())
+                        .rewardId(result.getRewardId())
                         .build())
                 .collect(Collectors.toList());
         

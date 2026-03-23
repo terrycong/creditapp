@@ -35,7 +35,7 @@ INSERT INTO rewards (name, description, quantity, points_required, active) VALUE
 INSERT INTO lottery_themes (name, description, points_per_draw, type, active, created_by_id, created_at) VALUES ('幸运大转盘', '每日抽奖机会，试试你的运气！', 10, 'WEIGHTED_RANDOM', true, 1, NOW());
 
 -- 插入抽奖奖品（关联到可兑换礼物）
-INSERT INTO lottery_prizes (lottery_theme_id, name, description, prize_value, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '冰淇淋', '喜欢的冰淇淋一份', 15, 50, NULL, 999, 0, true, 4, NOW());
-INSERT INTO lottery_prizes (lottery_theme_id, name, description, prize_value, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '游戏时间', '30 分钟游戏时间', 20, 30, NULL, 999, 0, true, 1, NOW());
-INSERT INTO lottery_prizes (lottery_theme_id, name, description, prize_value, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '零花钱', '10 元零花钱', 100, 15, NULL, 50, 0, true, 2, NOW());
-INSERT INTO lottery_prizes (lottery_theme_id, name, description, prize_value, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '新玩具', '买一个喜欢的玩具', 500, 5, NULL, 999, 0, true, 5, NOW());
+INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '冰淇淋', '喜欢的冰淇淋一份', 50, NULL, 999, 0, true, 4, NOW());
+INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '游戏时间', '30 分钟游戏时间', 30, NULL, 999, 0, true, 1, NOW());
+INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '零花钱', '10 元零花钱', 15, NULL, 50, 0, true, 2, NOW());
+INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '新玩具', '买一个喜欢的玩具', 5, NULL, 999, 0, true, 5, NOW());

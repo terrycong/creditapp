@@ -42,12 +42,6 @@ public class LotteryPrize {
     private String description;
 
     /**
-     * 奖品价值（积分）
-     */
-    @Column(name = "prize_value", nullable = false)
-    private Integer value;
-
-    /**
      * 概率权重（权重越高，中奖概率越大）
      * 总概率 = 该奖品权重 / 所有奖品权重之和
      */

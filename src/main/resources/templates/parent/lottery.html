@@ -255,18 +255,18 @@
                                         <input type="text" class="form-control" id="prizeName" required>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="prizeValue" class="form-label">奖品价值（积分）</label>
-                                        <input type="number" class="form-control" id="prizeValue" min="1" required>
+                                        <label for="prizeWeight" class="form-label">权重（越高越容易中）</label>
+                                        <input type="number" class="form-control" id="prizeWeight" min="1" value="10" required>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="prizeWeight" class="form-label">权重（越高越容易中）</label>
-                                        <input type="number" class="form-control" id="prizeWeight" min="1" value="10" required>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
                                         <label for="prizeQuantity" class="form-label">数量（-1 为无限）</label>
                                         <input type="number" class="form-control" id="prizeQuantity" value="-1" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="prizeImageUrl" class="form-label">奖品图片 URL（可选）</label>
+                                        <input type="text" class="form-control" id="prizeImageUrl" placeholder="https://...">
                                     </div>
                                 </div>
                                 <button type="submit" class="btn btn-info">
@@ -345,7 +345,7 @@
                     let html = '<h6 class="mb-3">已有奖品</h6><ul class="list-group">';
                     data.data.forEach(prize => {
                         html += '<li class="list-group-item d-flex justify-content-between align-items-center">';
-                        html += '<div><strong>' + prize.name + '</strong> - ' + prize.value + '积分';
+                        html += '<div><strong>' + prize.name + '</strong>';
                         html += '<br><small class="text-muted">权重：' + prize.weight + ', 库存：' + (prize.quantity === -1 ? '无限' : prize.quantity) + '</small></div>';
                         html += '<button class="btn btn-sm btn-danger" onclick="deletePrize(' + prize.id + ')"><i class="bi bi-trash"></i></button>';
                         html += '</li>';
@@ -365,10 +365,9 @@
                 themeId: parseInt(document.getElementById('prizeThemeId').value),
                 name: document.getElementById('prizeName').value,
                 description: '',
-                value: parseInt(document.getElementById('prizeValue').value),
                 weight: parseInt(document.getElementById('prizeWeight').value),
                 quantity: parseInt(document.getElementById('prizeQuantity').value),
-                imageUrl: ''
+                imageUrl: document.getElementById('prizeImageUrl').value || ''
             };
             
             fetch('/api/v1/lottery/prizes', {
