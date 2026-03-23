@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>执行扣分 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link th:href="@{/webjars/animate.css/4.1.1/animate.min.css}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .penalty-preview {
+            font-size: 1.2rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/approvals">
+                            <i class="bi bi-check-circle"></i> 任务审批
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/children">
+                            <i class="bi bi-people"></i> 小孩管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/penalties">
+                            <i class="bi bi-exclamation-triangle"></i> 违规扣分
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title">
+                    <i class="bi bi-dash-circle"></i> 执行扣分
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle"></i> 扣分操作
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${error}" class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}">错误</span>
+                        </div>
+
+                        <form th:action="@{/parent/penalties/apply}" method="post">
+                            <div class="mb-4">
+                                <label for="childId" class="form-label">选择小孩 <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-lg" id="childId" name="childId" required>
+                                    <option value="">请选择小孩</option>
+                                    <option th:each="child : ${children}" 
+                                            th:value="${child.id}" 
+                                            th:text="${child.username}">
+                                        小孩
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="penaltyRuleId" class="form-label">选择违规类型 <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-lg" id="penaltyRuleId" name="penaltyRuleId" required
+                                        onchange="updatePenaltyPreview()">
+                                    <option value="">请选择违规类型</option>
+                                    <option th:each="rule : ${rules}" 
+                                            th:value="${rule.id}" 
+                                            th:data-points="${rule.points}"
+                                            th:text="${rule.name + ' (-' + rule.points + '分)'}">
+                                        规则
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4" id="penaltyPreview" style="display: none;">
+                                <label class="form-label">扣分预览</label>
+                                <div class="penalty-preview text-center">
+                                    <span class="text-danger fw-bold" id="previewText">-0 分</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="note" class="form-label">备注说明</label>
+                                <textarea class="form-control" id="note" name="note" rows="3"
+                                          placeholder="可选：补充说明具体情况..."></textarea>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-danger btn-lg flex-fill" 
+                                        onclick="return confirm('确定要执行扣分吗？此操作不可撤销。');">
+                                    <i class="bi bi-dash-circle"></i> 确认扣分
+                                </button>
+                                <a href="/parent/penalties" class="btn btn-secondary btn-lg">
+                                    <i class="bi bi-arrow-left"></i> 返回
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle"></i> 使用说明
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-info"></i> 
+                                请先创建扣分规则，定义常见的违规行为和对应的分值
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-info"></i> 
+                                执行扣分时，小孩的积分必须足够扣除，否则操作会失败
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-info"></i> 
+                                所有扣分记录都会被保存，可在违规扣分页面查看历史记录
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle text-info"></i> 
+                                建议先和小孩沟通后再执行扣分，教育为主
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+    
+    <script>
+        function updatePenaltyPreview() {
+            const select = document.getElementById('penaltyRuleId');
+            const preview = document.getElementById('penaltyPreview');
+            const previewText = document.getElementById('previewText');
+            
+            if (select.value) {
+                const selectedOption = select.options[select.selectedIndex];
+                const points = selectedOption.getAttribute('data-points');
+                previewText.textContent = '-' + points + ' 分';
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>违规记录 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link th:href="@{/webjars/animate.css/4.1.1/animate.min.css}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .penalty-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/tasks">
+                            <i class="bi bi-list-check"></i> 我的任务
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/tasks/drafts">
+                            <i class="bi bi-file-earmark-medical"></i> 我的草稿
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/marketplace">
+                            <i class="bi bi-shop"></i> 任务市场
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/lottery">
+                            <i class="bi bi-trophy"></i> 幸运抽奖
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/rewards">
+                            <i class="bi bi-gift"></i> 礼物商城
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/child/points/history">
+                            <i class="bi bi-graph-up"></i> 积分历史
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/child/penalties">
+                            <i class="bi bi-exclamation-triangle"></i> 违规记录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title">
+                    <i class="bi bi-exclamation-triangle"></i> 违规扣分规则
+                </h1>
+                <p class="text-muted">了解哪些行为会被扣分，避免犯错</p>
+            </div>
+        </div>
+
+        <!-- Penalty Rules -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-check"></i> 扣分规则（请注意避免）
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${rules != null && !rules.empty}">
+                            <div class="row">
+                                <div th:each="rule : ${rules}" class="col-md-6 mb-3">
+                                    <div class="card h-100 border-warning">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="card-title text-dark fw-bold" th:text="${rule.name}">规则名称</h6>
+                                                    <p class="card-text text-muted small" th:if="${rule.description != null}" th:text="${rule.description}">描述</p>
+                                                </div>
+                                                <span class="badge bg-danger penalty-badge" th:text="'-' + ${rule.points} + '分'">-5分</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${rules == null || rules.empty}" class="text-center py-4">
+                            <i class="bi bi-emoji-smile text-success" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">太好了！目前还没有设置任何扣分规则</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Penalty Records -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 我的扣分记录
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${records != null && !records.empty}">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>时间</th>
+                                            <th>违规类型</th>
+                                            <th>扣分</th>
+                                            <th>备注</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="record : ${records}">
+                                            <td th:text="${#temporals.format(record.appliedAt, 'yyyy-MM-dd HH:mm')}">时间</td>
+                                            <td th:text="${record.penaltyRuleName}">规则</td>
+                                            <td>
+                                                <span class="badge bg-danger" th:text="'-' + ${record.points}">-10</span>
+                                            </td>
+                                            <td th:text="${record.note != null ? record.note : '-'}">备注</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div th:if="${records == null || records.empty}" class="text-center py-5">
+                            <i class="bi bi-emoji-smile text-success" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3 text-success">太棒了！</h5>
+                            <p class="text-muted">你还没有任何违规记录，继续保持！</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Encouragement Card -->
+        <div class="row mt-4" th:if="${records != null && !records.empty}">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <i class="bi bi-lightbulb text-info" style="font-size: 2rem;"></i>
+                        <h5 class="mt-2">小贴士</h5>
+                        <p class="text-muted mb-0">
+                            遵守规则，完成任务，赚取更多积分！<br>
+                            每一次遵守规则都是对自己的负责。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

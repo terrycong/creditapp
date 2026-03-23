@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>违规扣分管理 - 家庭积分系统</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link th:href="@{/webjars/animate.css/4.1.1/animate.min.css}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --info-color: #3B82F6;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .section-title {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .penalty-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-house-door"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/tasks">
+                            <i class="bi bi-list-check"></i> 任务管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/rewards">
+                            <i class="bi bi-gift"></i> 礼物管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/approvals">
+                            <i class="bi bi-check-circle"></i> 任务审批
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/parent/children">
+                            <i class="bi bi-people"></i> 小孩管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/parent/penalties">
+                            <i class="bi bi-exclamation-triangle"></i> 违规扣分
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Success/Error Messages -->
+        <div th:if="${success}" class="alert alert-success animate__animated animate__fadeIn">
+            <i class="bi bi-check-circle-fill"></i> <span th:text="${success}">成功</span>
+        </div>
+        <div th:if="${error}" class="alert alert-danger animate__animated animate__fadeIn">
+            <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}">错误</span>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title">
+                    <i class="bi bi-exclamation-triangle"></i> 违规扣分管理
+                </h1>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <a href="/parent/penalties/apply" class="btn btn-danger btn-lg w-100">
+                    <i class="bi bi-dash-circle"></i> 立即扣分
+                </a>
+            </div>
+        </div>
+
+        <!-- Penalty Rules -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-check"></i> 扣分规则
+                        </h5>
+                        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#createRuleModal">
+                            <i class="bi bi-plus-circle"></i> 新建规则
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${rules != null && !rules.empty}">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>规则名称</th>
+                                            <th>描述</th>
+                                            <th class="text-center">扣分</th>
+                                            <th>创建时间</th>
+                                            <th class="text-center">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="rule : ${rules}">
+                                            <td th:text="${rule.name}">打人</td>
+                                            <td th:text="${rule.description != null ? rule.description : '-'}">描述</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-danger penalty-badge" th:text="'-' + ${rule.points}">-10</span>
+                                            </td>
+                                            <td th:text="${#temporals.format(rule.createdAt, 'yyyy-MM-dd HH:mm')}">时间</td>
+                                            <td class="text-center">
+                                                <form th:action="@{/parent/penalties/{id}/delete(id=${rule.id})}" method="post" 
+                                                      onsubmit="return confirm('确定要删除此规则吗？');">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="bi bi-trash"></i> 删除
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div th:if="${rules == null || rules.empty}" class="text-center py-4">
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-info-circle"></i> 暂无扣分规则，请创建规则
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Penalty Records -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 扣分记录
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${records != null && !records.empty}">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>时间</th>
+                                            <th>小孩</th>
+                                            <th>违规类型</th>
+                                            <th>扣分</th>
+                                            <th>备注</th>
+                                            <th>操作人</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="record : ${records}">
+                                            <td th:text="${#temporals.format(record.appliedAt, 'yyyy-MM-dd HH:mm')}">时间</td>
+                                            <td th:text="${record.childName}">小孩</td>
+                                            <td th:text="${record.penaltyRuleName}">规则</td>
+                                            <td>
+                                                <span class="badge bg-danger" th:text="'-' + ${record.points}">-10</span>
+                                            </td>
+                                            <td th:text="${record.note != null ? record.note : '-'}">备注</td>
+                                            <td th:text="${record.appliedByName}">家长</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div th:if="${records == null || records.empty}" class="text-center py-4">
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-info-circle"></i> 暂无扣分记录
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Rule Modal -->
+    <div class="modal fade" id="createRuleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle"></i> 新建扣分规则
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/parent/penalties}" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">规则名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required
+                                   placeholder="例如：打人、说脏话、不完成作业">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">描述</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"
+                                      placeholder="详细描述违规情况..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="points" class="form-label">扣分分值 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="points" name="points" required min="1"
+                                   placeholder="例如：5、10、20">
+                            <div class="form-text">输入正数，系统会自动显示为负数</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-check-circle"></i> 创建规则
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2024 家庭积分系统. 让爱与陪伴一起成长！</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
