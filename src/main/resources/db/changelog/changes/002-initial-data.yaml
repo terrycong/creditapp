@@ -1,0 +1,337 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-seed-initial-data
+      author: creditapp
+      comment: Seed initial data for development and production
+      changes:
+        # Parent User
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: username, value: 'parent' }
+              - column: { name: password, value: '$2a$10$BFeE1qUtBvthU1sKwEc.tOIzuFOw1D635dDscfC2cv1HcP1/Co0Su' }
+              - column: { name: role, value: 'PARENT' }
+              - column: { name: points, valueNumeric: 0 }
+
+        # Child User
+        - insert:
+            tableName: children
+            columns:
+              - column: { name: username, value: 'child' }
+              - column: { name: password, value: '$2a$10$cV03s.di3hDvqXLPMiAvpucc7aLcLrWv5kHMFWIrOZXWdAtT4SsDi' }
+              - column: { name: role, value: 'CHILD' }
+              - column: { name: parent_id, valueNumeric: 1 }
+              - column: { name: points, valueNumeric: 0 }
+
+        # Direct Tasks
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: '完成作业' }
+              - column: { name: description, value: '按时完成学校作业' }
+              - column: { name: points, valueNumeric: 10 }
+              - column: { name: type, value: 'DAILY_ONCE' }
+              - column: { name: status, value: 'APPROVED' }
+              - column: { name: created_by_id, valueNumeric: 1 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: '打扫房间' }
+              - column: { name: description, value: '整理自己的房间' }
+              - column: { name: points, valueNumeric: 5 }
+              - column: { name: type, value: 'REPEATABLE' }
+              - column: { name: status, value: 'APPROVED' }
+              - column: { name: created_by_id, valueNumeric: 1 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: '阅读书籍' }
+              - column: { name: description, value: '每天阅读 30 分钟课外书' }
+              - column: { name: points, valueNumeric: 8 }
+              - column: { name: type, value: 'DAILY_ONCE' }
+              - column: { name: status, value: 'APPROVED' }
+              - column: { name: created_by_id, valueNumeric: 1 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: '帮助做家务' }
+              - column: { name: description, value: '帮忙洗碗或扫地' }
+              - column: { name: points, valueNumeric: 7 }
+              - column: { name: type, value: 'REPEATABLE' }
+              - column: { name: status, value: 'APPROVED' }
+              - column: { name: created_by_id, valueNumeric: 1 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        # Task Jobs
+        - insert:
+            tableName: task_jobs
+            columns:
+              - column: { name: task_id, valueNumeric: 1 }
+              - column: { name: child_id, valueNumeric: 1 }
+              - column: { name: status, value: 'ASSIGNED' }
+              - column: { name: snapshot_title, value: '完成作业' }
+              - column: { name: snapshot_description, value: '按时完成学校作业' }
+              - column: { name: snapshot_points, valueNumeric: 10 }
+              - column: { name: snapshot_task_type, value: 'DAILY_ONCE' }
+              - column: { name: assigned_at, valueDate: 'NOW()' }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: task_jobs
+            columns:
+              - column: { name: task_id, valueNumeric: 2 }
+              - column: { name: child_id, valueNumeric: 1 }
+              - column: { name: status, value: 'ASSIGNED' }
+              - column: { name: snapshot_title, value: '打扫房间' }
+              - column: { name: snapshot_description, value: '整理自己的房间' }
+              - column: { name: snapshot_points, valueNumeric: 5 }
+              - column: { name: snapshot_task_type, value: 'REPEATABLE' }
+              - column: { name: assigned_at, valueDate: 'NOW()' }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: task_jobs
+            columns:
+              - column: { name: task_id, valueNumeric: 3 }
+              - column: { name: child_id, valueNumeric: 1 }
+              - column: { name: status, value: 'ASSIGNED' }
+              - column: { name: snapshot_title, value: '阅读书籍' }
+              - column: { name: snapshot_description, value: '每天阅读 30 分钟课外书' }
+              - column: { name: snapshot_points, valueNumeric: 8 }
+              - column: { name: snapshot_task_type, value: 'DAILY_ONCE' }
+              - column: { name: assigned_at, valueDate: 'NOW()' }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: task_jobs
+            columns:
+              - column: { name: task_id, valueNumeric: 4 }
+              - column: { name: child_id, valueNumeric: 1 }
+              - column: { name: status, value: 'ASSIGNED' }
+              - column: { name: snapshot_title, value: '帮助做家务' }
+              - column: { name: snapshot_description, value: '帮忙洗碗或扫地' }
+              - column: { name: snapshot_points, valueNumeric: 7 }
+              - column: { name: snapshot_task_type, value: 'REPEATABLE' }
+              - column: { name: assigned_at, valueDate: 'NOW()' }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        # Marketplace Tasks
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: '洗碗一次' }
+              - column: { name: description, value: '帮忙洗晚餐的碗' }
+              - column: { name: points, valueNumeric: 15 }
+              - column: { name: type, value: 'REPEATABLE' }
+              - column: { name: status, value: 'APPROVED' }
+              - column: { name: created_by_id, valueNumeric: 1 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: '倒垃圾' }
+              - column: { name: description, value: '把家里的垃圾倒掉' }
+              - column: { name: points, valueNumeric: 5 }
+              - column: { name: type, value: 'DAILY_ONCE' }
+              - column: { name: status, value: 'APPROVED' }
+              - column: { name: created_by_id, valueNumeric: 1 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: tasks
+            columns:
+              - column: { name: title, value: '整理客厅' }
+              - column: { name: description, value: '整理客厅的沙发和桌子' }
+              - column: { name: points, valueNumeric: 10 }
+              - column: { name: type, value: 'REPEATABLE' }
+              - column: { name: status, value: 'APPROVED' }
+              - column: { name: created_by_id, valueNumeric: 1 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        # Rewards
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '游戏时间' }
+              - column: { name: description, value: '30 分钟游戏时间' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 20 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '看电影' }
+              - column: { name: description, value: '选择一部喜欢的电影观看' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 40 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '去游乐场' }
+              - column: { name: description, value: '周末去游乐场玩半天' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 150 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '冰淇淋' }
+              - column: { name: description, value: '喜欢的冰淇淋一份' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 15 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '零花钱' }
+              - column: { name: description, value: '10 元零花钱' }
+              - column: { name: quantity, valueNumeric: 50 }
+              - column: { name: points_required, valueNumeric: 100 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '披萨大餐' }
+              - column: { name: description, value: '全家一起吃披萨' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 100 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '新玩具' }
+              - column: { name: description, value: '买一个喜欢的玩具' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 500 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '图书' }
+              - column: { name: description, value: '购买一本喜欢的图书' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 40 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '文具套装' }
+              - column: { name: description, value: '获得一套新文具' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 50 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '选择周末活动' }
+              - column: { name: description, value: '决定周末全家去哪里玩' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 80 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '晚睡 1 小时特权' }
+              - column: { name: description, value: '周末可以晚睡 1 小时' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 40 }
+              - column: { name: active, valueBoolean: true }
+
+        - insert:
+            tableName: rewards
+            columns:
+              - column: { name: name, value: '免做家务一次' }
+              - column: { name: description, value: '可以免除一次家务任务' }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: points_required, valueNumeric: 25 }
+              - column: { name: active, valueBoolean: true }
+
+        # Lottery Theme
+        - insert:
+            tableName: lottery_themes
+            columns:
+              - column: { name: name, value: '幸运大转盘' }
+              - column: { name: description, value: '每日抽奖机会，试试你的运气！' }
+              - column: { name: points_per_draw, valueNumeric: 10 }
+              - column: { name: type, value: 'WEIGHTED_RANDOM' }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: created_by_id, valueNumeric: 1 }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        # Lottery Prizes
+        - insert:
+            tableName: lottery_prizes
+            columns:
+              - column: { name: lottery_theme_id, valueNumeric: 1 }
+              - column: { name: name, value: '冰淇淋' }
+              - column: { name: description, value: '喜欢的冰淇淋一份' }
+              - column: { name: weight, valueNumeric: 50 }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: redeemed_count, valueNumeric: 0 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: reward_id, valueNumeric: 4 }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: lottery_prizes
+            columns:
+              - column: { name: lottery_theme_id, valueNumeric: 1 }
+              - column: { name: name, value: '游戏时间' }
+              - column: { name: description, value: '30 分钟游戏时间' }
+              - column: { name: weight, valueNumeric: 30 }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: redeemed_count, valueNumeric: 0 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: reward_id, valueNumeric: 1 }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: lottery_prizes
+            columns:
+              - column: { name: lottery_theme_id, valueNumeric: 1 }
+              - column: { name: name, value: '零花钱' }
+              - column: { name: description, value: '10 元零花钱' }
+              - column: { name: weight, valueNumeric: 15 }
+              - column: { name: quantity, valueNumeric: 50 }
+              - column: { name: redeemed_count, valueNumeric: 0 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: reward_id, valueNumeric: 5 }
+              - column: { name: created_at, valueDate: 'NOW()' }
+
+        - insert:
+            tableName: lottery_prizes
+            columns:
+              - column: { name: lottery_theme_id, valueNumeric: 1 }
+              - column: { name: name, value: '新玩具' }
+              - column: { name: description, value: '买一个喜欢的玩具' }
+              - column: { name: weight, valueNumeric: 5 }
+              - column: { name: quantity, valueNumeric: 999 }
+              - column: { name: redeemed_count, valueNumeric: 0 }
+              - column: { name: active, valueBoolean: true }
+              - column: { name: reward_id, valueNumeric: 7 }
+              - column: { name: created_at, valueDate: 'NOW()' }

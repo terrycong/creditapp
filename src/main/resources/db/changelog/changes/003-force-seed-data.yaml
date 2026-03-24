@@ -1,0 +1,197 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-force-seed-data-if-not-exists
+      author: creditapp
+      comment: Force seed initial data if users table is empty
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM users
+      changes:
+        # Parent User
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: username, value: 'parent' }
+              - column: { name: password, value: '$2a$10$BFeE1qUtBvthU1sKwEc.tOIzuFOw1D635dDscfC2cv1HcP1/Co0Su' }
+              - column: { name: role, value: 'PARENT' }
+              - column: { name: points, valueNumeric: 0 }
+
+        # Child User (need to get the auto-generated ID from parent insert)
+        - sql:
+            sql: INSERT INTO children (username, password, role, parent_id, points) 
+                 SELECT 'child', '$2a$10$cV03s.di3hDvqXLPMiAvpucc7aLcLrWv5kHMFWIrOZXWdAtT4SsDi', 'CHILD', id, 0 
+                 FROM users WHERE username='parent'
+            dbms: mysql
+
+        - sql:
+            sql: INSERT INTO children (username, password, role, parent_id, points) 
+                 SELECT 'child', '$2a$10$cV03s.di3hDvqXLPMiAvpucc7aLcLrWv5kHMFWIrOZXWdAtT4SsDi', 'CHILD', id, 0 
+                 FROM users WHERE username='parent'
+            dbms: h2
+
+        # Direct Tasks
+        - sql:
+            sql: INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
+                 VALUES ('完成作业', '按时完成学校作业', 10, 'DAILY_ONCE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW())
+            dbms: mysql
+
+        - sql:
+            sql: INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
+                 VALUES ('完成作业', '按时完成学校作业', 10, 'DAILY_ONCE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, CURRENT_TIMESTAMP())
+            dbms: h2
+
+        - sql:
+            sql: INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
+                 VALUES ('打扫房间', '整理自己的房间', 5, 'REPEATABLE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW())
+            dbms: mysql
+
+        - sql:
+            sql: INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
+                 VALUES ('打扫房间', '整理自己的房间', 5, 'REPEATABLE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, CURRENT_TIMESTAMP())
+            dbms: h2
+
+        - sql:
+            sql: INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
+                 VALUES ('阅读书籍', '每天阅读 30 分钟课外书', 8, 'DAILY_ONCE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW())
+            dbms: mysql
+
+        - sql:
+            sql: INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
+                 VALUES ('阅读书籍', '每天阅读 30 分钟课外书', 8, 'DAILY_ONCE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, CURRENT_TIMESTAMP())
+            dbms: h2
+
+        - sql:
+            sql: INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
+                 VALUES ('帮助做家务', '帮忙洗碗或扫地', 7, 'REPEATABLE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW())
+            dbms: mysql
+
+        - sql:
+            sql: INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
+                 VALUES ('帮助做家务', '帮忙洗碗或扫地', 7, 'REPEATABLE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, CURRENT_TIMESTAMP())
+            dbms: h2
+
+        # Task Jobs - MySQL
+        - sql:
+            sql: |
+                INSERT INTO task_jobs (task_id, child_id, status, snapshot_title, snapshot_description, snapshot_points, snapshot_task_type, assigned_at, created_at)
+                SELECT t.id, c.id, 'ASSIGNED', t.title, t.description, t.points, t.type, NOW(), NOW()
+                FROM tasks t, children c
+                WHERE t.created_by_id = (SELECT id FROM users WHERE username='parent')
+                AND c.username = 'child'
+                AND t.title IN ('完成作业', '打扫房间', '阅读书籍', '帮助做家务')
+            dbms: mysql
+
+        # Task Jobs - H2
+        - sql:
+            sql: |
+                INSERT INTO task_jobs (task_id, child_id, status, snapshot_title, snapshot_description, snapshot_points, snapshot_task_type, assigned_at, created_at)
+                SELECT t.id, c.id, 'ASSIGNED', t.title, t.description, t.points, t.type, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()
+                FROM tasks t, children c
+                WHERE t.created_by_id = (SELECT id FROM users WHERE username='parent')
+                AND c.username = 'child'
+                AND t.title IN ('完成作业', '打扫房间', '阅读书籍', '帮助做家务')
+            dbms: h2
+
+        # Rewards
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('游戏时间', '30 分钟游戏时间', 999, 20, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('看电影', '选择一部喜欢的电影观看', 999, 40, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('去游乐场', '周末去游乐场玩半天', 999, 150, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('冰淇淋', '喜欢的冰淇淋一份', 999, 15, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('零花钱', '10 元零花钱', 50, 100, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('披萨大餐', '全家一起吃披萨', 999, 100, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('新玩具', '买一个喜欢的玩具', 999, 500, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('图书', '购买一本喜欢的图书', 999, 40, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('文具套装', '获得一套新文具', 999, 50, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('选择周末活动', '决定周末全家去哪里玩', 999, 80, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('晚睡 1 小时特权', '周末可以晚睡 1 小时', 999, 40, true)
+        - sql:
+            sql: INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('免做家务一次', '可以免除一次家务任务', 999, 25, true)
+
+        # Lottery Theme
+        - sql:
+            sql: INSERT INTO lottery_themes (name, description, points_per_draw, type, active, created_by_id, created_at) 
+                 VALUES ('幸运大转盘', '每日抽奖机会，试试你的运气！', 10, 'WEIGHTED_RANDOM', true, (SELECT id FROM users WHERE username='parent'), NOW())
+            dbms: mysql
+
+        - sql:
+            sql: INSERT INTO lottery_themes (name, description, points_per_draw, type, active, created_by_id, created_at) 
+                 VALUES ('幸运大转盘', '每日抽奖机会，试试你的运气！', 10, 'WEIGHTED_RANDOM', true, (SELECT id FROM users WHERE username='parent'), CURRENT_TIMESTAMP())
+            dbms: h2
+
+        # Lottery Prizes
+        - sql:
+            sql: |
+                INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, quantity, redeemed_count, active, reward_id, created_at)
+                SELECT lt.id, '冰淇淋', '喜欢的冰淇淋一份', 50, 999, 0, true, r.id, NOW()
+                FROM lottery_themes lt, rewards r
+                WHERE lt.name = '幸运大转盘' AND r.name = '冰淇淋'
+            dbms: mysql
+
+        - sql:
+            sql: |
+                INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, quantity, redeemed_count, active, reward_id, created_at)
+                SELECT lt.id, '游戏时间', '30 分钟游戏时间', 30, 999, 0, true, r.id, NOW()
+                FROM lottery_themes lt, rewards r
+                WHERE lt.name = '幸运大转盘' AND r.name = '游戏时间'
+            dbms: mysql
+
+        - sql:
+            sql: |
+                INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, quantity, redeemed_count, active, reward_id, created_at)
+                SELECT lt.id, '零花钱', '10 元零花钱', 15, 50, 0, true, r.id, NOW()
+                FROM lottery_themes lt, rewards r
+                WHERE lt.name = '幸运大转盘' AND r.name = '零花钱'
+            dbms: mysql
+
+        - sql:
+            sql: |
+                INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, quantity, redeemed_count, active, reward_id, created_at)
+                SELECT lt.id, '新玩具', '买一个喜欢的玩具', 5, 999, 0, true, r.id, NOW()
+                FROM lottery_themes lt, rewards r
+                WHERE lt.name = '幸运大转盘' AND r.name = '新玩具'
+            dbms: mysql
+
+        - sql:
+            sql: |
+                INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, quantity, redeemed_count, active, reward_id, created_at)
+                SELECT lt.id, '冰淇淋', '喜欢的冰淇淋一份', 50, 999, 0, true, r.id, CURRENT_TIMESTAMP()
+                FROM lottery_themes lt, rewards r
+                WHERE lt.name = '幸运大转盘' AND r.name = '冰淇淋'
+            dbms: h2
+
+        - sql:
+            sql: |
+                INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, quantity, redeemed_count, active, reward_id, created_at)
+                SELECT lt.id, '游戏时间', '30 分钟游戏时间', 30, 999, 0, true, r.id, CURRENT_TIMESTAMP()
+                FROM lottery_themes lt, rewards r
+                WHERE lt.name = '幸运大转盘' AND r.name = '游戏时间'
+            dbms: h2
+
+        - sql:
+            sql: |
+                INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, quantity, redeemed_count, active, reward_id, created_at)
+                SELECT lt.id, '零花钱', '10 元零花钱', 15, 50, 0, true, r.id, CURRENT_TIMESTAMP()
+                FROM lottery_themes lt, rewards r
+                WHERE lt.name = '幸运大转盘' AND r.name = '零花钱'
+            dbms: h2
+
+        - sql:
+            sql: |
+                INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, quantity, redeemed_count, active, reward_id, created_at)
+                SELECT lt.id, '新玩具', '买一个喜欢的玩具', 5, 999, 0, true, r.id, CURRENT_TIMESTAMP()
+                FROM lottery_themes lt, rewards r
+                WHERE lt.name = '幸运大转盘' AND r.name = '新玩具'
+            dbms: h2

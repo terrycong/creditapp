@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: classpath:db/changelog/changes/001-database-agnostic.sql
+  - include:
+      file: classpath:db/changelog/changes/002-initial-data.yaml
+  - include:
+      file: classpath:db/changelog/changes/003-force-seed-data.yaml

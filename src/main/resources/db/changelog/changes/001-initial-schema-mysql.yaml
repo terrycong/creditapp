@@ -1,0 +1,919 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-users-table
+      author: creditapp
+      comment: Create users table for parent and child accounts
+      changes:
+        - createTable:
+            tableName: users
+            remarks: User accounts (parents and children)
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: ENUM('CHILD','PARENT')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: points
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_id
+                  type: BIGINT
+  - changeSet:
+      id: 002-create-children-table
+      author: creditapp
+      comment: Create children table extending users
+      changes:
+        - createTable:
+            tableName: children
+            remarks: Child accounts with parent relationship
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: ENUM('CHILD','PARENT')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: points
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: children
+            baseColumnNames: parent_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_children_parent
+  - changeSet:
+      id: 003-create-tasks-table
+      author: creditapp
+      comment: Create tasks table
+      changes:
+        - createTable:
+            tableName: tasks
+            remarks: Task definitions created by parents
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+              - column:
+                  name: points
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: ENUM('DAILY_ONCE','MANDATORY','ONE_TIME','REPEATABLE')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: ENUM('APPROVED','DRAFT','REJECTED')
+              - column:
+                  name: active
+                  type: BIT(1)
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: penalty_points
+                  type: INT
+              - column:
+                  name: deadline_type
+                  type: ENUM('DAILY','WEEKLY_TIMES')
+              - column:
+                  name: deadline_value
+                  type: INT
+              - column:
+                  name: created_by_id
+                  type: BIGINT
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: DATETIME
+        - addForeignKeyConstraint:
+            baseTableName: tasks
+            baseColumnNames: created_by_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_tasks_created_by
+  - changeSet:
+      id: 004-create-task_jobs-table
+      author: creditapp
+      comment: Create task_jobs table for task-child assignments
+      changes:
+        - createTable:
+            tableName: task_jobs
+            remarks: Task instances assigned to children
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: task_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: child_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: ENUM('ASSIGNED','CANCELLED','COMPLETED','IN_PROGRESS')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: snapshot_title
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: snapshot_description
+                  type: VARCHAR(500)
+              - column:
+                  name: snapshot_points
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: snapshot_task_type
+                  type: ENUM('DAILY_ONCE','MANDATORY','ONE_TIME','REPEATABLE')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: assigned_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: started_at
+                  type: DATETIME
+              - column:
+                  name: deadline
+                  type: DATETIME
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: DATETIME
+        - addForeignKeyConstraint:
+            baseTableName: task_jobs
+            baseColumnNames: task_id
+            referencedTableName: tasks
+            referencedColumnNames: id
+            constraintName: FK_task_jobs_task
+        - addForeignKeyConstraint:
+            baseTableName: task_jobs
+            baseColumnNames: child_id
+            referencedTableName: children
+            referencedColumnNames: id
+            constraintName: FK_task_jobs_child
+  - changeSet:
+      id: 005-create-task_completions-table
+      author: creditapp
+      comment: Create task_completions table for tracking completions
+      changes:
+        - createTable:
+            tableName: task_completions
+            remarks: Task completion records
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: task_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: task_job_id
+                  type: BIGINT
+              - column:
+                  name: child_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: ENUM('APPROVED','PENDING','REJECTED')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: proof
+                  type: TEXT
+              - column:
+                  name: completed_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: approved_at
+                  type: DATETIME
+        - addForeignKeyConstraint:
+            baseTableName: task_completions
+            baseColumnNames: task_id
+            referencedTableName: tasks
+            referencedColumnNames: id
+            constraintName: FK_completions_task
+        - addForeignKeyConstraint:
+            baseTableName: task_completions
+            baseColumnNames: task_job_id
+            referencedTableName: task_jobs
+            referencedColumnNames: id
+            constraintName: FK_completions_task_job
+        - addForeignKeyConstraint:
+            baseTableName: task_completions
+            baseColumnNames: child_id
+            referencedTableName: children
+            referencedColumnNames: id
+            constraintName: FK_completions_child
+  - changeSet:
+      id: 006-create-rewards-table
+      author: creditapp
+      comment: Create rewards table
+      changes:
+        - createTable:
+            tableName: rewards
+            remarks: Available rewards for children
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+              - column:
+                  name: quantity
+                  type: INT
+                  defaultValueNumeric: 999
+                  constraints:
+                    nullable: false
+              - column:
+                  name: points_required
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: image_url
+                  type: VARCHAR(500)
+              - column:
+                  name: active
+                  type: BIT(1)
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 007-create-reward_redemptions-table
+      author: creditapp
+      comment: Create reward_redemptions table
+      changes:
+        - createTable:
+            tableName: reward_redemptions
+            remarks: Reward redemption records
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: reward_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: child_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: ENUM('REDEEMED','USED')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: redeemed_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: used_at
+                  type: DATETIME
+              - column:
+                  name: note
+                  type: VARCHAR(500)
+        - addForeignKeyConstraint:
+            baseTableName: reward_redemptions
+            baseColumnNames: reward_id
+            referencedTableName: rewards
+            referencedColumnNames: id
+            constraintName: FK_redemptions_reward
+        - addForeignKeyConstraint:
+            baseTableName: reward_redemptions
+            baseColumnNames: child_id
+            referencedTableName: children
+            referencedColumnNames: id
+            constraintName: FK_redemptions_child
+  - changeSet:
+      id: 008-create-lottery_themes-table
+      author: creditapp
+      comment: Create lottery_themes table
+      changes:
+        - createTable:
+            tableName: lottery_themes
+            remarks: Lottery theme definitions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+              - column:
+                  name: points_per_draw
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: ENUM('FIXED_PROBABILITY','GUARANTEED','WEIGHTED_RANDOM')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BIT(1)
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: DATETIME
+        - addForeignKeyConstraint:
+            baseTableName: lottery_themes
+            baseColumnNames: created_by_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_themes_created_by
+  - changeSet:
+      id: 009-create-lottery_prizes-table
+      author: creditapp
+      comment: Create lottery_prizes table
+      changes:
+        - createTable:
+            tableName: lottery_prizes
+            remarks: Lottery prize definitions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: lottery_theme_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reward_id
+                  type: BIGINT
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+              - column:
+                  name: image_url
+                  type: VARCHAR(500)
+              - column:
+                  name: weight
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: probability
+                  type: INT
+              - column:
+                  name: quantity
+                  type: INT
+                  defaultValueNumeric: -1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: redeemed_count
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BIT(1)
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: DATETIME
+        - addForeignKeyConstraint:
+            baseTableName: lottery_prizes
+            baseColumnNames: lottery_theme_id
+            referencedTableName: lottery_themes
+            referencedColumnNames: id
+            constraintName: FK_prizes_theme
+        - addForeignKeyConstraint:
+            baseTableName: lottery_prizes
+            baseColumnNames: reward_id
+            referencedTableName: rewards
+            referencedColumnNames: id
+            constraintName: FK_prizes_reward
+  - changeSet:
+      id: 010-create-lottery_draws-table
+      author: creditapp
+      comment: Create lottery_draws table
+      changes:
+        - createTable:
+            tableName: lottery_draws
+            remarks: Lottery draw records
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: lottery_theme_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: child_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: points_cost
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: result_status
+                  type: ENUM('JACKPOT','NO_WIN','WON')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: draw_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: lottery_draws
+            baseColumnNames: lottery_theme_id
+            referencedTableName: lottery_themes
+            referencedColumnNames: id
+            constraintName: FK_draws_theme
+        - addForeignKeyConstraint:
+            baseTableName: lottery_draws
+            baseColumnNames: child_id
+            referencedTableName: children
+            referencedColumnNames: id
+            constraintName: FK_draws_child
+  - changeSet:
+      id: 011-create-lottery_draw_results-table
+      author: creditapp
+      comment: Create lottery_draw_results table
+      changes:
+        - createTable:
+            tableName: lottery_draw_results
+            remarks: Lottery draw result details
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: lottery_draw_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: prize_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reward_id
+                  type: BIGINT
+              - column:
+                  name: prize_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: lottery_draw_results
+            baseColumnNames: lottery_draw_id
+            referencedTableName: lottery_draws
+            referencedColumnNames: id
+            constraintName: FK_results_draw
+        - addForeignKeyConstraint:
+            baseTableName: lottery_draw_results
+            baseColumnNames: prize_id
+            referencedTableName: lottery_prizes
+            referencedColumnNames: id
+            constraintName: FK_results_prize
+        - addForeignKeyConstraint:
+            baseTableName: lottery_draw_results
+            baseColumnNames: reward_id
+            referencedTableName: rewards
+            referencedColumnNames: id
+            constraintName: FK_results_reward
+  - changeSet:
+      id: 012-create-point_history-table
+      author: creditapp
+      comment: Create point_history table for tracking point changes
+      changes:
+        - createTable:
+            tableName: point_history
+            remarks: Point change history log
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: child_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_type
+                  type: ENUM('BONUS','INITIAL','LOTTERY_DRAW','LOTTERY_WIN','MANUAL_ADJUSTMENT','OTHER','PENALTY','REWARD_REDEMPTION','TASK_COMPLETION')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_points
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: original_points
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: after_points
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+              - column:
+                  name: reference_id
+                  type: BIGINT
+              - column:
+                  name: reference_type
+                  type: VARCHAR(50)
+              - column:
+                  name: changed_by_id
+                  type: BIGINT
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: point_history
+            baseColumnNames: child_id
+            referencedTableName: children
+            referencedColumnNames: id
+            constraintName: FK_history_child
+        - addForeignKeyConstraint:
+            baseTableName: point_history
+            baseColumnNames: changed_by_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_history_changed_by
+  - changeSet:
+      id: 013-create-penalty_rules-table
+      author: creditapp
+      comment: Create penalty_rules table
+      changes:
+        - createTable:
+            tableName: penalty_rules
+            remarks: Penalty rule definitions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+              - column:
+                  name: points
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BIT(1)
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: DATETIME
+        - addForeignKeyConstraint:
+            baseTableName: penalty_rules
+            baseColumnNames: created_by_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_rules_created_by
+  - changeSet:
+      id: 014-create-penalty_records-table
+      author: creditapp
+      comment: Create penalty_records table
+      changes:
+        - createTable:
+            tableName: penalty_records
+            remarks: Executed penalty records
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: child_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: penalty_rule_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: points
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: VARCHAR(500)
+              - column:
+                  name: applied_by_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: applied_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: penalty_records
+            baseColumnNames: child_id
+            referencedTableName: children
+            referencedColumnNames: id
+            constraintName: FK_records_child
+        - addForeignKeyConstraint:
+            baseTableName: penalty_records
+            baseColumnNames: penalty_rule_id
+            referencedTableName: penalty_rules
+            referencedColumnNames: id
+            constraintName: FK_records_rule
+        - addForeignKeyConstraint:
+            baseTableName: penalty_records
+            baseColumnNames: applied_by_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_records_applied_by
+  - changeSet:
+      id: 015-create-penalty_notifications-table
+      author: creditapp
+      comment: Create penalty_notifications table
+      changes:
+        - createTable:
+            tableName: penalty_notifications
+            remarks: Penalty notification records
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: child_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: task_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: ENUM('APPLIED','DISMISSED','EXPIRED','PENDING')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notification_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: penalty_points
+                  type: INT
+              - column:
+                  name: is_penalty_applied
+                  type: BIT(1)
+              - column:
+                  name: applied_by_id
+                  type: BIGINT
+              - column:
+                  name: applied_at
+                  type: DATETIME
+        - addForeignKeyConstraint:
+            baseTableName: penalty_notifications
+            baseColumnNames: child_id
+            referencedTableName: children
+            referencedColumnNames: id
+            constraintName: FK_notifications_child
+        - addForeignKeyConstraint:
+            baseTableName: penalty_notifications
+            baseColumnNames: parent_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_notifications_parent
+        - addForeignKeyConstraint:
+            baseTableName: penalty_notifications
+            baseColumnNames: task_id
+            referencedTableName: tasks
+            referencedColumnNames: id
+            constraintName: FK_notifications_task
+        - addForeignKeyConstraint:
+            baseTableName: penalty_notifications
+            baseColumnNames: applied_by_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK_notifications_applied_by
