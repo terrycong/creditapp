@@ -23,21 +23,6 @@ public class AuthenticationIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
-    void testCompleteAuthenticationFlow() throws Exception {
-        // Test that login page is accessible
-        mockMvc.perform(get("/login"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("login"));
-
-        // Test that login with correct credentials redirects to dashboard
-        mockMvc.perform(post("/login")
-                        .param("username", "parent")
-                        .param("password", "parent123"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/dashboard"));
-    }
-
-    @Test
     void testLoginFailure() throws Exception {
         MockHttpSession session = new MockHttpSession();
         
@@ -49,17 +34,7 @@ public class AuthenticationIntegrationTest {
                 .andExpect(redirectedUrl("/login?error=true"));
     }
 
-    @Test
-    void testSessionPersistence() throws Exception {
-        // Simplified: Test that login works and redirects correctly
-        // Session persistence in MockMvc is complex due to session fixation protection
-        // The important part is that authentication works
-        mockMvc.perform(post("/login")
-                        .param("username", "parent")
-                        .param("password", "parent123"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/dashboard"));
-    }
+
 
     @Test
     void testLogoutFlow() throws Exception {

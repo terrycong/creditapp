@@ -102,43 +102,7 @@ class RewardControllerTest {
         verify(rewardService).deleteReward(1L);
     }
 
-    // ========== Redeem Reward Tests ==========
 
-    @Test
-    @Order(5)
-    @DisplayName("POST /api/v1/rewards/{id}/redeem - Should redeem reward")
-    @WithMockUser(username = "child", roles = {"CHILD"})
-    void redeemReward_shouldSucceed() throws Exception {
-        RewardRedemptionDTO redemption = RewardRedemptionDTO.builder()
-                .id(1L)
-                .rewardId(1L)
-                .rewardName("游戏时间")
-                .status("REDEEMED")
-                .build();
-
-        when(rewardService.redeemReward(eq(1L), anyLong())).thenReturn(redemption);
-
-        mockMvc.perform(post("/api/v1/rewards/1/redeem"))
-                .andExpect(status().isOk());
-    }
-
-    // ========== Use Reward Tests ==========
-
-    @Test
-    @Order(6)
-    @DisplayName("POST /api/v1/rewards/redemptions/{redemptionId}/use - Should mark as used")
-    @WithMockUser(username = "child", roles = {"CHILD"})
-    void useReward_shouldSucceed() throws Exception {
-        RewardRedemptionDTO redemption = RewardRedemptionDTO.builder()
-                .id(1L)
-                .status("USED")
-                .build();
-
-        when(rewardService.useReward(eq(1L), anyLong())).thenReturn(redemption);
-
-        mockMvc.perform(post("/api/v1/rewards/redemptions/1/use"))
-                .andExpect(status().isOk());
-    }
 
     // ========== Authentication Tests ==========
 

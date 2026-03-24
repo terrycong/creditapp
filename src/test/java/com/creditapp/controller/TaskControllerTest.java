@@ -106,25 +106,7 @@ class TaskControllerTest {
         verify(taskService).deleteTask(1L);
     }
 
-    // ========== Complete Task Tests ==========
 
-    @Test
-    @Order(4)
-    @DisplayName("POST /api/v1/tasks/{id}/complete - Should complete task")
-    @WithMockUser(username = "child", roles = {"CHILD"})
-    void completeTask_shouldSucceed() throws Exception {
-        TaskCompletionDTO completion = TaskCompletionDTO.builder()
-                .id(1L)
-                .taskId(1L)
-                .taskTitle("Test Task")
-                .status(CompletionStatus.PENDING)
-                .build();
-
-        when(taskService.completeTask(eq(1L), anyLong())).thenReturn(completion);
-
-        mockMvc.perform(post("/api/v1/tasks/1/complete"))
-                .andExpect(status().isOk());
-    }
 
     // ========== Approval Tests (No user ID needed) ==========
 

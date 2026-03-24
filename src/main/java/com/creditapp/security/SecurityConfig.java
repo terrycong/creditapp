@@ -10,9 +10,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -48,28 +51,40 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutSuccessUrl("/login?logout")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
                 .permitAll()
             )
             .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .sessionFixation().migrateSession()
                 .maximumSessions(1)
+                    .maxSessionsPreventsLogin(false)
+            )
+            .securityContext(context -> context
+                .securityContextRepository(securityContextRepository())
             );
 
-        // H2 Console frame disable for development
+        // H2 Console frame options
         http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
-        // CSRF configuration - conditionally enabled based on application properties
-        boolean csrfEnabled = environment.getProperty("spring.security.csrf.enabled", Boolean.class, true);
+        // CSRF configuration - conditionally enabled based on environment
+        boolean csrfEnabled = environment.getProperty("spring.security.csrf.enabled", Boolean.class, false);
         log.info("CSRF protection enabled: {}", csrfEnabled);
         
         if (!csrfEnabled) {
             http.csrf(csrf -> csrf.disable());
-            log.warn("CSRF protection is DISABLED. This should only be used in development.");
+            log.warn("CSRF protection is DISABLED. This should only be used in development or Docker environments.");
         } else {
             log.info("CSRF protection is ENABLED for production security.");
         }
 
         log.info("SecurityFilterChain configuration complete");
         return http.build();
+    }
+
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
     }
 }
