@@ -41,6 +41,21 @@
             transform: translateY(-5px);
         }
         
+        .stat-card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: all 0.2s;
+        }
+        
+        .stat-card-link:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card-link:hover .stat-card {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+        
         .stat-icon {
             font-size: 2.5rem;
             border-radius: 50%;
@@ -196,82 +211,98 @@
         <!-- Statistics Cards -->
         <div class="row mb-5 animate__animated animate__fadeInUp">
             <div th:if="${role == 'PARENT'}" class="col-md-3">
-                <div class="stat-card text-center p-4">
-                    <div class="stat-icon icon-primary mx-auto">
-                        <i class="bi bi-people-fill"></i>
+                <a href="/parent/children" class="stat-card-link">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-icon icon-primary mx-auto">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h3 class="mb-2" th:text="${dashboardStats.totalChildren} ?: 0">0</h3>
+                        <p class="text-muted mb-0">家庭成员</p>
                     </div>
-                    <h3 class="mb-2" th:text="${dashboardStats.totalChildren} ?: 0">0</h3>
-                    <p class="text-muted mb-0">家庭成员</p>
-                </div>
+                </a>
             </div>
             <div th:if="${role == 'PARENT'}" class="col-md-3">
-                <div class="stat-card text-center p-4">
-                    <div class="stat-icon icon-success mx-auto">
-                        <i class="bi bi-check-circle-fill"></i>
+                <a href="/parent/tasks" class="stat-card-link">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-icon icon-success mx-auto">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h3 class="mb-2" th:text="${dashboardStats.totalTasksCreated} ?: 0">0</h3>
+                        <p class="text-muted mb-0">创建的任务</p>
                     </div>
-                    <h3 class="mb-2" th:text="${dashboardStats.totalTasksCreated} ?: 0">0</h3>
-                    <p class="text-muted mb-0">创建的任务</p>
-                </div>
+                </a>
             </div>
             <div th:if="${role == 'PARENT'}" class="col-md-3">
-                <div class="stat-card text-center p-4">
-                    <div class="stat-icon icon-warning mx-auto">
-                        <i class="bi bi-gift-fill"></i>
+                <a href="/parent/rewards" class="stat-card-link">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-icon icon-warning mx-auto">
+                            <i class="bi bi-gift-fill"></i>
+                        </div>
+                        <h3 class="mb-2" th:text="${dashboardStats.totalRewardsAvailable} ?: 0">0</h3>
+                        <p class="text-muted mb-0">可用礼物</p>
                     </div>
-                    <h3 class="mb-2" th:text="${dashboardStats.totalRewardsAvailable} ?: 0">0</h3>
-                    <p class="text-muted mb-0">可用礼物</p>
-                </div>
+                </a>
             </div>
             <div th:if="${role == 'PARENT'}" class="col-md-3">
-                <div class="stat-card text-center p-4">
-                    <div class="stat-icon icon-info mx-auto">
-                        <i class="bi bi-cash-stack"></i>
+                <a href="/parent/approvals" class="stat-card-link">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-icon icon-info mx-auto">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <h3 class="mb-2" th:text="${dashboardStats.totalPointsDistributed} ?: 0">0</h3>
+                        <p class="text-muted mb-0">发放积分</p>
                     </div>
-                    <h3 class="mb-2" th:text="${dashboardStats.totalPointsDistributed} ?: 0">0</h3>
-                    <p class="text-muted mb-0">发放积分</p>
-                </div>
+                </a>
             </div>
             
             <!-- Child-specific stats -->
             <div th:if="${role == 'CHILD' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
                  class="col-md-3">
-                <div class="stat-card text-center p-4">
-                    <div class="stat-icon icon-success mx-auto">
-                        <i class="bi bi-check-circle-fill"></i>
+                <a href="/child/tasks" class="stat-card-link">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-icon icon-success mx-auto">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].taskCompletionCount} ?: 0">0</h3>
+                        <p class="text-muted mb-0">完成任务</p>
                     </div>
-                    <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].taskCompletionCount} ?: 0">0</h3>
-                    <p class="text-muted mb-0">完成任务</p>
-                </div>
+                </a>
             </div>
             <div th:if="${role == 'CHILD' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
                  class="col-md-3">
-                <div class="stat-card text-center p-4">
-                    <div class="stat-icon icon-warning mx-auto">
-                        <i class="bi bi-gift-fill"></i>
+                <a href="/child/rewards" class="stat-card-link">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-icon icon-warning mx-auto">
+                            <i class="bi bi-gift-fill"></i>
+                        </div>
+                        <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].rewardRedemptionCount} ?: 0">0</h3>
+                        <p class="text-muted mb-0">兑换礼物</p>
                     </div>
-                    <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].rewardRedemptionCount} ?: 0">0</h3>
-                    <p class="text-muted mb-0">兑换礼物</p>
-                </div>
+                </a>
             </div>
             <div th:if="${role == 'CHILD' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
                  class="col-md-3">
-                <div class="stat-card text-center p-4">
-                    <div class="stat-icon icon-info mx-auto">
-                        <i class="bi bi-cash-stack"></i>
+                <a href="/child/points/history" class="stat-card-link">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-icon icon-info mx-auto">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].currentPoints} ?: 0">0</h3>
+                        <p class="text-muted mb-0">当前积分</p>
                     </div>
-                    <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].currentPoints} ?: 0">0</h3>
-                    <p class="text-muted mb-0">当前积分</p>
-                </div>
+                </a>
             </div>
             <div th:if="${role == 'CHILD' && dashboardStats.childActivities != null && !dashboardStats.childActivities.empty}" 
                  class="col-md-3">
-                <div class="stat-card text-center p-4">
-                    <div class="stat-icon icon-primary mx-auto">
-                        <i class="bi bi-trophy-fill"></i>
+                <a href="/child/marketplace" class="stat-card-link">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-icon icon-primary mx-auto">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].totalPointsEarned} ?: 0">0</h3>
+                        <p class="text-muted mb-0">累计积分</p>
                     </div>
-                    <h3 class="mb-2" th:text="${dashboardStats.childActivities[0].totalPointsEarned} ?: 0">0</h3>
-                    <p class="text-muted mb-0">累计积分</p>
-                </div>
+                </a>
             </div>
         </div>
 
