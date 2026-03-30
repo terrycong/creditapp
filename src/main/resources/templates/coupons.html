@@ -323,6 +323,10 @@
                     <p>Disabled</p>
                 </div>
                 <div class="stat-card" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
+                    <h3 id="redeemedCount">0</h3>
+                    <p>Redeemed</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4299e1 0%, #2b6cb0 100%);">
                     <h3 id="usedCount">0</h3>
                     <p>Total Redemptions</p>
                 </div>
@@ -356,6 +360,7 @@
                         <th>Timeout</th>
                         <th>Used</th>
                         <th>Status</th>
+                        <th>Redeemed</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -363,6 +368,14 @@
                     <!-- Will be populated by JavaScript -->
                 </tbody>
             </table>
+
+            <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                <h4 style="margin: 0 0 10px 0; color: #0369a1;">💡 优惠券池说明</h4>
+                <p style="margin: 0; font-size: 13px; color: #0c4a6e;">
+                    每一行代表一个独立的优惠券实例。兑换时从可用池中分配一个未兑换的优惠券给小孩。
+                    <br>已兑换的优惠券不会参与后续兑换，但记录会保留以便追踪。
+                </p>
+            </div>
         </div>
     </div>
 
@@ -481,6 +494,13 @@
                         </span>
                     </td>
                     <td>
+                        ${coupon.redeemed 
+                            ? `<span class="status-badge" style="background: #fed7d7; color: #742a2a;">✅ Redeemed</span>`
+                            : `<span class="status-badge" style="background: #c6f6d5; color: #22543d;">⭕ Available</span>`
+                        }
+                        ${coupon.redeemedByUsername ? `<br><small style="color:#718096">${escapeHtml(coupon.redeemedByUsername)}</small>` : ''}
+                    </td>
+                    <td>
                         <button class="btn btn-secondary" onclick="editCoupon(${coupon.id})" style="padding: 4px 8px; font-size: 12px;">Edit</button>
                         <button class="btn btn-danger" onclick="deleteCoupon(${coupon.id})" style="padding: 4px 8px; font-size: 12px;">Delete</button>
                     </td>
@@ -493,6 +513,7 @@
             document.getElementById('enabledCount').textContent = coupons.filter(c => c.enabled).length;
             document.getElementById('disabledCount').textContent = coupons.filter(c => !c.enabled).length;
             document.getElementById('usedCount').textContent = coupons.reduce((sum, c) => sum + c.usedCount, 0);
+            document.getElementById('redeemedCount').textContent = coupons.filter(c => c.redeemed).length;
         }
 
         function openCreateModal() {

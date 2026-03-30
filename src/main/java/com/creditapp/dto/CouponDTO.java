@@ -17,6 +17,10 @@ public class CouponDTO {
     private LocalDateTime expiresAt;
     private Integer timeoutSeconds;
     private Integer usedCount;
+    private Boolean redeemed;
+    private Long redeemedById;
+    private String redeemedByUsername;
+    private LocalDateTime redeemedAt;
     private Long createdById;
     private String createdByUsername;
     private LocalDateTime createdAt;

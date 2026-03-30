@@ -34,6 +34,10 @@ public class CouponService {
                 .expiresAt(coupon.getExpiresAt())
                 .timeoutSeconds(coupon.getTimeoutSeconds())
                 .usedCount(coupon.getUsedCount())
+                .redeemed(coupon.getRedeemed())
+                .redeemedById(coupon.getRedeemedBy() != null ? coupon.getRedeemedBy().getId() : null)
+                .redeemedByUsername(coupon.getRedeemedBy() != null ? coupon.getRedeemedBy().getUsername() : null)
+                .redeemedAt(coupon.getRedeemedAt())
                 .createdById(coupon.getCreatedBy() != null ? coupon.getCreatedBy().getId() : null)
                 .createdByUsername(coupon.getCreatedBy() != null ? coupon.getCreatedBy().getUsername() : null)
                 .createdAt(coupon.getCreatedAt())
@@ -162,9 +166,12 @@ public class CouponService {
     }
 
     public CouponDTO getCouponByCode(String code) {
-        Coupon coupon = couponRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Coupon not found: " + code));
-        return toDTO(coupon);
+        List<Coupon> coupons = couponRepository.findByCode(code);
+        if (coupons.isEmpty()) {
+            throw new ResourceNotFoundException("Coupon not found: " + code);
+        }
+        // Return first coupon with this code
+        return toDTO(coupons.get(0));
     }
 
     public List<CouponDTO> getCouponsByParentId(Long parentId) {
@@ -181,17 +188,19 @@ public class CouponService {
 
     @Transactional
     public CouponDTO redeemCoupon(String code, Long childId) {
-        Coupon coupon = couponRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid coupon code"));
-
-        if (!coupon.getEnabled()) {
-            throw new IllegalArgumentException("Coupon is disabled");
+        // Find an available coupon with this code (not redeemed, enabled, not expired)
+        List<Coupon> coupons = couponRepository.findByCode(code);
+        
+        if (coupons.isEmpty()) {
+            throw new ResourceNotFoundException("Invalid coupon code: " + code);
         }
-
-        // Check if expired
-        if (coupon.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Coupon has expired");
-        }
+        
+        // Find first available coupon
+        Coupon coupon = coupons.stream()
+                .filter(c -> c.getEnabled() && !c.getRedeemed())
+                .filter(c -> c.getExpiresAt().isAfter(LocalDateTime.now()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No available coupons with this code (all redeemed or expired)"));
 
         // Check if assigned to specific user
         if (coupon.getUsername() != null && !coupon.getUsername().isEmpty()) {
@@ -202,8 +211,13 @@ public class CouponService {
             }
         }
 
+        // Mark as redeemed
+        coupon.setRedeemed(true);
+        coupon.setRedeemedBy(userRepository.findById(childId).orElse(null));
+        coupon.setRedeemedAt(LocalDateTime.now());
         coupon.setUsedCount(coupon.getUsedCount() + 1);
         coupon.setUpdatedAt(LocalDateTime.now());
+        
         Coupon updated = couponRepository.save(coupon);
         
         return toDTO(updated);

@@ -53,6 +53,18 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: redeemed
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: redeemed_by
+                  type: BIGINT
+              - column:
+                  name: redeemed_at
+                  type: TIMESTAMP
+              - column:
                   name: created_by
                   type: BIGINT
               - column:

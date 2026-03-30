@@ -34,6 +34,16 @@ public class Coupon {
     @Column(nullable = false)
     private Integer usedCount = 0;
 
+    @Column(nullable = false)
+    private Boolean redeemed = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "redeemed_by")
+    private User redeemedBy;
+
+    @Column
+    private LocalDateTime redeemedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -115,6 +125,30 @@ public class Coupon {
 
     public void setUsedCount(Integer usedCount) {
         this.usedCount = usedCount;
+    }
+
+    public Boolean getRedeemed() {
+        return redeemed;
+    }
+
+    public void setRedeemed(Boolean redeemed) {
+        this.redeemed = redeemed;
+    }
+
+    public User getRedeemedBy() {
+        return redeemedBy;
+    }
+
+    public void setRedeemedBy(User redeemedBy) {
+        this.redeemedBy = redeemedBy;
+    }
+
+    public LocalDateTime getRedeemedAt() {
+        return redeemedAt;
+    }
+
+    public void setRedeemedAt(LocalDateTime redeemedAt) {
+        this.redeemedAt = redeemedAt;
     }
 
     public User getCreatedBy() {
