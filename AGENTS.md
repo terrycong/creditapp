@@ -1998,3 +1998,113 @@ CREATE TABLE penalty_records (
 - Thymeleaf文档：https://www.thymeleaf.org/documentation.html
 - Bootstrap 5文档：https://getbootstrap.com/docs/5.3/
 - Animate.css：https://animate.style/
+
+---
+
+## 优惠券管理功能 (2026-03-31 新增)
+
+### 需求描述
+家长需要管理优惠券（coupon），可以批量导入、创建、编辑、删除优惠券，并追踪优惠券的使用情况。
+**只有 PARENT 角色的用户可以访问优惠券管理功能**。
+
+### 优惠券数据格式
+优惠券文件 (coupon.txt) 格式示例：
+```
+id=2 enabled=yes comment= username=Y74GNZMKZ2 expires=0 timeout=1800 used=0
+id=3 enabled=yes comment= username=4711785411 expires=0 timeout=600 used=0
+```
+
+**字段说明**：
+- `id`: 优惠券唯一标识
+- `enabled`: 是否启用 (yes/no)
+- `comment`: 备注说明
+- `username`: 指定使用的小孩用户名（可选，留空表示所有小孩可用）
+- `expires`: 过期天数（0=永不过期）
+- `timeout`: 有效期（秒），从领取开始计算
+- `used`: 已使用次数
+
+### 功能要求
+
+#### 1. CRUD 操作（仅 PARENT）
+- **创建优惠券**: 单个创建，指定代码、积分、有效期等
+- **编辑优惠券**: 修改现有优惠券信息
+- **删除优惠券**: 删除不再需要的优惠券
+- **查看优惠券**: 列表显示所有优惠券，支持搜索和筛选
+
+#### 2. 批量导入（仅 PARENT）
+- 上传 coupon.txt 文件批量导入优惠券
+- 自动解析文件格式，创建优惠券记录
+- 跳过已存在的优惠券代码
+- 显示导入结果（成功/失败数量）
+
+#### 3. 搜索与筛选（仅 PARENT）
+- 按优惠券代码搜索
+- 按用户名筛选（查看指定小孩的优惠券）
+- 按状态筛选（启用/禁用）
+
+#### 4. 优惠券兑换（CHILD 可用）
+- 小孩可以兑换优惠券
+- 验证优惠券是否有效（未过期、未禁用）
+- 验证是否指定给当前小孩（如果设置了 username）
+- 兑换后增加 used_count
+
+#### 5. 统计信息（仅 PARENT）
+- 优惠券总数
+- 启用/禁用数量
+- 总兑换次数
+
+### 技术实现
+
+#### 数据库表
+```sql
+CREATE TABLE coupons (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    code VARCHAR(100) UNIQUE NOT NULL,
+    points INT NOT NULL,
+    enabled BOOLEAN DEFAULT TRUE,
+    comment VARCHAR(500),
+    username VARCHAR(50),
+    expires_at TIMESTAMP NOT NULL,
+    timeout_seconds INT NOT NULL,
+    used_count INT DEFAULT 0,
+    created_by BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+```
+
+#### API 端点
+- `GET /api/v1/coupons` - 获取所有优惠券（PARENT）
+- `POST /api/v1/coupons` - 创建优惠券（PARENT）
+- `PUT /api/v1/coupons/{id}` - 更新优惠券（PARENT）
+- `DELETE /api/v1/coupons/{id}` - 删除优惠券（PARENT）
+- `GET /api/v1/coupons/search` - 搜索优惠券（PARENT）
+- `POST /api/v1/coupons/import` - 批量导入（PARENT）
+- `POST /api/v1/coupons/redeem` - 兑换优惠券（CHILD）
+
+#### 权限控制
+- 所有管理端点需要 PARENT 角色
+- 兑换端点 CHILD 和 PARENT 都可以使用
+- 使用 Spring Security 进行权限验证
+
+#### 前端页面
+- `/parent/coupons` - 优惠券管理页面
+- 支持创建、编辑、删除、搜索、导入功能
+- 显示统计信息和优惠券列表
+
+### 文件位置
+- **Entity**: `src/main/java/com/creditapp/entity/Coupon.java`
+- **Repository**: `src/main/java/com/creditapp/repository/CouponRepository.java`
+- **Service**: `src/main/java/com/creditapp/service/CouponService.java`
+- **Controller**: `src/main/java/com/creditapp/controller/CouponController.java`
+- **DTO**: `src/main/java/com/creditapp/dto/CouponDTO.java`, `CreateCouponRequest.java`
+- **UI**: `src/main/resources/templates/coupons.html`
+- **Migration**: `src/main/resources/db/changelog/changes/017-create-coupons-table.yaml`
+
+### 测试要点
+1. PARENT 用户可以访问所有管理功能
+2. CHILD 用户访问管理端点应返回 403 禁止访问
+3. 批量导入正确解析 coupon.txt 格式
+4. 优惠券兑换验证逻辑正确（过期、禁用、用户名匹配）
+5. 搜索和筛选功能正常工作

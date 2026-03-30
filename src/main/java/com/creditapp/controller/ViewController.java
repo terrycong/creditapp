@@ -1367,4 +1367,21 @@ public class ViewController {
 
         return "child/penalties";
     }
+
+    // ========== Coupon Management (Parent Only) ==========
+
+    @GetMapping("/parent/coupons")
+    public String parentCoupons(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        log.info("=== PARENT COUPONS CONTROLLER INVOKED ===");
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
+
+        model.addAttribute("username", username);
+        return "coupons";
+    }
 }
