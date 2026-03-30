@@ -24,14 +24,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/coupons")
 @RequiredArgsConstructor
-@Tag(name = "Coupon Management", description = "优惠券管理 API (仅 PARENT 可用)")
+@Tag(name = "Coupon Management", description = "上网券管理 API (仅 PARENT 可用)")
 public class CouponController {
 
     private final CouponService couponService;
     private final UserService userService;
 
     @PostMapping
-    @Operation(summary = "创建优惠券 (仅 PARENT)")
+    @Operation(summary = "创建上网券 (仅 PARENT)")
     public ResponseEntity<ApiResponse<CouponDTO>> createCoupon(
             @Valid @RequestBody CreateCouponRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -43,7 +43,7 @@ public class CouponController {
     }
 
     @GetMapping
-    @Operation(summary = "获取所有优惠券 (仅 PARENT)")
+    @Operation(summary = "获取所有上网券 (仅 PARENT)")
     public ResponseEntity<ApiResponse<List<CouponDTO>>> getAllCoupons(
             @AuthenticationPrincipal UserDetails userDetails) {
         
@@ -54,7 +54,7 @@ public class CouponController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "根据 ID 获取优惠券 (仅 PARENT)")
+    @Operation(summary = "根据 ID 获取上网券 (仅 PARENT)")
     public ResponseEntity<ApiResponse<CouponDTO>> getCouponById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -66,7 +66,7 @@ public class CouponController {
     }
 
     @GetMapping("/code/{code}")
-    @Operation(summary = "根据代码获取优惠券 (仅 PARENT)")
+    @Operation(summary = "根据代码获取上网券 (仅 PARENT)")
     public ResponseEntity<ApiResponse<CouponDTO>> getCouponByCode(
             @PathVariable String code,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -78,7 +78,7 @@ public class CouponController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "更新优惠券 (仅 PARENT)")
+    @Operation(summary = "更新上网券 (仅 PARENT)")
     public ResponseEntity<ApiResponse<CouponDTO>> updateCoupon(
             @PathVariable Long id,
             @Valid @RequestBody CreateCouponRequest request,
@@ -91,7 +91,7 @@ public class CouponController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除优惠券 (仅 PARENT)")
+    @Operation(summary = "删除上网券 (仅 PARENT)")
     public ResponseEntity<ApiResponse<Void>> deleteCoupon(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -103,7 +103,7 @@ public class CouponController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "搜索优惠券 (仅 PARENT)")
+    @Operation(summary = "搜索上网券 (仅 PARENT)")
     public ResponseEntity<ApiResponse<List<CouponDTO>>> searchCoupons(
             @RequestParam(required = false) String code,
             @RequestParam(required = false) Boolean enabled,
@@ -117,7 +117,7 @@ public class CouponController {
     }
 
     @PostMapping("/import")
-    @Operation(summary = "批量导入优惠券 (仅 PARENT)")
+    @Operation(summary = "批量导入上网券 (仅 PARENT)")
     public ResponseEntity<ApiResponse<List<CouponDTO>>> importCoupons(
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -145,7 +145,7 @@ public class CouponController {
     }
 
     @PostMapping("/redeem")
-    @Operation(summary = "兑换优惠券 (CHILD 可用)")
+    @Operation(summary = "兑换上网券 (CHILD 可用)")
     public ResponseEntity<ApiResponse<CouponDTO>> redeemCoupon(
             @RequestParam String code,
             @AuthenticationPrincipal UserDetails userDetails) {

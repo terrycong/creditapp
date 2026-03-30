@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coupon Management - CreditApp</title>
+    <title>上网券管理 - CreditApp</title>
     <style>
         * {
             margin: 0;
@@ -299,10 +299,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎫 Coupon Management</h1>
+            <h1>🎫 上网券管理</h1>
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-secondary" onclick="window.location.href='/dashboard'">← Back</button>
-                <button class="btn btn-primary" onclick="openCreateModal()">+ New Coupon</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/dashboard'">← 返回</button>
+                <button class="btn btn-primary" onclick="openCreateModal()">+ 新建上网券</button>
             </div>
         </div>
 
@@ -312,23 +312,23 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3 id="totalCount">0</h3>
-                    <p>Total Coupons</p>
+                    <p>上网券总数</p>
                 </div>
                 <div class="stat-card" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
                     <h3 id="enabledCount">0</h3>
-                    <p>Enabled</p>
+                    <p>启用</p>
                 </div>
                 <div class="stat-card" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">
                     <h3 id="disabledCount">0</h3>
-                    <p>Disabled</p>
+                    <p>禁用</p>
                 </div>
                 <div class="stat-card" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
                     <h3 id="redeemedCount">0</h3>
-                    <p>Redeemed</p>
+                    <p>已兑换</p>
                 </div>
                 <div class="stat-card" style="background: linear-gradient(135deg, #4299e1 0%, #2b6cb0 100%);">
                     <h3 id="usedCount">0</h3>
-                    <p>Total Redemptions</p>
+                    <p>总兑换次数</p>
                 </div>
             </div>
 
@@ -353,16 +353,16 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Code</th>
-                        <th>Points</th>
-                        <th>Username</th>
-                        <th>Inserted At</th>
-                        <th>Expires At</th>
-                        <th>Timeout</th>
-                        <th>Used</th>
-                        <th>Status</th>
-                        <th>Redeemed</th>
-                        <th>Actions</th>
+                        <th>券码</th>
+                        <th>积分</th>
+                        <th>用户名</th>
+                        <th>插入日期</th>
+                        <th>过期时间</th>
+                        <th>有效期</th>
+                        <th>使用次数</th>
+                        <th>状态</th>
+                        <th>兑换状态</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="couponTableBody">
@@ -371,10 +371,10 @@
             </table>
 
             <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                <h4 style="margin: 0 0 10px 0; color: #0369a1;">💡 优惠券池说明</h4>
+                <h4 style="margin: 0 0 10px 0; color: #0369a1;">💡 上网券池说明</h4>
                 <p style="margin: 0; font-size: 13px; color: #0c4a6e;">
-                    每一行代表一个独立的优惠券实例。兑换时从可用池中分配一个未兑换的优惠券给小孩。
-                    <br>已兑换的优惠券不会参与后续兑换，但记录会保留以便追踪。
+                    每一行代表一个独立的上网券实例。兑换时从可用池中分配一个未兑换的上网券给小孩。
+                    <br>已兑换的上网券不会参与后续兑换，但记录会保留以便追踪。
                 </p>
             </div>
         </div>
@@ -384,7 +384,7 @@
     <div id="couponModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle">Create Coupon</h2>
+                <h2 id="modalTitle">创建上网券</h2>
                 <button class="modal-close" onclick="closeModal()">×</button>
             </div>
             <form id="couponForm">
@@ -421,8 +421,8 @@
                     </select>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
                 </div>
             </form>
         </div>
@@ -432,7 +432,7 @@
     <div id="importModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Import Coupons</h2>
+                <h2>导入上网券</h2>
                 <button class="modal-close" onclick="closeImportModal()">×</button>
             </div>
             <form id="importForm" enctype="multipart/form-data">
@@ -448,8 +448,8 @@
                     <p id="fileName" style="margin-top: 10px; color: #667eea; font-weight: 600;"></p>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
-                    <button type="submit" class="btn btn-success">Import</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeImportModal()">取消</button>
+                    <button type="submit" class="btn btn-success">导入</button>
                 </div>
             </form>
         </div>
@@ -492,19 +492,19 @@
                     <td>${coupon.usedCount}</td>
                     <td>
                         <span class="status-badge ${coupon.enabled ? 'status-enabled' : 'status-disabled'}">
-                            ${coupon.enabled ? 'Enabled' : 'Disabled'}
+                            ${coupon.enabled ? '启用' : '禁用'}
                         </span>
                     </td>
                     <td>
                         ${coupon.redeemed 
-                            ? `<span class="status-badge" style="background: #fed7d7; color: #742a2a;">✅ Redeemed</span>`
-                            : `<span class="status-badge" style="background: #c6f6d5; color: #22543d;">⭕ Available</span>`
+                            ? `<span class="status-badge" style="background: #fed7d7; color: #742a2a;">✅ 已兑换</span>`
+                            : `<span class="status-badge" style="background: #c6f6d5; color: #22543d;">⭕ 可用</span>`
                         }
                         ${coupon.redeemedByUsername ? `<br><small style="color:#718096">${escapeHtml(coupon.redeemedByUsername)}</small>` : ''}
                     </td>
                     <td>
-                        <button class="btn btn-secondary" onclick="editCoupon(${coupon.id})" style="padding: 4px 8px; font-size: 12px;">Edit</button>
-                        <button class="btn btn-danger" onclick="deleteCoupon(${coupon.id})" style="padding: 4px 8px; font-size: 12px;">Delete</button>
+                        <button class="btn btn-secondary" onclick="editCoupon(${coupon.id})" style="padding: 4px 8px; font-size: 12px;">编辑</button>
+                        <button class="btn btn-danger" onclick="deleteCoupon(${coupon.id})" style="padding: 4px 8px; font-size: 12px;">删除</button>
                     </td>
                 </tr>
             `).join('');
@@ -519,7 +519,7 @@
         }
 
         function openCreateModal() {
-            document.getElementById('modalTitle').textContent = 'Create Coupon';
+            document.getElementById('modalTitle').textContent = '创建上网券';
             document.getElementById('couponForm').reset();
             document.getElementById('couponId').value = '';
             document.getElementById('couponModal').classList.add('active');
@@ -529,7 +529,7 @@
             const coupon = coupons.find(c => c.id === id);
             if (!coupon) return;
 
-            document.getElementById('modalTitle').textContent = 'Edit Coupon';
+            document.getElementById('modalTitle').textContent = '编辑上网券';
             document.getElementById('couponId').value = coupon.id;
             document.getElementById('code').value = coupon.code;
             document.getElementById('points').value = coupon.points;
@@ -591,11 +591,11 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showAlert(id ? 'Coupon updated successfully' : 'Coupon created successfully', 'success');
+                    showAlert(id ? '上网券更新成功' : '上网券创建成功', 'success');
                     closeModal();
                     loadCoupons();
                 } else {
-                    showAlert(data.message || 'Failed to save coupon', 'error');
+                    showAlert(data.message || '保存上网券失败', 'error');
                 }
             } catch (error) {
                 showAlert('Error: ' + error.message, 'error');
@@ -624,11 +624,11 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showAlert(`Imported ${data.data.length} coupons successfully`, 'success');
+                    showAlert(`已导入 ${data.data.length} 张上网券`, 'success');
                     closeImportModal();
                     loadCoupons();
                 } else {
-                    showAlert(data.message || 'Failed to import coupons', 'error');
+                    showAlert(data.message || '导入上网券失败', 'error');
                 }
             } catch (error) {
                 showAlert('Error: ' + error.message, 'error');
@@ -646,10 +646,10 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showAlert('Coupon deleted successfully', 'success');
+                    showAlert('上网券删除成功', 'success');
                     loadCoupons();
                 } else {
-                    showAlert(data.message || 'Failed to delete coupon', 'error');
+                    showAlert(data.message || '删除上网券失败', 'error');
                 }
             } catch (error) {
                 showAlert('Error: ' + error.message, 'error');
@@ -675,7 +675,7 @@
                     renderCoupons(coupons);
                     updateStats();
                 } else {
-                    showAlert(data.message || 'Search failed', 'error');
+                    showAlert(data.message || '搜索失败', 'error');
                 }
             } catch (error) {
                 showAlert('Error: ' + error.message, 'error');
