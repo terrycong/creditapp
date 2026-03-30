@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "lottery_prizes")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -82,6 +81,15 @@ public class LotteryPrize {
      */
     @Column(length = 500)
     private String imageUrl;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     /**
      * 关联的可兑换礼物 ID（可选）

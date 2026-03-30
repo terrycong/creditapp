@@ -25,7 +25,5 @@ public class CouponDTO {
     private String createdByUsername;
     private LocalDateTime insertedAt;
     private LocalDateTime createdAt;
-    private String createdByUsername;
-    private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

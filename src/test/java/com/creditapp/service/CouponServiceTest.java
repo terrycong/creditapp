@@ -82,9 +82,15 @@ class CouponServiceTest {
     @Test
     void testCreateCoupon_Success() {
         // Arrange
+        Coupon newCoupon = new Coupon();
+        newCoupon.setId(2L);
+        newCoupon.setCode("NEW_COUPON");
+        newCoupon.setPoints(50);
+        newCoupon.setEnabled(true);
+        
         when(userRepository.findById(1L)).thenReturn(Optional.of(parentUser));
         when(couponRepository.existsByCode("NEW_COUPON")).thenReturn(false);
-        when(couponRepository.save(any(Coupon.class))).thenReturn(coupon);
+        when(couponRepository.save(any(Coupon.class))).thenReturn(newCoupon);
 
         // Act
         CouponDTO result = couponService.createCoupon(createRequest, 1L);
