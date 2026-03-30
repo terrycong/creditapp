@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-create-task-completions-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: task_completions
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: task_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_task_completions_task
+                    references: tasks(id)
+              - column:
+                  name: task_job_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: fk_task_completions_job
+                    references: task_jobs(id)
+              - column:
+                  name: child_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_task_completions_child
+                    references: children(id)
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: proof
+                  type: varchar(2000)
+              - column:
+                  name: completed_at
+                  type: datetime
+                  constraints:
+                    nullable: false
+              - column:
+                  name: approved_at
+                  type: datetime

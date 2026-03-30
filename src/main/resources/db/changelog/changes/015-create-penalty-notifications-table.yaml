@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 015-create-penalty-notifications-table
+      author: terrycong
+      changes:
+        - createTable:
+            tableName: penalty_notifications
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: task_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_penalty_notifications_task
+                    references: tasks(id)
+              - column:
+                  name: child_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_penalty_notifications_child
+                    references: children(id)
+              - column:
+                  name: parent_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_penalty_notifications_parent
+                    references: users(id)
+              - column:
+                  name: notification_time
+                  type: datetime
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: penalty_points
+                  type: int
+              - column:
+                  name: is_penalty_applied
+                  type: boolean
+                  defaultValueBoolean: false
+              - column:
+                  name: applied_at
+                  type: datetime
+              - column:
+                  name: applied_by_id
+                  type: bigint

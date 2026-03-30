@@ -1,5 +1,3 @@
 databaseChangeLog:
-  - include:
-      file: classpath:db/changelog/changes/001-database-agnostic.sql
-  - include:
-      file: classpath:db/changelog/changes/002-initial-data.sql
+  - includeAll:
+      path: classpath:db/changelog/changes/
