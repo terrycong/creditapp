@@ -51,6 +51,9 @@ public class Coupon {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column
+    private LocalDateTime insertedAt;
+
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
@@ -165,6 +168,14 @@ public class Coupon {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getInsertedAt() {
+        return insertedAt;
+    }
+
+    public void setInsertedAt(LocalDateTime insertedAt) {
+        this.insertedAt = insertedAt;
     }
 
     public LocalDateTime getUpdatedAt() {

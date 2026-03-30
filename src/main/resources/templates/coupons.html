@@ -356,6 +356,7 @@
                         <th>Code</th>
                         <th>Points</th>
                         <th>Username</th>
+                        <th>Inserted At</th>
                         <th>Expires At</th>
                         <th>Timeout</th>
                         <th>Used</th>
@@ -485,6 +486,7 @@
                     <td><strong>${escapeHtml(coupon.code)}</strong></td>
                     <td>${coupon.points}</td>
                     <td>${coupon.username || '-'}</td>
+                    <td>${formatDate(coupon.insertedAt)}</td>
                     <td>${formatDate(coupon.expiresAt)}</td>
                     <td>${coupon.timeoutSeconds}s</td>
                     <td>${coupon.usedCount}</td>

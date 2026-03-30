@@ -40,6 +40,7 @@ public class CouponService {
                 .redeemedAt(coupon.getRedeemedAt())
                 .createdById(coupon.getCreatedBy() != null ? coupon.getCreatedBy().getId() : null)
                 .createdByUsername(coupon.getCreatedBy() != null ? coupon.getCreatedBy().getUsername() : null)
+                .insertedAt(coupon.getInsertedAt())
                 .createdAt(coupon.getCreatedAt())
                 .updatedAt(coupon.getUpdatedAt())
                 .build();
@@ -54,6 +55,7 @@ public class CouponService {
         coupon.setUsername(request.getUsername());
         coupon.setTimeoutSeconds(request.getTimeoutSeconds() != null ? request.getTimeoutSeconds() : 600);
         coupon.setUsedCount(0);
+        coupon.setInsertedAt(LocalDateTime.now());
         
         // If expires is 0, set to far future (year 2099)
         if (request.getExpires() != null && request.getExpires() > 0) {

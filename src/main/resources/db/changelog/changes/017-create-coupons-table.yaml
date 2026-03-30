@@ -74,6 +74,9 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: inserted_at
+                  type: TIMESTAMP
+              - column:
                   name: updated_at
                   type: TIMESTAMP
                   defaultValueComputed: CURRENT_TIMESTAMP

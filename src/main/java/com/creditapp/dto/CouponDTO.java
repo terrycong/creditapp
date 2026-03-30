@@ -23,6 +23,9 @@ public class CouponDTO {
     private LocalDateTime redeemedAt;
     private Long createdById;
     private String createdByUsername;
+    private LocalDateTime insertedAt;
+    private LocalDateTime createdAt;
+    private String createdByUsername;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
