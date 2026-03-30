@@ -91,6 +91,14 @@ public class LotteryTheme {
         updatedAt = LocalDateTime.now();
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
