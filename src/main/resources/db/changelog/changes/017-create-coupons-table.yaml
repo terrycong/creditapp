@@ -38,7 +38,7 @@ databaseChangeLog:
                   type: VARCHAR(50)
               - column:
                   name: expires_at
-                  type: TIMESTAMP
+                  type: DATETIME
                   constraints:
                     nullable: false
               - column:
