@@ -180,7 +180,7 @@ public class CouponController {
     }
 
     private CreateCouponRequest parseCouponLine(String line) {
-        // Format: id=2 enabled=yes comment= username=Y74GNZMKZ2 expires=0 timeout=1800 used=0
+        // Format: id=2 enabled=yes comment= username=Y74GNZMKZ2 timeout=1800 used=0
         CreateCouponRequest request = new CreateCouponRequest();
         
         String[] parts = line.split("\\s+");
@@ -202,8 +202,6 @@ public class CouponController {
                 }
             } else if (part.startsWith("username=")) {
                 request.setUsername(part.substring(9));
-            } else if (part.startsWith("expires=")) {
-                request.setExpires(Integer.parseInt(part.substring(8)));
             } else if (part.startsWith("timeout=")) {
                 request.setTimeoutSeconds(Integer.parseInt(part.substring(8)));
             }

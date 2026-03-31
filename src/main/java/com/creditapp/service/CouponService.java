@@ -31,7 +31,6 @@ public class CouponService {
                 .enabled(coupon.getEnabled())
                 .comment(coupon.getComment())
                 .username(coupon.getUsername())
-                .expiresAt(coupon.getExpiresAt())
                 .timeoutSeconds(coupon.getTimeoutSeconds())
                 .usedCount(coupon.getUsedCount())
                 .redeemed(coupon.getRedeemed())
@@ -56,13 +55,6 @@ public class CouponService {
         coupon.setTimeoutSeconds(request.getTimeoutSeconds() != null ? request.getTimeoutSeconds() : 600);
         coupon.setUsedCount(0);
         coupon.setInsertedAt(LocalDateTime.now());
-        
-        // If expires is 0, set to far future (year 2099)
-        if (request.getExpires() != null && request.getExpires() > 0) {
-            coupon.setExpiresAt(LocalDateTime.now().plusDays(request.getExpires()));
-        } else {
-            coupon.setExpiresAt(LocalDateTime.of(2099, 12, 31, 23, 59, 59));
-        }
         
         return coupon;
     }
@@ -125,13 +117,6 @@ public class CouponService {
         }
         if (request.getTimeoutSeconds() != null) {
             coupon.setTimeoutSeconds(request.getTimeoutSeconds());
-        }
-        if (request.getExpires() != null) {
-            if (request.getExpires() > 0) {
-                coupon.setExpiresAt(LocalDateTime.now().plusDays(request.getExpires()));
-            } else {
-                coupon.setExpiresAt(LocalDateTime.of(2099, 12, 31, 23, 59, 59));
-            }
         }
 
         coupon.setUpdatedAt(LocalDateTime.now());
@@ -200,9 +185,8 @@ public class CouponService {
         // Find first available coupon
         Coupon coupon = coupons.stream()
                 .filter(c -> c.getEnabled() && !c.getRedeemed())
-                .filter(c -> c.getExpiresAt().isAfter(LocalDateTime.now()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No available coupons with this code (all redeemed or expired)"));
+                .orElseThrow(() -> new IllegalArgumentException("No available coupons with this code (all redeemed)"));
 
         // Check if assigned to specific user
         if (coupon.getUsername() != null && !coupon.getUsername().isEmpty()) {

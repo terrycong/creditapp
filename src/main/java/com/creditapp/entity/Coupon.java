@@ -26,9 +26,6 @@ public class Coupon {
     private String username;
 
     @Column(nullable = false)
-    private LocalDateTime expiresAt;
-
-    @Column(nullable = false)
     private Integer timeoutSeconds;
 
     @Column(nullable = false)
@@ -104,14 +101,6 @@ public class Coupon {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(LocalDateTime expiresAt) {
-        this.expiresAt = expiresAt;
     }
 
     public Integer getTimeoutSeconds() {

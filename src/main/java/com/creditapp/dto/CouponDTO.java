@@ -14,7 +14,6 @@ public class CouponDTO {
     private Boolean enabled;
     private String comment;
     private String username;
-    private LocalDateTime expiresAt;
     private Integer timeoutSeconds;
     private Integer usedCount;
     private Boolean redeemed;

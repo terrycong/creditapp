@@ -25,9 +25,6 @@ public class CreateCouponRequest {
     @Size(max = 50, message = "Username must be less than 50 characters")
     private String username;
     
-    @Min(value = 0, message = "Expires must be 0 or positive")
-    private Integer expires;
-    
     @Min(value = 1, message = "Timeout must be at least 1 second")
     @Max(value = 86400, message = "Timeout must be less than 24 hours")
     private Integer timeoutSeconds;

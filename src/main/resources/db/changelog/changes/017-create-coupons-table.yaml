@@ -37,11 +37,6 @@ databaseChangeLog:
                   name: username
                   type: VARCHAR(50)
               - column:
-                  name: expires_at
-                  type: DATETIME
-                  constraints:
-                    nullable: false
-              - column:
                   name: timeout_seconds
                   type: INT
                   constraints:
