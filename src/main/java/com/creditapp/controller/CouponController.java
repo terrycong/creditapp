@@ -156,17 +156,6 @@ public class CouponController {
         return ResponseEntity.ok(ApiResponse.success(coupon));
     }
 
-    @GetMapping("/history")
-    @Operation(summary = "获取我的兑换历史 (CHILD 可用)")
-    public ResponseEntity<ApiResponse<List<CouponDTO>>> getRedemptionHistory(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        User user = userService.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "User not found"));
-        List<CouponDTO> history = couponService.getRedemptionHistoryByChildId(user.getId());
-        return ResponseEntity.ok(ApiResponse.success(history));
-    }
-
     private List<CreateCouponRequest> parseCouponFile(MultipartFile file) throws Exception {
         List<CreateCouponRequest> coupons = new ArrayList<>();
         

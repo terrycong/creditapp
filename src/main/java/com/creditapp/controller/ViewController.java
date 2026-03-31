@@ -1391,19 +1391,4 @@ public class ViewController {
         log.info("Found {} coupons for parent: {}", coupons.size(), username);
         return "coupons";
     }
-
-    // ========== Coupon Redeem (Child) ==========
-
-    @GetMapping("/child/coupon-redeem")
-    public String childCouponRedeem(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        log.info("=== CHILD COUPON REDEEM CONTROLLER INVOKED ===");
-        if (userDetails == null) {
-            return "redirect:/login";
-        }
-
-        String username = userDetails.getUsername();
-        model.addAttribute("username", username);
-
-        return "child/coupon-redeem";
-    }
 }
