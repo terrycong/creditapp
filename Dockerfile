@@ -2,7 +2,7 @@
 # Supports both GitHub Actions (with built JAR) and local build
 
 # Stage 1: Build with Maven (used when JAR doesn't exist)
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
