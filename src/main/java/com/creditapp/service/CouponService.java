@@ -220,4 +220,10 @@ public class CouponService {
             }
         }
     }
+
+    public List<CouponDTO> getRedemptionHistoryByChildId(Long childId) {
+        return couponRepository.findByRedeemedById(childId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
 }

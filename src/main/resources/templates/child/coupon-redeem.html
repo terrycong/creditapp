@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兑换上网券 - CreditApp</title>
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+            font-weight: bold;
+        }
+        
+        .btn-redeem {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-redeem:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .coupon-code-input {
+            font-size: 24px;
+            letter-spacing: 5px;
+            text-align: center;
+            font-family: monospace;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .coupon-code-input:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        
+        .history-item {
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .status-success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .alert {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-ticket-perforated"></i> 兑换上网券
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    输入上网券券码进行兑换。券码由家长提供，每个券码只能兑换一次。
+                </div>
+                
+                <!-- Redeem Form -->
+                <form id="redeemForm" class="mt-4">
+                    <div class="mb-3">
+                        <label for="couponCode" class="form-label fw-bold">上网券券码</label>
+                        <input type="text" 
+                               id="couponCode" 
+                               name="code"
+                               class="form-control coupon-code-input" 
+                               placeholder="请输入券码"
+                               required
+                               autocomplete="off">
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-redeem btn-lg">
+                            <i class="bi bi-gift-fill"></i> 立即兑换
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Result Display -->
+                <div id="resultArea" class="mt-4" style="display: none;">
+                    <div class="alert alert-success">
+                        <h5><i class="bi bi-check-circle-fill"></i> 兑换成功！</h5>
+                        <p class="mb-0" id="resultMessage"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Redemption History -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-clock-history"></i> 我的兑换记录
+                </h4>
+            </div>
+            <div class="card-body">
+                <div id="historyList">
+                    <p class="text-muted text-center">加载中...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Back Button -->
+        <div class="text-center mt-4">
+            <a href="/dashboard" class="btn btn-light">
+                <i class="bi bi-arrow-left"></i> 返回仪表板
+            </a>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+    
+    <script>
+        let redemptionHistory = [];
+        
+        // Load redemption history on page load
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/v1/coupons/history');
+                const data = await response.json();
+                
+                if (data.code === 'SUCCESS') {
+                    redemptionHistory = data.data || [];
+                    renderHistory();
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+        
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            if (redemptionHistory.length === 0) {
+                historyList.innerHTML = '<p class="text-muted text-center">暂无兑换记录</p>';
+                return;
+            }
+            
+            historyList.innerHTML = redemptionHistory.map(item => `
+                <div class="history-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="fs-5">${escapeHtml(item.code)}</strong>
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i> ${formatDate(item.redeemedAt)}
+                            </small>
+                        </div>
+                        <div>
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> 已兑换
+                            </span>
+                        </div>
+                    </div>
+                    ${item.comment ? `<p class="mt-2 mb-0 text-muted small">${escapeHtml(item.comment)}</p>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        // Handle form submission
+        document.getElementById('redeemForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const code = document.getElementById('couponCode').value.trim();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Disable button during submission
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 兑换中...';
+            
+            try {
+                const response = await fetch(`/api/v1/coupons/redeem?code=${encodeURIComponent(code)}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.code === 'SUCCESS') {
+                    // Show success message
+                    document.getElementById('resultMessage').textContent = 
+                        `券码 ${code} 兑换成功！上网券已添加到您的账户。`;
+                    document.getElementById('resultArea').style.display = 'block';
+                    
+                    // Clear input
+                    document.getElementById('couponCode').value = '';
+                    
+                    // Reload history
+                    await loadHistory();
+                    
+                    // Auto-hide success message after 5 seconds
+                    setTimeout(() => {
+                        document.getElementById('resultArea').style.display = 'none';
+                    }, 5000);
+                } else {
+                    // Show error
+                    showAlert(data.message || '兑换失败', 'error');
+                }
+            } catch (error) {
+                showAlert('兑换失败：' + error.message, 'error');
+            } finally {
+                // Restore button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const form = document.getElementById('redeemForm');
+            form.parentNode.insertBefore(alertDiv, form.nextSibling);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadHistory);
+    </script>
+</body>
+</html>
