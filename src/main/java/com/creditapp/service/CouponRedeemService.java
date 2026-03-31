@@ -51,15 +51,20 @@ public class CouponRedeemService implements RedeemableService {
     
     /**
      * 执行上网券兑换逻辑
-     * 1. 从券码池随机分配一个未兑换的券码
-     * 2. 标记为已兑换
-     * 3. 返回券码详情
+     * 1. 从奖励名称/描述解析期望时长（分钟）
+     * 2. 查找匹配时长的可用券码
+     * 3. 标记为已兑换
+     * 4. 返回券码详情
      */
     @Override
     @Transactional
     public RedeemResult redeem(Reward reward, Child child) {
         log.info(" redeeming coupon reward: rewardId={}, rewardName={}, childId={}, childName={}", 
                 reward.getId(), reward.getName(), child.getId(), child.getUsername());
+        
+        // 解析期望时长（分钟）
+        Integer expectedMinutes = parseExpectedMinutes(reward);
+        log.info("Expected duration: {} minutes", expectedMinutes);
         
         // 查找可用的券码（未兑换、已启用）
         List<Coupon> availableCoupons = couponRepository.findByEnabledTrueAndRedeemedFalse();
@@ -69,8 +74,28 @@ public class CouponRedeemService implements RedeemableService {
             return RedeemResult.failure("暂无可用上网券，请联系家长补充券码");
         }
         
-        // 随机选择一个券码
-        Coupon selectedCoupon = availableCoupons.get((int) (Math.random() * availableCoupons.size()));
+        // 如果解析出期望时长，过滤匹配的券码
+        List<Coupon> matchingCoupons;
+        if (expectedMinutes != null) {
+            int expectedSeconds = expectedMinutes * 60;
+            matchingCoupons = availableCoupons.stream()
+                    .filter(c -> c.getTimeoutSeconds() == expectedSeconds)
+                    .collect(java.util.stream.Collectors.toList());
+            
+            log.info("Found {} matching coupons (expected {}s)", matchingCoupons.size(), expectedSeconds);
+            
+            if (matchingCoupons.isEmpty()) {
+                log.warn("No coupons match the expected duration of {} minutes", expectedMinutes);
+                return RedeemResult.failure("暂无" + expectedMinutes + "分钟时长的上网券，请联系家长补充券码");
+            }
+        } else {
+            // 没有指定期望时长，使用所有可用券码
+            matchingCoupons = availableCoupons;
+            log.info("No specific duration required, using all {} available coupons", matchingCoupons.size());
+        }
+        
+        // 随机选择一个匹配的券码
+        Coupon selectedCoupon = matchingCoupons.get((int) (Math.random() * matchingCoupons.size()));
         log.info("Selected coupon: code={}, timeout={}s, username={}", 
                 selectedCoupon.getCode(), selectedCoupon.getTimeoutSeconds(), selectedCoupon.getUsername());
         
@@ -130,5 +155,66 @@ public class CouponRedeemService implements RedeemableService {
     @Override
     public int getOrder() {
         return 10;  // 上网券服务优先级较高
+    }
+    
+    /**
+     * 从奖励名称和描述中解析期望时长（分钟）
+     * 支持格式：
+     * - "2 小时" → 120 分钟
+     * - "30 分钟" → 30 分钟
+     * - "1 小时 30 分钟" → 90 分钟
+     * - "120 分钟" → 120 分钟
+     */
+    private Integer parseExpectedMinutes(Reward reward) {
+        if (reward == null) {
+            return null;
+        }
+        
+        String text = "";
+        
+        // 合并名称和描述
+        if (reward.getName() != null) {
+            text += reward.getName().toLowerCase();
+        }
+        if (reward.getDescription() != null) {
+            text += " " + reward.getDescription().toLowerCase();
+        }
+        
+        if (text.isEmpty()) {
+            return null;
+        }
+        
+        // 尝试匹配"X 小时 Y 分钟"格式
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d+)\\s*小\\s*时 [\\s]*(\\d+)?\\s*分\\s*钟？");
+        java.util.regex.Matcher matcher = pattern.matcher(text);
+        
+        if (matcher.find()) {
+            int hours = Integer.parseInt(matcher.group(1));
+            int minutes = 0;
+            if (matcher.group(2) != null) {
+                minutes = Integer.parseInt(matcher.group(2));
+            }
+            return hours * 60 + minutes;
+        }
+        
+        // 尝试匹配"X 小时"格式
+        pattern = java.util.regex.Pattern.compile("(\\d+)\\s*小\\s*时");
+        matcher = pattern.matcher(text);
+        
+        if (matcher.find()) {
+            int hours = Integer.parseInt(matcher.group(1));
+            return hours * 60;
+        }
+        
+        // 尝试匹配"X 分钟"格式
+        pattern = java.util.regex.Pattern.compile("(\\d+)\\s*分\\s*钟？");
+        matcher = pattern.matcher(text);
+        
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
+        }
+        
+        // 没有匹配到时长信息
+        return null;
     }
 }

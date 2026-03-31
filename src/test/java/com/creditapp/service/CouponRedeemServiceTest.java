@@ -188,4 +188,89 @@ class CouponRedeemServiceTest {
     void testGetOrder() {
         assertEquals(10, couponRedeemService.getOrder());
     }
+    
+    @Test
+    void testRedeem_MatchDuration() {
+        // 创建 2 小时奖励
+        Reward twoHourReward = new Reward();
+        twoHourReward.setId(1L);
+        twoHourReward.setName("2 小时上网券");
+        twoHourReward.setPointsRequired(100);
+        
+        // 准备券码：1 小时、2 小时、30 分钟
+        Coupon coupon1h = new Coupon();
+        coupon1h.setId(1L);
+        coupon1h.setCode("COUPON_1H");
+        coupon1h.setEnabled(true);
+        coupon1h.setRedeemed(false);
+        coupon1h.setTimeoutSeconds(3600); // 1 小时
+        
+        Coupon coupon2h = new Coupon();
+        coupon2h.setId(2L);
+        coupon2h.setCode("COUPON_2H");
+        coupon2h.setEnabled(true);
+        coupon2h.setRedeemed(false);
+        coupon2h.setTimeoutSeconds(7200); // 2 小时
+        
+        Coupon coupon30m = new Coupon();
+        coupon30m.setId(3L);
+        coupon30m.setCode("COUPON_30M");
+        coupon30m.setEnabled(true);
+        coupon30m.setRedeemed(false);
+        coupon30m.setTimeoutSeconds(1800); // 30 分钟
+        
+        List<Coupon> availableCoupons = Arrays.asList(coupon1h, coupon2h, coupon30m);
+        when(couponRepository.findByEnabledTrueAndRedeemedFalse()).thenReturn(availableCoupons);
+        when(couponRepository.save(any(Coupon.class))).thenAnswer(invocation -> {
+            Coupon saved = invocation.getArgument(0);
+            saved.setRedeemedAt(LocalDateTime.now());
+            return saved;
+        });
+        
+        // 执行兑换
+        RedeemResult result = couponRedeemService.redeem(twoHourReward, child);
+        
+        // 验证应该选择 2 小时的券码
+        assertNotNull(result);
+        assertTrue(result.isSuccess());
+        // 验证选择了正确的券码（timeout=7200 秒）
+        assertTrue(result.getNote().contains("COUPON_2H") || result.getNote().contains("2 小时"));
+    }
+    
+    @Test
+    void testRedeem_NoMatchingDuration() {
+        // 创建 3 小时奖励
+        Reward threeHourReward = new Reward();
+        threeHourReward.setId(1L);
+        threeHourReward.setName("3 小时上网券");
+        threeHourReward.setPointsRequired(150);
+        
+        // 只有 1 小时和 2 小时的券码
+        Coupon coupon1h = new Coupon();
+        coupon1h.setId(1L);
+        coupon1h.setCode("COUPON_1H");
+        coupon1h.setEnabled(true);
+        coupon1h.setRedeemed(false);
+        coupon1h.setTimeoutSeconds(3600);
+        
+        Coupon coupon2h = new Coupon();
+        coupon2h.setId(2L);
+        coupon2h.setCode("COUPON_2H");
+        coupon2h.setEnabled(true);
+        coupon2h.setRedeemed(false);
+        coupon2h.setTimeoutSeconds(7200);
+        
+        List<Coupon> availableCoupons = Arrays.asList(coupon1h, coupon2h);
+        when(couponRepository.findByEnabledTrueAndRedeemedFalse()).thenReturn(availableCoupons);
+        
+        // 执行兑换
+        RedeemResult result = couponRedeemService.redeem(threeHourReward, child);
+        
+        // 验证失败
+        assertNotNull(result);
+        assertFalse(result.isSuccess());
+        assertTrue(result.getErrorMessage().contains("180"));  // 3 小时=180 分钟
+        
+        verify(couponRepository, never()).save(any());
+    }
 }
