@@ -13,10 +13,21 @@ ghcr.io/terrycong/creditapp:<tag>
 
 ### 可用标签
 
-- `recover-branch` - recover-branch 分支的最新提交
-- `master` - master 分支的最新提交
-- `v1.0.0` - 语义化版本标签
-- `sha-abc123` - Git commit SHA
+Docker 镜像标签基于 `pom.xml` 中的版本号：
+
+- `1.0.0-SNAPSHOT` - recover-branch 分支（开发版本）
+- `1.0.0` - 正式版本标签（pom.xml version）
+- `branch-recover-branch` - 分支名称前缀
+- `sha-abc1234` - Git commit SHA
+
+**示例**：
+```
+pom.xml version: 1.0.0-SNAPSHOT
+→ Docker 镜像：ghcr.io/terrycong/creditapp:1.0.0-SNAPSHOT
+
+pom.xml version: 1.0.0
+→ Docker 镜像：ghcr.io/terrycong/creditapp:1.0.0
+```
 
 ## 触发条件
 
