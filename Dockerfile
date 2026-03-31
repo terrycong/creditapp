@@ -1,6 +1,20 @@
-# Single-stage Docker build for Credit App
-# Prerequisite: Build JAR locally first with: mvn clean package -DskipTests
+# Multi-stage Docker build for Credit App
+# Supports both GitHub Actions (with built JAR) and local build
 
+# Stage 1: Build with Maven (used when JAR doesn't exist)
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
+WORKDIR /app
+
+# Copy pom.xml and download dependencies
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copy source code and build
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+
+# Stage 2: Runtime with JRE
 FROM eclipse-temurin:21-jre-alpine
 
 # Install curl for health checks
@@ -12,8 +26,8 @@ RUN addgroup -S spring && adduser -S spring -G spring
 # Set working directory
 WORKDIR /app
 
-# Copy the pre-built JAR (build locally first!)
-COPY target/*.jar app.jar
+# Copy JAR from builder or from local build
+COPY --from=builder /app/target/*.jar app.jar 2>/dev/null || COPY target/*.jar app.jar
 
 # Change ownership to non-root user
 USER spring:spring
