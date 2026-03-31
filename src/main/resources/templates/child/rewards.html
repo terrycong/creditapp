@@ -164,7 +164,7 @@
             </div>
         </div>
 
-        <!-- Rewards Grid -->
+        <!-- Rewards Table -->
         <div class="row animate__animated animate__fadeInUp">
             <div class="col-12 mb-4">
                 <h5 class="section-title">
@@ -180,34 +180,59 @@
                 </div>
             </div>
 
-            <!-- Dynamic rewards list -->
-            <div th:if="${rewards != null and !rewards.isEmpty()}">
-                <div th:each="reward, iterStat : ${rewards}"
-                     class="col-md-4 mb-4 animate__animated animate__fadeInUp"
-                     th:style="'animation-delay: ' + ${iterStat.count * 100} + 'ms'">
-                    <div class="card reward-card" th:classappend="${!reward.active or reward.quantity == 0} ? 'disabled-card' : ''">
-                        <img th:src="${reward.imageUrl} ?: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'"
-                             class="card-img-top reward-image" th:alt="${reward.name}">
-                        <div class="card-body">
-                            <h5 class="card-title" th:text="${reward.name}">礼物名称</h5>
-                            <p class="card-text text-muted" th:text="${reward.description} ?: '暂无描述'">礼物描述</p>
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge points-badge" th:text="${reward.pointsRequired} + ' 积分'">积分</span>
-                                <span th:classappend="${reward.quantity == 999} ? 'badge quantity-badge' : 'badge bg-info'"
-                                      th:text="${reward.quantity == 999 ? '无限库存' : reward.quantity + ' 库存'}">
-                                    库存
-                                </span>
-                            </div>
-                            <div class="d-grid">
-                                <button class="btn btn-warning redeem-btn"
-                                        th:disabled="${!reward.active or reward.quantity == 0 or (childPoints != null and childPoints < reward.pointsRequired)}"
-                                        th:classappend="${childPoints == null or childPoints < reward.pointsRequired} ? '' : 'btn-success'"
-                                        th:attr="data-reward-id=${reward.id}, data-points-required=${reward.pointsRequired}"
-                                        th:id="'redeemBtn-' + ${reward.id}">
-                                    <i th:class="${childPoints == null or childPoints < reward.pointsRequired} ? 'bi bi-lock' : 'bi bi-gift'"></i>
-                                    <span th:text="${childPoints == null or childPoints < reward.pointsRequired} ? '积分不足' : '兑换礼物'">积分不足</span>
-                                </button>
-                            </div>
+            <!-- Dynamic rewards table -->
+            <div th:if="${rewards != null and !rewards.isEmpty()}" class="col-12">
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 60px;">图片</th>
+                                        <th>礼物名称</th>
+                                        <th>描述</th>
+                                        <th style="width: 120px;">所需积分</th>
+                                        <th style="width: 100px;">库存</th>
+                                        <th style="width: 150px;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="reward : ${rewards}" 
+                                        th:classappend="${!reward.active or reward.quantity == 0} ? 'table-secondary' : ''">
+                                        <td>
+                                            <img th:src="${reward.imageUrl} ?: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'"
+                                                 class="img-thumbnail" 
+                                                 th:alt="${reward.name}"
+                                                 style="width: 60px; height: 60px; object-fit: cover;">
+                                        </td>
+                                        <td>
+                                            <strong th:text="${reward.name}">礼物名称</strong>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted" th:text="${reward.description} ?: '暂无描述'">礼物描述</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge points-badge" th:text="${reward.pointsRequired} + ' 积分'">积分</span>
+                                        </td>
+                                        <td>
+                                            <span th:classappend="${reward.quantity == 999} ? 'badge quantity-badge' : 'badge bg-info'"
+                                                  th:text="${reward.quantity == 999 ? '∞' : reward.quantity}">
+                                                库存
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning redeem-btn"
+                                                    th:disabled="${!reward.active or reward.quantity == 0 or (childPoints != null and childPoints < reward.pointsRequired)}"
+                                                    th:classappend="${childPoints == null or childPoints < reward.pointsRequired} ? '' : 'btn-success'"
+                                                    th:attr="data-reward-id=${reward.id}, data-points-required=${reward.pointsRequired}"
+                                                    th:id="'redeemBtn-' + ${reward.id}">
+                                                <i th:class="${childPoints == null or childPoints < reward.pointsRequired} ? 'bi bi-lock' : 'bi bi-gift'"></i>
+                                                <span th:text="${childPoints == null or childPoints < reward.pointsRequired} ? '积分不足' : '兑换'">兑换</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
