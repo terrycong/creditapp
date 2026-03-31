@@ -7,3 +7,5 @@ databaseChangeLog:
       file: classpath:db/changelog/changes/003-force-seed-data.yaml
   - include:
       file: classpath:db/changelog/changes/004-clear-and-reseed.yaml
+  - include:
+      file: classpath:db/changelog/changes/017-create-coupons-table.sql
