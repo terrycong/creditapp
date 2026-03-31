@@ -11,6 +11,7 @@ import com.creditapp.entity.User;
 import com.creditapp.exception.BusinessException;
 import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.TaskCompletionRepository;
+import com.creditapp.service.CouponService;
 import com.creditapp.service.DashboardService;
 import com.creditapp.service.LotteryService;
 import com.creditapp.service.PenaltyService;
@@ -52,6 +53,7 @@ public class ViewController {
     private final TaskCompletionRepository taskCompletionRepository;
     private final LotteryService lotteryService;
     private final PenaltyService penaltyService;
+    private final CouponService couponService;
 
     @GetMapping("/")
     public String home() {
@@ -1381,7 +1383,12 @@ public class ViewController {
         User user = userService.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
 
+        // Load all coupons for this parent
+        List<CouponDTO> coupons = couponService.getCouponsByParentId(user.getId());
+        model.addAttribute("coupons", coupons);
         model.addAttribute("username", username);
+
+        log.info("Found {} coupons for parent: {}", coupons.size(), username);
         return "coupons";
     }
 }
