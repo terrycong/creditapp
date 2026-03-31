@@ -461,8 +461,8 @@
                 const response = await fetch('/api/v1/coupons');
                 const data = await response.json();
                 
-                if (data.success) {
-                    coupons = data.data;
+                if (data.code === 'SUCCESS') {
+                    coupons = data.data || [];
                     renderCoupons(coupons);
                     updateStats();
                 } else {
