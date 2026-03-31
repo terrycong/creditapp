@@ -63,7 +63,6 @@ class CouponServiceTest {
         coupon.setPoints(100);
         coupon.setEnabled(true);
         coupon.setUsername(null); // Available for anyone
-        coupon.setExpiresAt(LocalDateTime.now().plusDays(30));
         coupon.setTimeoutSeconds(600);
         coupon.setUsedCount(0);
         coupon.setRedeemed(false);
@@ -76,7 +75,6 @@ class CouponServiceTest {
         createRequest.setPoints(50);
         createRequest.setEnabled(true);
         createRequest.setTimeoutSeconds(300);
-        createRequest.setExpires(0); // Never expires
     }
 
     @Test
@@ -180,9 +178,8 @@ class CouponServiceTest {
         Coupon expiredCoupon = new Coupon();
         expiredCoupon.setId(1L);
         expiredCoupon.setCode("TEST_COUPON_001");
-        expiredCoupon.setEnabled(true);
+        expiredCoupon.setEnabled(false); // Disabled = expired
         expiredCoupon.setRedeemed(false);
-        expiredCoupon.setExpiresAt(LocalDateTime.now().minusDays(1)); // Expired
         
         List<Coupon> coupons = new ArrayList<>();
         coupons.add(expiredCoupon);
@@ -204,7 +201,6 @@ class CouponServiceTest {
         assignedCoupon.setEnabled(true);
         assignedCoupon.setRedeemed(false);
         assignedCoupon.setUsername("other_child@test.com");
-        assignedCoupon.setExpiresAt(LocalDateTime.now().plusDays(30));
         
         List<Coupon> coupons = new ArrayList<>();
         coupons.add(assignedCoupon);

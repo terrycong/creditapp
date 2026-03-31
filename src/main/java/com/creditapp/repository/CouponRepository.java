@@ -26,4 +26,8 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
                                @Param("username") String username);
     
     boolean existsByCode(String code);
+    
+    List<Coupon> findByRedeemedById(Long redeemedById);
+    
+    List<Coupon> findByEnabledTrueAndRedeemedFalse();
 }

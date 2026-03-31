@@ -6,6 +6,7 @@ import com.creditapp.entity.Coupon;
 import com.creditapp.entity.User;
 import com.creditapp.exception.ResourceNotFoundException;
 import com.creditapp.exception.BusinessException;
+import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.CouponRepository;
 import com.creditapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class CouponService {
 
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
+    private final ChildRepository childRepository;
 
     public CouponDTO toDTO(Coupon coupon) {
         return CouponDTO.builder()
@@ -199,7 +201,7 @@ public class CouponService {
 
         // Mark as redeemed
         coupon.setRedeemed(true);
-        coupon.setRedeemedBy(userRepository.findById(childId).orElse(null));
+        coupon.setRedeemedBy(childRepository.findById(childId).orElse(null));
         coupon.setRedeemedAt(LocalDateTime.now());
         coupon.setUsedCount(coupon.getUsedCount() + 1);
         coupon.setUpdatedAt(LocalDateTime.now());

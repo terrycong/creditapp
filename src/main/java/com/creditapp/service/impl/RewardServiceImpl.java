@@ -12,7 +12,9 @@ import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.PointHistoryRepository;
 import com.creditapp.repository.RewardRedemptionRepository;
 import com.creditapp.repository.RewardRepository;
+import com.creditapp.service.RedeemResult;
 import com.creditapp.service.RewardService;
+import com.creditapp.service.RedemptionStrategyManager;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,7 @@ public class RewardServiceImpl implements RewardService {
     private final RewardRedemptionRepository rewardRedemptionRepository;
     private final ChildRepository childRepository;
     private final PointHistoryRepository pointHistoryRepository;
+    private final RedemptionStrategyManager redemptionStrategyManager;
 
     @Override
     @Transactional
@@ -104,6 +107,13 @@ public class RewardServiceImpl implements RewardService {
             throw new BusinessException("INSUFFICIENT_POINTS", "积分不足");
         }
 
+        // Execute specific redeem logic via strategy pattern
+        RedeemResult redeemResult = redemptionStrategyManager.redeem(reward, child);
+        
+        if (!redeemResult.isSuccess()) {
+            throw new BusinessException("REDEEM_FAILED", redeemResult.getErrorMessage());
+        }
+
         // Deduct points
         child.setPoints(child.getPoints() - reward.getPointsRequired());
 
@@ -116,6 +126,8 @@ public class RewardServiceImpl implements RewardService {
         redemption.setChild(child);
         redemption.setRedeemedAt(LocalDateTime.now());
         redemption.setStatus(com.creditapp.entity.RedemptionStatus.REDEEMED);
+        // Set note from redeem result (e.g., coupon code details)
+        redemption.setNote(redeemResult.getNote());
 
         rewardRedemptionRepository.save(redemption);
         childRepository.save(child);
@@ -137,7 +149,8 @@ public class RewardServiceImpl implements RewardService {
         pointHistoryRepository.save(history);
         log.info("Recorded point history for reward redemption: childId={}, rewardId={}, points={}", childId, rewardId, reward.getPointsRequired());
 
-        log.info("Child {} redeemed reward {}, used {} points", childId, rewardId, reward.getPointsRequired());
+        log.info("Child {} redeemed reward {}, used {} points, note={}", 
+                childId, rewardId, reward.getPointsRequired(), redeemResult.getNote());
         return toRedemptionDTO(redemption);
     }
 

@@ -36,7 +36,7 @@ public class Coupon {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "redeemed_by")
-    private User redeemedBy;
+    private Child redeemedBy;
 
     @Column
     private LocalDateTime redeemedAt;
@@ -127,11 +127,11 @@ public class Coupon {
         this.redeemed = redeemed;
     }
 
-    public User getRedeemedBy() {
+    public Child getRedeemedBy() {
         return redeemedBy;
     }
 
-    public void setRedeemedBy(User redeemedBy) {
+    public void setRedeemedBy(Child redeemedBy) {
         this.redeemedBy = redeemedBy;
     }
 
