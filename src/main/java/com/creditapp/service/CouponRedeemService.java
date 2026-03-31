@@ -71,17 +71,8 @@ public class CouponRedeemService implements RedeemableService {
         
         // 随机选择一个券码
         Coupon selectedCoupon = availableCoupons.get((int) (Math.random() * availableCoupons.size()));
-        log.info("Selected coupon: code={}, timeout={}s", selectedCoupon.getCode(), selectedCoupon.getTimeoutSeconds());
-        
-        // 检查是否指定了用户名
-        if (selectedCoupon.getUsername() != null && !selectedCoupon.getUsername().isEmpty()) {
-            if (!selectedCoupon.getUsername().equals(child.getUsername())) {
-                log.warn("Coupon {} is assigned to {}, not {}", 
-                        selectedCoupon.getCode(), selectedCoupon.getUsername(), child.getUsername());
-                // 尝试找其他可用券码
-                return tryOtherCoupons(availableCoupons, child, selectedCoupon);
-            }
-        }
+        log.info("Selected coupon: code={}, timeout={}s, username={}", 
+                selectedCoupon.getCode(), selectedCoupon.getTimeoutSeconds(), selectedCoupon.getUsername());
         
         // 标记为已兑换
         selectedCoupon.setRedeemed(true);
@@ -101,29 +92,6 @@ public class CouponRedeemService implements RedeemableService {
     /**
      * 尝试其他券码
      */
-    private RedeemResult tryOtherCoupons(List<Coupon> coupons, Child child, Coupon excluded) {
-        for (Coupon coupon : coupons) {
-            if (coupon.getId().equals(excluded.getId())) {
-                continue;
-            }
-            
-            if (coupon.getUsername() == null || coupon.getUsername().isEmpty() ||
-                coupon.getUsername().equals(child.getUsername())) {
-                
-                coupon.setRedeemed(true);
-                coupon.setRedeemedBy(child);
-                coupon.setRedeemedAt(LocalDateTime.now());
-                coupon.setUsedCount(coupon.getUsedCount() + 1);
-                couponRepository.save(coupon);
-                
-                String note = buildCouponNote(coupon);
-                return RedeemResult.success(note, coupon);
-            }
-        }
-        
-        return RedeemResult.failure("没有适合您的上网券（券码已指定给其他用户）");
-    }
-    
     /**
      * 构建券码详情字符串
      */
@@ -131,6 +99,11 @@ public class CouponRedeemService implements RedeemableService {
         StringBuilder note = new StringBuilder();
         note.append("【上网券】\n");
         note.append("券码：").append(coupon.getCode()).append("\n");
+        
+        // 如果有 username，显示为登录账号
+        if (coupon.getUsername() != null && !coupon.getUsername().isEmpty()) {
+            note.append("登录账号：").append(coupon.getUsername()).append("\n");
+        }
         
         int hours = coupon.getTimeoutSeconds() / 3600;
         int minutes = (coupon.getTimeoutSeconds() % 3600) / 60;

@@ -139,27 +139,9 @@ class CouponRedeemServiceTest {
     }
     
     @Test
-    void testRedeem_AssignedToOtherUser() {
-        // 券码指定给其他用户
-        availableCoupon.setUsername("other_child");
-        List<Coupon> availableCoupons = Arrays.asList(availableCoupon);
-        when(couponRepository.findByEnabledTrueAndRedeemedFalse()).thenReturn(availableCoupons);
-        
-        // 执行兑换
-        RedeemResult result = couponRedeemService.redeem(couponReward, child);
-        
-        // 验证失败
-        assertNotNull(result);
-        assertFalse(result.isSuccess());
-        assertTrue(result.getErrorMessage().contains("没有适合您的上网券"));
-        
-        verify(couponRepository, never()).save(any());
-    }
-    
-    @Test
-    void testRedeem_AssignedToCurrentChild() {
-        // 券码指定给当前小孩
-        availableCoupon.setUsername("test_child");
+    void testRedeem_WithUsername() {
+        // 券码有登录账号（不影响兑换）
+        availableCoupon.setUsername("login_account_001");
         List<Coupon> availableCoupons = Arrays.asList(availableCoupon);
         when(couponRepository.findByEnabledTrueAndRedeemedFalse()).thenReturn(availableCoupons);
         when(couponRepository.save(any(Coupon.class))).thenReturn(availableCoupon);
@@ -171,13 +153,15 @@ class CouponRedeemServiceTest {
         assertNotNull(result);
         assertTrue(result.isSuccess());
         assertTrue(result.getNote().contains("COUPON_TEST_001"));
+        assertTrue(result.getNote().contains("登录账号：login_account_001"));
         
         verify(couponRepository).save(availableCoupon);
     }
     
     @Test
     void testRedeem_NoteFormat() {
-        // 设置券码备注
+        // 设置券码登录账号和备注
+        availableCoupon.setUsername("login_user_001");
         availableCoupon.setComment("测试备注");
         List<Coupon> availableCoupons = Arrays.asList(availableCoupon);
         when(couponRepository.findByEnabledTrueAndRedeemedFalse()).thenReturn(availableCoupons);
@@ -194,6 +178,7 @@ class CouponRedeemServiceTest {
         assertNotNull(result.getNote());
         assertTrue(result.getNote().contains("【上网券】"));
         assertTrue(result.getNote().contains("COUPON_TEST_001"));
+        assertTrue(result.getNote().contains("登录账号：login_user_001"));
         assertTrue(result.getNote().contains("小时"));
         assertTrue(result.getNote().contains("兑换时间："));
         assertTrue(result.getNote().contains("测试备注"));
