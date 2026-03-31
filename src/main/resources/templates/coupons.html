@@ -357,7 +357,6 @@
                         <th>积分</th>
                         <th>用户名</th>
                         <th>插入日期</th>
-                        <th>过期时间</th>
                         <th>有效期</th>
                         <th>使用次数</th>
                         <th>状态</th>
@@ -400,10 +399,6 @@
                 <div class="form-group">
                     <label for="username">Username (Optional)</label>
                     <input type="text" id="username" placeholder="Leave empty for anyone">
-                </div>
-                <div class="form-group">
-                    <label for="expires">Expires (days, 0=never)</label>
-                    <input type="number" id="expires" min="0" value="0">
                 </div>
                 <div class="form-group">
                     <label for="timeoutSeconds">Timeout (seconds)</label>
@@ -487,7 +482,6 @@
                     <td>${coupon.points}</td>
                     <td>${coupon.username || '-'}</td>
                     <td>${formatDate(coupon.insertedAt)}</td>
-                    <td>${formatDate(coupon.expiresAt)}</td>
                     <td>${coupon.timeoutSeconds}s</td>
                     <td>${coupon.usedCount}</td>
                     <td>
@@ -534,7 +528,6 @@
             document.getElementById('code').value = coupon.code;
             document.getElementById('points').value = coupon.points;
             document.getElementById('username').value = coupon.username || '';
-            document.getElementById('expires').value = '0';
             document.getElementById('timeoutSeconds').value = coupon.timeoutSeconds;
             document.getElementById('comment').value = coupon.comment || '';
             document.getElementById('enabled').value = coupon.enabled.toString();
@@ -572,7 +565,6 @@
                 code: document.getElementById('code').value,
                 points: parseInt(document.getElementById('points').value),
                 username: document.getElementById('username').value || null,
-                expires: parseInt(document.getElementById('expires').value),
                 timeoutSeconds: parseInt(document.getElementById('timeoutSeconds').value),
                 comment: document.getElementById('comment').value || null,
                 enabled: document.getElementById('enabled').value === 'true'
