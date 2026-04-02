@@ -24,25 +24,28 @@ INSERT INTO tasks (title, description, points, type, status, created_by_id, acti
 INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('倒垃圾', '把家里的垃圾倒掉', 5, 'DAILY_ONCE', 'APPROVED', 1, true, NOW());
 INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('整理客厅', '整理客厅的沙发和桌子', 10, 'REPEATABLE', 'APPROVED', 1, true, NOW());
 
--- Rewards
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('游戏时间', '30 分钟游戏时间', 999, 20, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('看电影', '选择一部喜欢的电影观看', 999, 40, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('去游乐场', '周末去游乐场玩半天', 999, 150, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('冰淇淋', '喜欢的冰淇淋一份', 999, 15, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('零花钱', '10 元零花钱', 50, 100, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('披萨大餐', '全家一起吃披萨', 999, 100, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('新玩具', '买一个喜欢的玩具', 999, 500, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('图书', '购买一本喜欢的图书', 999, 40, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('文具套装', '获得一套新文具', 999, 50, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('选择周末活动', '决定周末全家去哪里玩', 999, 80, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('晚睡 1 小时特权', '周末可以晚睡 1 小时', 999, 40, true);
-INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('免做家务一次', '可以免除一次家务任务', 999, 25, true);
+-- Rewards (Updated 2026-04-03)
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('10 分钟上网券', '上网 10 分钟', 999, 50, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('20 分钟上网券', '上网 20 分钟', 999, 100, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('30 分钟上网券', '上网 30 分钟', 999, 150, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('1 小时上网券', '上网 1 小时', 999, 200, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('雪糕一个', '雪糕一个', 999, 60, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('零食一份', '零食一份', 999, 60, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('饮料 1 支', '饮料 1 支', 999, 60, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('挖洞洞 1 次', '挖洞洞 1 次', 999, 120, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('住酒店一晚', '住酒店一晚', 999, 500, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('看电影一部', '看电影一部', 999, 100, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('和爸爸玩游戏半小时', '和爸爸玩游戏半小时', 999, 120, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('去指定的餐厅吃饭', '去指定的餐厅吃饭', 999, 50, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('下载故事 1 小时', '下载故事 1 小时', 999, 50, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('免除责罚一次', '免除责罚一次', 999, 200, true);
+INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('免除扣分一次', '免除扣分一次', 999, 100, true);
 
 -- Lottery Theme
 INSERT INTO lottery_themes (name, description, points_per_draw, type, active, created_by_id, created_at) VALUES ('幸运大转盘', '每日抽奖机会，试试你的运气！', 10, 'WEIGHTED_RANDOM', true, 1, NOW());
 
--- Lottery Prizes
-INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '冰淇淋', '喜欢的冰淇淋一份', 50, NULL, 999, 0, true, 4, NOW());
-INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '游戏时间', '30 分钟游戏时间', 30, NULL, 999, 0, true, 1, NOW());
-INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '零花钱', '10 元零花钱', 15, NULL, 50, 0, true, 5, NOW());
-INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '新玩具', '买一个喜欢的玩具', 5, NULL, 999, 0, true, 7, NOW());
+-- Lottery Prizes (Updated 2026-04-03)
+INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '10 分钟上网券', '上网 10 分钟', 30, NULL, 999, 0, true, 1, NOW());
+INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '雪糕一个', '雪糕一个', 25, NULL, 999, 0, true, 5, NOW());
+INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '看电影一部', '看电影一部', 20, NULL, 999, 0, true, 10, NOW());
+INSERT INTO lottery_prizes (lottery_theme_id, name, description, weight, probability, quantity, redeemed_count, active, reward_id, created_at) VALUES (1, '住酒店一晚', '住酒店一晚', 5, NULL, 999, 0, true, 9, NOW());
