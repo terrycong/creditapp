@@ -7,22 +7,10 @@ INSERT INTO users (username, password, role, points) VALUES ('parent', '$2a$10$B
 -- Child User
 INSERT INTO children (username, password, role, parent_id, points) VALUES ('child', '$2a$10$cV03s.di3hDvqXLPMiAvpucc7aLcLrWv5kHMFWIrOZXWdAtT4SsDi', 'CHILD', 1, 0);
 
--- Direct Tasks
+-- Marketplace Tasks (Updated 2026-04-03)
 INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('完成作业', '按时完成学校作业', 10, 'DAILY_ONCE', 'APPROVED', 1, true, NOW());
-INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('打扫房间', '整理自己的房间', 5, 'REPEATABLE', 'APPROVED', 1, true, NOW());
-INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('阅读书籍', '每天阅读 30 分钟课外书', 8, 'DAILY_ONCE', 'APPROVED', 1, true, NOW());
-INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('帮助做家务', '帮忙洗碗或扫地', 7, 'REPEATABLE', 'APPROVED', 1, true, NOW());
-
--- Task Jobs
-INSERT INTO task_jobs (task_id, child_id, status, snapshot_title, snapshot_description, snapshot_points, snapshot_task_type, assigned_at, created_at) VALUES (1, 1, 'ASSIGNED', '完成作业', '按时完成学校作业', 10, 'DAILY_ONCE', NOW(), NOW());
-INSERT INTO task_jobs (task_id, child_id, status, snapshot_title, snapshot_description, snapshot_points, snapshot_task_type, assigned_at, created_at) VALUES (2, 1, 'ASSIGNED', '打扫房间', '整理自己的房间', 5, 'REPEATABLE', NOW(), NOW());
-INSERT INTO task_jobs (task_id, child_id, status, snapshot_title, snapshot_description, snapshot_points, snapshot_task_type, assigned_at, created_at) VALUES (3, 1, 'ASSIGNED', '阅读书籍', '每天阅读 30 分钟课外书', 8, 'DAILY_ONCE', NOW(), NOW());
-INSERT INTO task_jobs (task_id, child_id, status, snapshot_title, snapshot_description, snapshot_points, snapshot_task_type, assigned_at, created_at) VALUES (4, 1, 'ASSIGNED', '帮助做家务', '帮忙洗碗或扫地', 7, 'REPEATABLE', NOW(), NOW());
-
--- Marketplace Tasks
-INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('洗碗一次', '帮忙洗晚餐的碗', 15, 'REPEATABLE', 'APPROVED', 1, true, NOW());
-INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('倒垃圾', '把家里的垃圾倒掉', 5, 'DAILY_ONCE', 'APPROVED', 1, true, NOW());
-INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('整理客厅', '整理客厅的沙发和桌子', 10, 'REPEATABLE', 'APPROVED', 1, true, NOW());
+INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('阅读书籍', '每天阅读 30 分钟课外书', 20, 'DAILY_ONCE', 'APPROVED', 1, true, NOW());
+INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) VALUES ('帮助做家务', '帮忙洗碗或扫地', 5, 'REPEATABLE', 'APPROVED', 1, true, NOW());
 
 -- Rewards (Updated 2026-04-03)
 INSERT INTO rewards (name, description, quantity, points_required, active) VALUES ('10 分钟上网券', '上网 10 分钟', 999, 50, true);
