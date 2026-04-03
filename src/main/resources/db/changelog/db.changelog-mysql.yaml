@@ -11,3 +11,5 @@ databaseChangeLog:
       file: classpath:db/changelog/changes/017-create-coupons-table.sql
   - include:
       file: classpath:db/changelog/changes/018-update-tasks-and-rewards.sql
+  - include:
+      file: classpath:db/changelog/changes/019-add-new-tasks.sql
