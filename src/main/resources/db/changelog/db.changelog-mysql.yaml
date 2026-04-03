@@ -17,3 +17,5 @@ databaseChangeLog:
       file: classpath:db/changelog/changes/020-add-penalty-rules.sql
   - include:
       file: classpath:db/changelog/changes/021-add-clothing-penalty-rules.sql
+  - include:
+      file: classpath:db/changelog/changes/022-add-new-rewards.sql
