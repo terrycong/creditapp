@@ -473,8 +473,11 @@
                     data.data.forEach(prize => {
                         html += '<li class="list-group-item d-flex justify-content-between align-items-center">';
                         html += '<div><strong>' + prize.name + '</strong>';
-                        html += '<br><small class="text-muted">权重：' + prize.weight + ', 库存：' + (prize.quantity === -1 ? '无限' : prize.quantity) + '</small></div>';
+                        html += '<br><small class="text-muted">权重：<span class="text-primary fw-bold">' + prize.weight + '</span>, 库存：' + (prize.quantity === -1 ? '无限' : prize.quantity) + '</small></div>';
+                        html += '<div class="btn-group btn-group-sm">';
+                        html += '<button class="btn btn-sm btn-outline-primary edit-prize-btn" data-prize-id="' + prize.id + '" data-prize-name="' + prize.name + '" data-prize-weight="' + prize.weight + '" data-prize-quantity="' + prize.quantity + '"><i class="bi bi-pencil"></i> 编辑</button>';
                         html += '<button class="btn btn-sm btn-danger delete-prize-btn" data-prize-id="' + prize.id + '"><i class="bi bi-trash"></i></button>';
+                        html += '</div>';
                         html += '</li>';
                     });
                     html += '</ul>';
@@ -485,6 +488,17 @@
                         btn.addEventListener('click', function() {
                             const prizeId = this.getAttribute('data-prize-id');
                             deletePrize(prizeId);
+                        });
+                    });
+                    
+                    // Add event listeners to edit buttons
+                    container.querySelectorAll('.edit-prize-btn').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            const prizeId = this.getAttribute('data-prize-id');
+                            const prizeName = this.getAttribute('data-prize-name');
+                            const prizeWeight = this.getAttribute('data-prize-weight');
+                            const prizeQuantity = this.getAttribute('data-prize-quantity');
+                            editPrize(prizeId, prizeName, prizeWeight, prizeQuantity);
                         });
                     });
                 } else {
@@ -564,6 +578,41 @@
                     }
                 });
             }
+        }
+        
+        function editPrize(prizeId, prizeName, prizeWeight, prizeQuantity) {
+            const newName = prompt('修改奖品名称:', prizeName);
+            if (newName === null) return;
+            
+            const newWeight = prompt('修改权重（越高越容易中）:', prizeWeight);
+            if (newWeight === null) return;
+            
+            const newQuantity = prompt('修改数量（-1 为无限）:', prizeQuantity);
+            if (newQuantity === null) return;
+            
+            const data = {
+                name: newName,
+                description: '',
+                weight: parseInt(newWeight),
+                quantity: parseInt(newQuantity),
+                imageUrl: ''
+            };
+            
+            fetch('/api/v1/lottery/prizes/' + prizeId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 'SUCCESS') {
+                    alert('奖品已更新！');
+                    loadPrizes(document.getElementById('prizeThemeId').value);
+                } else {
+                    alert('更新失败：' + data.message);
+                }
+            })
+            .catch(error => alert('更新失败：' + error));
         }
     </script>
 </body>
