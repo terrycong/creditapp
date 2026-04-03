@@ -72,10 +72,10 @@ VALUES ('爸爸抽查单词 10 个对 9 个', '爸爸抽查 10 个单词对 9 �
 
 -- Weekend tasks
 INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
-VALUES ('周末作业在星期五做完', '周末作业在星期五完成', 200, 'WEEKLY', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW());
+VALUES ('周末作业在星期五做完', '周末作业在星期五完成', 200, 'REPEATABLE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW());
 
 INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
-VALUES ('周末作业在星期六做完', '周末作业在星期六完成', 50, 'WEEKLY', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW());
+VALUES ('周末作业在星期六做完', '周末作业在星期六完成', 50, 'REPEATABLE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW());
 
 -- Exam and course tasks
 INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
