@@ -26,9 +26,9 @@ public class NotificationPageController {
     private final UserService userService;
 
     /**
-     * Parent notifications management page
+     * Parent family notifications management page
      */
-    @GetMapping("/parent/notifications")
+    @GetMapping("/parent/family-notifications")
     public String parentNotificationsPage(
             @AuthenticationPrincipal UserDetails userDetails,
             Model model) {
@@ -43,9 +43,9 @@ public class NotificationPageController {
     }
 
     /**
-     * Child notifications page with marquee
+     * Child family notifications page with marquee
      */
-    @GetMapping("/child/notifications")
+    @GetMapping("/child/family-notifications")
     public String childNotificationsPage() {
         return "child/notifications";
     }
