@@ -209,6 +209,14 @@
                                             <span th:unless="${theme.active}" class="badge bg-danger">已停用</span>
                                         </td>
                                         <td>
+                                            <button class="btn btn-sm btn-success edit-theme-btn" 
+                                                    th:data-theme-id="${theme.id}"
+                                                    th:data-theme-name="${theme.name}"
+                                                    th:data-theme-description="${theme.description}"
+                                                    th:data-theme-points="${theme.pointsPerDraw}"
+                                                    th:data-theme-type="${theme.type}">
+                                                <i class="bi bi-pencil"></i> 编辑
+                                            </button>
                                             <button class="btn btn-sm btn-primary manage-prizes-btn" 
                                                     th:data-theme-id="${theme.id}" 
                                                     th:data-theme-name="${theme.name}">
@@ -228,6 +236,48 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Theme Modal -->
+    <div class="modal fade" id="editThemeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil"></i> 编辑抽奖主题
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editThemeForm">
+                        <input type="hidden" id="editThemeId">
+                        <div class="mb-3">
+                            <label for="editThemeName" class="form-label">主题名称</label>
+                            <input type="text" class="form-control" id="editThemeName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editThemeDescription" class="form-label">主题描述</label>
+                            <textarea class="form-control" id="editThemeDescription" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPointsPerDraw" class="form-label">每次消耗积分</label>
+                            <input type="number" class="form-control" id="editPointsPerDraw" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editThemeType" class="form-label">抽奖类型</label>
+                            <select class="form-select" id="editThemeType">
+                                <option value="WEIGHTED_RANDOM">权重随机</option>
+                                <option value="FIXED_PROBABILITY">固定概率</option>
+                                <option value="GUARANTEED">必中模式</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> 保存修改
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -295,9 +345,60 @@
     
     <script>
         let prizeModal;
+        let editThemeModal;
         
         document.addEventListener('DOMContentLoaded', function() {
             prizeModal = new bootstrap.Modal(document.getElementById('prizeModal'));
+            editThemeModal = new bootstrap.Modal(document.getElementById('editThemeModal'));
+            
+            // Event delegation for edit theme buttons
+            document.querySelectorAll('.edit-theme-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const themeId = this.getAttribute('data-theme-id');
+                    const themeName = this.getAttribute('data-theme-name');
+                    const themeDescription = this.getAttribute('data-theme-description') || '';
+                    const themePoints = this.getAttribute('data-theme-points');
+                    const themeType = this.getAttribute('data-theme-type');
+                    
+                    document.getElementById('editThemeId').value = themeId;
+                    document.getElementById('editThemeName').value = themeName;
+                    document.getElementById('editThemeDescription').value = themeDescription;
+                    document.getElementById('editPointsPerDraw').value = themePoints;
+                    document.getElementById('editThemeType').value = themeType;
+                    
+                    editThemeModal.show();
+                });
+            });
+            
+            // Edit theme form submit
+            document.getElementById('editThemeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const data = {
+                    name: document.getElementById('editThemeName').value,
+                    description: document.getElementById('editThemeDescription').value,
+                    pointsPerDraw: parseInt(document.getElementById('editPointsPerDraw').value),
+                    type: document.getElementById('editThemeType').value
+                };
+                
+                const themeId = document.getElementById('editThemeId').value;
+                
+                fetch('/api/v1/lottery/themes/' + themeId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 'SUCCESS') {
+                        alert('主题已更新！');
+                        window.location.reload();
+                    } else {
+                        alert('更新失败：' + data.message);
+                    }
+                })
+                .catch(error => alert('更新失败：' + error));
+            });
             
             // Event delegation for manage prizes buttons
             document.querySelectorAll('.manage-prizes-btn').forEach(function(btn) {
