@@ -31,10 +31,20 @@ SET points = 5,
     updated_at = NOW()
 WHERE title = '帮助做家务';
 
--- Remove old tasks that are no longer needed
+-- Remove old task-related data in correct order (due to foreign keys)
+-- First delete from task_completions (child of task_jobs)
+DELETE FROM task_completions WHERE task_job_id IN (
+    SELECT id FROM task_jobs WHERE task_id IN (
+        SELECT id FROM tasks WHERE title NOT IN ('完成作业', '阅读书籍', '帮助做家务')
+    )
+);
+
+-- Then delete from task_jobs (child of tasks)
 DELETE FROM task_jobs WHERE task_id IN (
     SELECT id FROM tasks WHERE title NOT IN ('完成作业', '阅读书籍', '帮助做家务')
 );
+
+-- Finally delete old tasks
 DELETE FROM tasks WHERE title NOT IN ('完成作业', '阅读书籍', '帮助做家务');
 
 -- ============================================
