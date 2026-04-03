@@ -9,3 +9,5 @@ databaseChangeLog:
       file: classpath:db/changelog/changes/004-clear-and-reseed.yaml
   - include:
       file: classpath:db/changelog/changes/017-create-coupons-table.sql
+  - include:
+      file: classpath:db/changelog/changes/018-update-tasks-and-rewards.sql
