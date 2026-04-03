@@ -15,3 +15,5 @@ databaseChangeLog:
       file: classpath:db/changelog/changes/019-add-new-tasks.sql
   - include:
       file: classpath:db/changelog/changes/020-add-penalty-rules.sql
+  - include:
+      file: classpath:db/changelog/changes/021-add-clothing-penalty-rules.sql
