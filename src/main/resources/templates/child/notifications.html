@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的通知 - 家庭积分系统</title>
+    
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    
+    <style>
+        body { background-color: #f8f9fa; }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Marquee notification bar */
+        .marquee-container {
+            background: linear-gradient(90deg, #4F46E5, #7C3AED);
+            color: white;
+            padding: 10px 0;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .marquee-container.active {
+            display: block;
+        }
+        
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 15s linear infinite;
+            padding-left: 100%;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        
+        .marquee-item {
+            display: inline-block;
+            margin: 0 20px;
+        }
+        
+        .priority-URGENT { border-left: 4px solid #EF4444; background-color: #FEF2F2; }
+        .priority-HIGH { border-left: 4px solid #F59E0B; background-color: #FFFBEB; }
+        .priority-NORMAL { border-left: 4px solid #3B82F6; }
+        .priority-LOW { border-left: 4px solid #10B981; }
+        
+        .unread-badge {
+            background-color: #EF4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Marquee Notification Bar -->
+    <div id="marqueeContainer" class="marquee-container">
+        <div class="container">
+            <div class="marquee-content" id="marqueeContent">
+                <!-- Unread notifications will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard"><i class="bi bi-house-door"></i> 首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/child/notifications"><i class="bi bi-bell"></i> 我的通知</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login"><i class="bi bi-box-arrow-right"></i> 退出</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="section-title">
+                        <i class="bi bi-bell"></i> 我的通知
+                        <span id="unreadBadge" class="unread-badge" style="display: none;">0</span>
+                    </h1>
+                    <p class="text-muted">查看家长发布的通知消息</p>
+                </div>
+                <button id="markAllReadBtn" class="btn btn-success">
+                    <i class="bi bi-check-all"></i> 全部标记为已读
+                </button>
+            </div>
+        </div>
+
+        <!-- Notifications List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-list-task"></i> 通知列表</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="loadingSpinner" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        
+                        <div id="emptyState" class="text-center py-5" style="display: none;">
+                            <i class="bi bi-inbox" style="font-size: 4rem; color: #d1d5db;"></i>
+                            <h5 class="text-muted mt-3">暂时没有通知</h5>
+                        </div>
+                        
+                        <div id="notificationList" class="table-responsive" style="display: none;">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>优先级</th>
+                                        <th>标题</th>
+                                        <th>内容</th>
+                                        <th>发布时间</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="notificationTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Detail Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="notificationModalTitle">
+                        <i class="bi bi-bell"></i> 通知详情
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="notificationModalContent"></p>
+                    <p class="text-muted small">
+                        <i class="bi bi-clock"></i> 
+                        <span id="notificationModalTime"></span>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+    
+    <script>
+        let allNotifications = [];
+        let notificationModal;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            notificationModal = new bootstrap.Modal(document.getElementById('notificationModal'));
+            loadNotifications();
+            
+            document.getElementById('markAllReadBtn').addEventListener('click', function() {
+                fetch('/api/v1/notifications/read-all', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 'SUCCESS') {
+                        alert('所有通知已标记为已读');
+                        loadNotifications();
+                    }
+                });
+            });
+        });
+        
+        function loadNotifications() {
+            fetch('/api/v1/notifications/child')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                
+                if (data.data && data.data.length > 0) {
+                    allNotifications = data.data;
+                    renderNotifications(data.data);
+                    updateMarquee(data.data.filter(n => !n.read));
+                } else {
+                    document.getElementById('emptyState').style.display = 'block';
+                }
+            });
+        }
+        
+        function renderNotifications(notifications) {
+            const tbody = document.getElementById('notificationTableBody');
+            document.getElementById('notificationList').style.display = 'block';
+            
+            let html = '';
+            let unreadCount = 0;
+            
+            notifications.forEach(notif => {
+                if (!notif.read) unreadCount++;
+                
+                html += '<tr class="priority-' + notif.priority + '" style="' + (notif.read ? '' : 'font-weight: bold;') + '">';
+                html += '<td><span class="badge ' + getPriorityClass(notif.priority) + '">' + getPriorityText(notif.priority) + '</span></td>';
+                html += '<td>' + notif.title + (notif.read ? '' : ' <span class="badge bg-danger">新</span>') + '</td>';
+                html += '<td class="text-muted">' + notif.content.substring(0, 50) + '...</td>';
+                html += '<td>' + formatDate(notif.createdAt) + '</td>';
+                html += '<td>' + (notif.read ? '<span class="badge bg-secondary">已读</span>' : '<span class="badge bg-warning">未读</span>') + '</td>';
+                html += '<td><button class="btn btn-sm btn-primary" onclick="viewNotification(' + notif.id + ')"><i class="bi bi-eye"></i> 查看</button></td>';
+                html += '</tr>';
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Update unread badge
+            const badge = document.getElementById('unreadBadge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        function updateMarquee(unreadNotifications) {
+            const container = document.getElementById('marqueeContainer');
+            const content = document.getElementById('marqueeContent');
+            
+            if (unreadNotifications.length > 0) {
+                let html = '';
+                unreadNotifications.forEach(notif => {
+                    html += '<span class="marquee-item">';
+                    html += '<i class="bi bi-bell-fill"></i> ';
+                    html += '<strong>' + notif.title + '</strong>: ';
+                    html += notif.content;
+                    html += '</span>';
+                });
+                content.innerHTML = html;
+                container.classList.add('active');
+            } else {
+                container.classList.remove('active');
+            }
+        }
+        
+        function viewNotification(id) {
+            const notif = allNotifications.find(n => n.id === id);
+            if (!notif) return;
+            
+            document.getElementById('notificationModalTitle').innerHTML = '<i class="bi bi-bell"></i> ' + notif.title;
+            document.getElementById('notificationModalContent').textContent = notif.content;
+            document.getElementById('notificationModalTime').textContent = formatDate(notif.createdAt);
+            
+            notificationModal.show();
+            
+            // Mark as read if not already read
+            if (!notif.read) {
+                fetch('/api/v1/notifications/' + id + '/read', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 'SUCCESS') {
+                        loadNotifications();
+                    }
+                });
+            }
+        }
+        
+        function getPriorityClass(priority) {
+            const classes = {
+                'URGENT': 'bg-danger',
+                'HIGH': 'bg-warning',
+                'NORMAL': 'bg-info',
+                'LOW': 'bg-success'
+            };
+            return classes[priority] || 'bg-info';
+        }
+        
+        function getPriorityText(priority) {
+            const texts = {
+                'URGENT': '紧急',
+                'HIGH': '高',
+                'NORMAL': '普通',
+                'LOW': '低'
+            };
+            return texts[priority] || '普通';
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString('zh-CN', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+    </script>
+</body>
+</html>
