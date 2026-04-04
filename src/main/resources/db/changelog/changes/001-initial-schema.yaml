@@ -39,10 +39,9 @@ databaseChangeLog:
               - column:
                   name: parent_id
                   type: BIGINT
-        - addSqlConstraint:
-            constraintName: CHK_users_role
-            tableName: users
-            constraintSQL: role IN ('CHILD','PARENT')
+        - sql:
+            comment: Add check constraint for role enum
+            sql: ALTER TABLE users ADD CONSTRAINT CHK_users_role CHECK (role IN ('CHILD', 'PARENT'));
         - addForeignKeyConstraint:
             baseTableName: users
             baseColumnNames: parent_id
