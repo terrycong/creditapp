@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库备份管理 - 家庭积分系统</title>
+    
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+        }
+        
+        body { background-color: #f8f9fa; }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .stat-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .backup-table {
+            font-size: 0.9rem;
+        }
+        
+        .backup-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .btn-action {
+            padding: 4px 12px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-gift-fill"></i> 家庭积分系统
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard"><i class="bi bi-house-door"></i> 首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/backups"><i class="bi bi-database"></i> 备份管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login"><i class="bi bi-box-arrow-right"></i> 退出</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title">
+                    <i class="bi bi-database"></i> 数据库备份管理
+                </h1>
+                <p class="text-muted">手动触发备份、查看备份历史、下载和删除备份文件</p>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stat-card bg-primary text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-2">自动备份</h6>
+                            <h3 class="mb-0">每天 12:00</h3>
+                        </div>
+                        <i class="bi bi-clock-history" style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-white text-primary">定时任务</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="stat-card bg-success text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-2">备份总数</h6>
+                            <h3 class="mb-0" id="totalBackups">-</h3>
+                        </div>
+                        <i class="bi bi-file-earmark-zip" style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-white text-success">XML 压缩格式</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="stat-card bg-info text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-2">备份目录</h6>
+                            <h6 class="mb-0" id="backupDir">-</h6>
+                        </div>
+                        <i class="bi bi-folder" style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-white text-info">本地存储</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Backup -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-lightning-charge"></i> 手动备份</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle"></i> 
+                            点击下面的按钮立即创建数据库备份。备份将保存为 XML 压缩格式（.xml.gz）。
+                        </div>
+                        
+                        <button id="backupBtn" class="btn btn-primary btn-lg">
+                            <i class="bi bi-cloud-upload"></i> 立即创建备份
+                        </button>
+                        
+                        <div id="backupProgress" class="mt-3" style="display: none;">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 100%">
+                                    正在备份数据库...
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="backupResult" class="mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backup List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-list-task"></i> 备份历史</h5>
+                        <button class="btn btn-sm btn-light" onclick="loadBackups()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="loadingSpinner" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        
+                        <div id="emptyState" class="text-center py-5" style="display: none;">
+                            <i class="bi bi-inbox" style="font-size: 4rem; color: #d1d5db;"></i>
+                            <h5 class="text-muted mt-3">暂无备份记录</h5>
+                            <p class="text-muted">点击上面的"立即创建备份"按钮创建第一个备份</p>
+                        </div>
+                        
+                        <div id="backupListContainer" class="table-responsive" style="display: none;">
+                            <table class="table table-hover backup-table">
+                                <thead>
+                                    <tr>
+                                        <th width="40%">文件名</th>
+                                        <th width="20%">大小</th>
+                                        <th width="25%">创建时间</th>
+                                        <th width="15%" class="text-end">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="backupTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> 确认删除</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除备份文件 <strong id="deleteFilename"></strong> 吗？</p>
+                    <p class="text-danger"><i class="bi bi-exclamation-circle"></i> 此操作不可恢复！</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="bi bi-trash"></i> 删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+    
+    <script>
+        let deleteModal;
+        let currentDeleteFile = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            loadBackups();
+            
+            // Manual backup
+            document.getElementById('backupBtn').addEventListener('click', function() {
+                triggerBackup();
+            });
+            
+            // Delete confirmation
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                if (currentDeleteFile) {
+                    deleteBackup(currentDeleteFile);
+                }
+            });
+        });
+        
+        // Trigger manual backup
+        function triggerBackup() {
+            const btn = document.getElementById('backupBtn');
+            const progress = document.getElementById('backupProgress');
+            const result = document.getElementById('backupResult');
+            
+            btn.disabled = true;
+            progress.style.display = 'block';
+            result.style.display = 'none';
+            
+            fetch('/api/backup/trigger', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                progress.style.display = 'none';
+                result.style.display = 'block';
+                
+                if (data.success) {
+                    result.className = 'alert alert-success';
+                    result.innerHTML = '<i class="bi bi-check-circle"></i> ' + data.message + 
+                                      '<br><small>文件：' + data.backupPath + '</small>';
+                    loadBackups();
+                } else {
+                    result.className = 'alert alert-danger';
+                    result.innerHTML = '<i class="bi bi-x-circle"></i> ' + data.message;
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                progress.style.display = 'none';
+                result.style.display = 'block';
+                result.className = 'alert alert-danger';
+                result.innerHTML = '<i class="bi bi-x-circle"></i> 备份失败：' + error;
+            });
+        }
+        
+        // Load backup list
+        function loadBackups() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('backupListContainer').style.display = 'none';
+            
+            fetch('/api/backup/list')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                
+                if (data.success && data.backups && data.backups.length > 0) {
+                    document.getElementById('totalBackups').textContent = data.count;
+                    document.getElementById('backupDir').textContent = data.backupDir;
+                    renderBackupList(data.backups);
+                } else {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('totalBackups').textContent = '0';
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                console.error('Error loading backups:', error);
+            });
+        }
+        
+        // Render backup list
+        function renderBackupList(backups) {
+            const tbody = document.getElementById('backupTableBody');
+            document.getElementById('backupListContainer').style.display = 'block';
+            
+            let html = '';
+            backups.forEach(backup => {
+                html += '<tr>';
+                html += '<td><i class="bi bi-file-earmark-zip text-success"></i> ' + backup.filename + '</td>';
+                html += '<td>' + backup.sizeFormatted + '</td>';
+                html += '<td>' + backup.lastModifiedFormatted + '</td>';
+                html += '<td class="text-end">';
+                html += '<button class="btn btn-sm btn-success btn-action me-2" onclick="downloadBackup(\'' + 
+                        backup.filename + '\')">';
+                html += '<i class="bi bi-download"></i> 下载';
+                html += '</button>';
+                html += '<button class="btn btn-sm btn-danger btn-action" onclick="confirmDelete(\'' + 
+                        backup.filename + '\')">';
+                html += '<i class="bi bi-trash"></i> 删除';
+                html += '</button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        // Download backup
+        function downloadBackup(filename) {
+            window.location.href = '/api/backup/download?filename=' + encodeURIComponent(filename);
+        }
+        
+        // Confirm delete
+        function confirmDelete(filename) {
+            currentDeleteFile = filename;
+            document.getElementById('deleteFilename').textContent = filename;
+            deleteModal.show();
+        }
+        
+        // Delete backup
+        function deleteBackup(filename) {
+            fetch('/api/backup/delete?filename=' + encodeURIComponent(filename), { 
+                method: 'DELETE' 
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('备份已删除');
+                    deleteModal.hide();
+                    loadBackups();
+                } else {
+                    alert('删除失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('删除失败：' + error);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -199,6 +199,52 @@
         </div>
     </nav>
 
+    <!-- Marquee Notification Bar (Homepage Top) -->
+    <div id="marqueeContainer" class="marquee-container" style="display: none;">
+        <div class="container">
+            <div class="marquee-content" id="marqueeContent">
+                <!-- Unread notifications will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Marquee notification bar styles */
+        .marquee-container {
+            background: linear-gradient(90deg, #4F46E5, #7C3AED);
+            color: white;
+            padding: 12px 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(79, 70, 229, 0.3);
+        }
+        
+        .marquee-container.active {
+            display: block !important;
+        }
+        
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 20s linear infinite;
+            padding-left: 100%;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        
+        .marquee-item {
+            display: inline-block;
+            margin: 0 30px;
+            font-size: 1.05rem;
+        }
+        
+        .marquee-item i {
+            margin-right: 8px;
+        }
+    </style>
+
     <div class="container mt-4">
         <div class="row mb-4">
             <div class="col-12">
@@ -907,7 +953,51 @@
                     .catch(error => console.error('Error refreshing dashboard:', error));
             }, 30000);
             */
+            
+            // Load notifications and update marquee
+            loadNotificationsForMarquee();
         });
+        
+        // Load notifications for marquee display
+        function loadNotificationsForMarquee() {
+            fetch('/api/v1/notifications/child')
+            .then(response => response.json())
+            .then(data => {
+                if (data.data && data.data.length > 0) {
+                    const unreadNotifications = data.data.filter(n => !n.read);
+                    updateMarquee(unreadNotifications);
+                }
+            })
+            .catch(error => console.error('Error loading notifications:', error));
+        }
+        
+        // Update marquee with unread notifications
+        function updateMarquee(unreadNotifications) {
+            const container = document.getElementById('marqueeContainer');
+            const content = document.getElementById('marqueeContent');
+            
+            if (unreadNotifications && unreadNotifications.length > 0) {
+                let html = '';
+                unreadNotifications.forEach(notif => {
+                    html += '<span class="marquee-item">';
+                    html += '<i class="bi bi-bell-fill"></i> ';
+                    html += '<strong>' + escapeHtml(notif.title) + '</strong>: ';
+                    html += escapeHtml(notif.content);
+                    html += '</span>';
+                });
+                content.innerHTML = html;
+                container.classList.add('active');
+            } else {
+                container.classList.remove('active');
+            }
+        }
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
         /*]]>*/
     </script>
 </body>
