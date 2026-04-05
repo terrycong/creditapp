@@ -25,7 +25,7 @@ VALUES ('坚持背单词 50 天', '连续坚持背单词 50 天，坚持不懈',
 
 -- 一周学习 3 节宝典课，奖励 50 分
 INSERT INTO tasks (title, description, points, type, status, created_by_id, active, created_at) 
-VALUES ('一周学习 3 节宝典课', '每周完成 3 节宝典课程学习', 50, 'WEEKLY', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW());
+VALUES ('一周学习 3 节宝典课', '每周完成 3 节宝典课程学习', 50, 'REPEATABLE', 'APPROVED', (SELECT id FROM users WHERE username='parent'), true, NOW());
 
 -- ============================================
 -- 违规扣分规则（使用 penalty_rules 表）
