@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * This test simulates the actual browser behavior
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 public class AuthenticationIntegrationTest {
 

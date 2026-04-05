@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * which doesn't work well with @WithMockUser in unit tests.
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * CreateTaskRequest with validation that's designed for tasks, not rewards.
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
