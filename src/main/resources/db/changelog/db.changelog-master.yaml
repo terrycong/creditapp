@@ -24,3 +24,5 @@ databaseChangeLog:
       file: db/changelog/changes/022-add-new-rewards.sql
   - include:
       file: db/changelog/changes/023-create-notifications-tables.sql
+  - include:
+      file: db/changelog/changes/024-add-word-study-rewards.sql
