@@ -1,28 +1,28 @@
 databaseChangeLog:
   # Complete schema definition (includes all tables: users, children, tasks, task_jobs, task_completions, etc.)
   - include:
-      file: db/changelog/changes/001-initial-schema-mysql.yaml
+      file: changes/001-initial-schema-mysql.yaml
   
   # Initial seed data
   - include:
-      file: db/changelog/changes/002-initial-data.yaml
+      file: changes/002-initial-data.yaml
   
   # Incremental changes after the initial schema
   - include:
-      file: db/changelog/changes/017-create-coupons-table.sql
+      file: changes/017-create-coupons-table.sql
   - include:
-      file: db/changelog/changes/018-add-spring-autumn-trip-reward.yaml
+      file: changes/018-add-spring-autumn-trip-reward.yaml
   - include:
-      file: db/changelog/changes/018-update-tasks-and-rewards.sql
+      file: changes/018-update-tasks-and-rewards.sql
   - include:
-      file: db/changelog/changes/019-add-new-tasks.sql
+      file: changes/019-add-new-tasks.sql
   - include:
-      file: db/changelog/changes/020-add-penalty-rules.sql
+      file: changes/020-add-penalty-rules.sql
   - include:
-      file: db/changelog/changes/021-add-clothing-penalty-rules.sql
+      file: changes/021-add-clothing-penalty-rules.sql
   - include:
-      file: db/changelog/changes/022-add-new-rewards.sql
+      file: changes/022-add-new-rewards.sql
   - include:
-      file: db/changelog/changes/023-create-notifications-tables.sql
+      file: changes/023-create-notifications-tables.sql
   - include:
-      file: db/changelog/changes/024-add-word-study-rewards.sql
+      file: changes/024-add-word-study-rewards.sql
