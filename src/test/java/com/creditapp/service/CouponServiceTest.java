@@ -2,11 +2,13 @@ package com.creditapp.service;
 
 import com.creditapp.dto.CouponDTO;
 import com.creditapp.dto.CreateCouponRequest;
+import com.creditapp.entity.Child;
 import com.creditapp.entity.Coupon;
 import com.creditapp.entity.User;
 import com.creditapp.entity.UserRole;
 import com.creditapp.exception.BusinessException;
 import com.creditapp.exception.ResourceNotFoundException;
+import com.creditapp.repository.ChildRepository;
 import com.creditapp.repository.CouponRepository;
 import com.creditapp.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,11 +36,15 @@ class CouponServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private ChildRepository childRepository;
+
     @InjectMocks
     private CouponService couponService;
 
     private User parentUser;
     private User childUser;
+    private Child child;
     private Coupon coupon;
     private CreateCouponRequest createRequest;
 
@@ -55,6 +61,13 @@ class CouponServiceTest {
         childUser.setId(2L);
         childUser.setUsername("child@test.com");
         childUser.setRole(UserRole.CHILD);
+
+        // Setup child entity
+        child = new Child();
+        child.setId(2L);
+        child.setUsername("child@test.com");
+        child.setRole(UserRole.CHILD);
+        child.setParent(parentUser);
 
         // Setup coupon
         coupon = new Coupon();
@@ -141,7 +154,7 @@ class CouponServiceTest {
         coupons.add(coupon);
         
         when(couponRepository.findByCode("TEST_COUPON_001")).thenReturn(coupons);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(childUser));
+        when(childRepository.findById(2L)).thenReturn(Optional.of(child));
         when(couponRepository.save(any(Coupon.class))).thenReturn(coupon);
 
         // Act
