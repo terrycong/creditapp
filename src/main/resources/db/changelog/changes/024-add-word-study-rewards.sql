@@ -32,7 +32,7 @@ VALUES ('一周学习 3 节宝典课', '每周完成 3 节宝典课程学习', 5
 -- ============================================
 
 -- 不诚实使用平板，扣 50 分
-INSERT INTO penalty_rules (rule_name, description, points_deducted, severity, active, created_by_id, created_at) 
-VALUES ('不诚实使用平板', '不诚实使用平板电脑，包括偷玩游戏、浏览不良内容等', 50, 'HIGH', true, (SELECT id FROM users WHERE username='parent'), NOW());
+INSERT INTO penalty_rules (name, description, points, active, created_by_id, created_at) 
+VALUES ('不诚实使用平板', '不诚实使用平板电脑，包括偷玩游戏、浏览不良内容等', 50, true, (SELECT id FROM users WHERE username='parent'), NOW());
 
 -- Rollback comment: This is a one-time data migration.
