@@ -14,11 +14,6 @@ public class WebController {
         return "redirect:/login";
     }
 
-    @GetMapping("/register")
-    public String register() {
-        return "auth/register";
-    }
-
     @GetMapping("/parent/dashboard")
     public String parentDashboard() {
         return "parent/dashboard";
