@@ -1,18 +1,8 @@
--- ============================================================
--- creditapp Initial Data (DML)
--- ============================================================
--- 家庭积分管理系统 - 初始数据和配置
--- Generated: 2026-04-06
--- ============================================================
-
 --liquibase formatted sql
-
--- ============================================================
--- 1. 基础用户数据
--- ============================================================
 
 --changeset admin:data-01-users
 --comment: Insert parent and child users
+-- 1. 基础用户数据
 INSERT INTO users (username, password, role, points) 
 SELECT 'parent', '$2a$10$BFeE1qUtBvthU1sKwEc.tOIzuFOw1D635dDscfC2cv1HcP1/Co0Su', 'PARENT', 0
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'parent');

@@ -1,18 +1,8 @@
--- ============================================================
--- creditapp Database Schema (DDL)
--- ============================================================
--- 家庭积分管理系统 - 数据库结构定义
--- Generated: 2026-04-06
--- ============================================================
-
 --liquibase formatted sql
-
--- ============================================================
--- 1. 用户系统表
--- ============================================================
 
 --changeset admin:schema-01-users
 --comment: Create users and children tables
+-- 1. 用户系统表
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
