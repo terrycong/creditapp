@@ -1,5 +1,40 @@
+# Maven
 /target/*
 /.idea/**
 /.settings/**
 /.project
+
+# OpenClaw workspace (not part of project code)
+.openclaw/
+memory/
+AGENTS.md
+SOUL.md
+USER.md
+TOOLS.md
+IDENTITY.md
+HEARTBEAT.md
+BOOTSTRAP.md
+app.log
+cookies.txt
+coupon.txt
+reset-mysql.sql
+liquibase.properties
+
+# Submodules / symlinks (separate repos)
+creditapp/
+creditapp-android/
+iso20022-viewer/
+project-manager/
+qr-data-bridge/
+qr-data-bridge-sender/
+quant_analysis/
+charts/
+docker/
+helm/
+.github/
+.workflow/
+.sisyphus/
+
+# IDE
+*.iml
 
