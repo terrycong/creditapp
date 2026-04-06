@@ -14,11 +14,6 @@ public class WebController {
         return "redirect:/login";
     }
 
-    @GetMapping("/login")
-    public String login() {
-        return "auth/login";
-    }
-
     @GetMapping("/register")
     public String register() {
         return "auth/register";
