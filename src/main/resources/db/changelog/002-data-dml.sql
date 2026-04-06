@@ -220,5 +220,21 @@ SELECT id, true, true, true, true FROM users WHERE username = 'parent'
 AND NOT EXISTS (SELECT 1 FROM notification_preferences);
 
 -- ============================================================
--- Data initialization complete
+-- 15. 反馈系统示例数据（可选）
+-- ============================================================
+
+--changeset admin:data-15-feedback-samples
+--comment: Insert sample feedback data for testing
+INSERT INTO feedbacks (child_id, category, title, description, status, created_at)
+SELECT c.id, t.category, t.title, t.description, t.status, NOW()
+FROM children c, (
+    SELECT 'FUNCTIONAL' AS category, '希望能有更多奖励选择' AS title, '现在的奖励有点少，希望能增加一些新的奖励，比如更多的游戏时间或者新的玩具' AS description, 'PENDING' AS status UNION ALL
+    SELECT 'NON_FUNCTIONAL', '界面颜色可以更漂亮一些', '现在的界面颜色比较简单，希望能有更多颜色选择，让我可以自定义喜欢的主题' AS description, 'REVIEWED' AS status UNION ALL
+    SELECT 'OTHER', '谢谢爸爸妈妈', '这个系统很好用，让我可以清楚地看到自己的任务和奖励，谢谢爸爸妈妈的用心' AS description, 'ACCEPTED' AS status
+) t
+WHERE c.username = 'child'
+AND NOT EXISTS (SELECT 1 FROM feedbacks LIMIT 1);
+
+-- ============================================================
+-- Data initialization complete - 15 sections
 -- ============================================================

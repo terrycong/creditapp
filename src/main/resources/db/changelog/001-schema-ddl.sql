@@ -295,10 +295,36 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='User notification preferences';
 
 -- ============================================================
--- 8. 优惠券系统表
+-- 8. 反馈系统表
 -- ============================================================
 
---changeset admin:schema-08-coupons
+--changeset admin:schema-08-feedback
+--comment: Create feedback table for child suggestions
+CREATE TABLE IF NOT EXISTS feedbacks (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    child_id BIGINT NOT NULL,
+    category ENUM('FUNCTIONAL', 'NON_FUNCTIONAL', 'OTHER') NOT NULL COMMENT 'FUNCTIONAL=功能建议，NON_FUNCTIONAL=非功能建议，OTHER=其他',
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    status ENUM('PENDING', 'REVIEWED', 'ACCEPTED', 'REJECTED') DEFAULT 'PENDING' NOT NULL,
+    parent_response TEXT,
+    responded_by_id BIGINT,
+    responded_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT FK_feedbacks_child FOREIGN KEY (child_id) REFERENCES children(id) ON DELETE CASCADE,
+    CONSTRAINT FK_feedbacks_responder FOREIGN KEY (responded_by_id) REFERENCES users(id),
+    INDEX idx_feedbacks_child (child_id),
+    INDEX idx_feedbacks_status (status),
+    INDEX idx_feedbacks_category (category),
+    INDEX idx_feedbacks_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Child feedback and suggestions';
+
+-- ============================================================
+-- 9. 优惠券系统表
+-- ============================================================
+
+--changeset admin:schema-09-coupons
 --comment: Create coupons table
 CREATE TABLE IF NOT EXISTS coupons (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -321,5 +347,5 @@ CREATE TABLE IF NOT EXISTS coupons (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Discount coupons for rewards';
 
 -- ============================================================
--- Schema creation complete
+-- Schema creation complete - 9 sections, 18 tables
 -- ============================================================
