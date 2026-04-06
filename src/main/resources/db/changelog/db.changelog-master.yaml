@@ -1,48 +1,18 @@
 databaseChangeLog:
-  # Complete schema definition (includes all tables: users, children, tasks, task_jobs, task_completions, etc.)
+  # ============================================================
+  # creditapp Database Changelog Master File
+  # ============================================================
+  # 简化版 - 只包含两个主要文件
+  # 1. Schema DDL - 数据库结构定义
+  # 2. Data DML - 初始数据
+  # ============================================================
+  
+  # Schema DDL (数据库结构)
   - include:
-      file: changes/001-initial-schema-mysql.yaml
+      file: 001-schema-ddl.sql
       relativeToChangelogFile: true
   
-  # Initial seed data
+  # Data DML (初始数据)
   - include:
-      file: changes/002-initial-data.yaml
-      relativeToChangelogFile: true
-  
-  # Incremental changes after the initial schema
-  - include:
-      file: changes/017-create-coupons-table.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/018-add-spring-autumn-trip-reward.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changes/018-update-tasks-and-rewards.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/019-add-new-tasks.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/020-add-penalty-rules.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/021-add-clothing-penalty-rules.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/022-add-new-rewards.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/023-create-notifications-tables.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/024-add-word-study-rewards.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/025-add-video-with-dad-reward.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/026-add-story-download-reward.sql
-      relativeToChangelogFile: true
-  - include:
-      file: changes/027-add-math-exercise-task.sql
+      file: 002-data-dml.sql
       relativeToChangelogFile: true
