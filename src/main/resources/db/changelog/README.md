@@ -1,16 +1,13 @@
 # Changelog 重构说明
 
-## 📁 新结构
+## 📁 目录结构
 
 ```
 db/changelog/
-├── db.changelog-master.yaml    # 主配置文件（简化版）
+├── db.changelog-master.yaml    # 主配置文件
 ├── 001-schema-ddl.sql          # 数据库结构定义（所有 DDL）
 ├── 002-data-dml.sql            # 初始数据配置（所有 DML）
-└── changes/                    # 旧文件（已废弃，保留备份）
-    ├── 001-initial-schema-mysql.yaml
-    ├── 002-initial-data.yaml
-    └── ... (其他旧文件)
+└── README.md                   # 本文档
 ```
 
 ---
@@ -141,23 +138,21 @@ mvn liquibase:status
 
 ---
 
-## 🗑️ 旧文件处理
+## 📜 历史
 
-### 建议操作
+**重构前（已删除）：**
+```
+changes/
+├── 001-initial-schema-mysql.yaml
+├── 002-initial-data.yaml
+├── 003-force-seed-data.yaml
+├── ... (共 27 个文件)
+```
 
-1. **保留 `changes/` 目录** - 作为历史参考
-2. **不再修改旧文件** - 所有修改在新文件中进行
-3. **更新文档** - 说明新结构
-
-### 可选清理
-
-如果确认不再需要旧文件：
-
-```bash
-# 移动到备份目录
-mkdir -p src/main/resources/db/changelog/changes-deprecated
-mv src/main/resources/db/changelog/changes/*.yaml src/main/resources/db/changelog/changes-deprecated/
-mv src/main/resources/db/changelog/changes/*.sql src/main/resources/db/changelog/changes-deprecated/
+**重构后（当前）：**
+```
+001-schema-ddl.sql    # 所有表结构
+002-data-dml.sql      # 所有初始数据
 ```
 
 ---
