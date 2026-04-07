@@ -46,3 +46,6 @@ databaseChangeLog:
   - include:
       file: changes/027-add-math-exercise-task.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/028-add-documentary-tasks-and-cartoon-rewards.sql
+      relativeToChangelogFile: true
