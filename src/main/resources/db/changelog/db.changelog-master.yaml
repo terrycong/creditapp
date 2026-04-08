@@ -22,3 +22,6 @@ databaseChangeLog:
   - include:
       file: changes/029-add-exam-score-rewards.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/030-add-exam-score-tasks.sql
+      relativeToChangelogFile: true
