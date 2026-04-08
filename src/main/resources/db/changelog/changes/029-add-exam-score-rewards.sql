@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset admin:028-add-exam-score-rewards
+--changeset admin:029-add-exam-score-rewards
 --comment: Add exam score rewards (2 items): 90+ points = 50 credits, 95+ points = 200 credits
 
 -- ============================================
