@@ -20,8 +20,8 @@ databaseChangeLog:
       file: changes/028-add-documentary-tasks-and-cartoon-rewards.sql
       relativeToChangelogFile: true
   - include:
-      file: changes/029-add-exam-score-rewards.sql
+      file: changes/028-add-documentary-tasks-and-cartoon-rewards.sql
       relativeToChangelogFile: true
   - include:
-      file: changes/030-add-exam-score-tasks.sql
+      file: 030-add-exam-score-tasks.sql
       relativeToChangelogFile: true
