@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反馈管理 - 家庭积分系统</title>
+    <link href="/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .feedback-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4F46E5;
+        }
+        .stats-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        .status-pending { color: #d97706; }
+        .status-reviewed { color: #2563eb; }
+        .status-accepted { color: #059669; }
+        .status-rejected { color: #dc2626; }
+        .feedback-item {
+            border-left: 4px solid #6366f1;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .feedback-item:hover {
+            background-color: #f9fafb;
+            transform: translateX(5px);
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .bg-pending { background-color: #fef3c7; color: #92400e; }
+        .bg-reviewed { background-color: #dbeafe; color: #1e40af; }
+        .bg-accepted { background-color: #d1fae5; color: #065f46; }
+        .bg-rejected { background-color: #fee2e2; color: #991b1b; }
+        .category-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        .btn-reply {
+            background: linear-gradient(135deg, #4F46E5 0%, #6366f1 100%);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .filter-btn {
+            border-radius: 20px;
+            padding: 8px 20px;
+            margin: 0 5px;
+        }
+        .filter-btn.active {
+            background: #4F46E5;
+            color: white;
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #4F46E5 0%, #6366f1 100%);
+            color: white;
+        }
+        .response-section {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container feedback-container">
+        <!-- 返回按钮 -->
+        <div class="mb-3">
+            <a href="/parent/dashboard" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left"></i> 返回主页
+            </a>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="totalStats">-</div>
+                    <div class="stats-label">总反馈</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="stats-card">
+                    <div class="stats-number status-pending" id="pendingStats">-</div>
+                    <div class="stats-label">待处理</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="stats-card">
+                    <div class="stats-number status-accepted" id="acceptedStats">-</div>
+                    <div class="stats-label">已采纳</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="stats-card">
+                    <div class="stats-number status-rejected" id="rejectedStats">-</div>
+                    <div class="stats-label">已拒绝</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筛选按钮 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center">
+                    <span class="me-3"><i class="bi bi-funnel"></i> 筛选:</span>
+                    <button class="btn btn-outline-primary filter-btn active" data-filter="all">
+                        全部
+                    </button>
+                    <button class="btn btn-outline-warning filter-btn" data-filter="PENDING">
+                        待处理
+                    </button>
+                    <button class="btn btn-outline-info filter-btn" data-filter="REVIEWED">
+                        已查看
+                    </button>
+                    <button class="btn btn-outline-success filter-btn" data-filter="ACCEPTED">
+                        已采纳
+                    </button>
+                    <button class="btn btn-outline-danger filter-btn" data-filter="REJECTED">
+                        已拒绝
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 反馈列表 -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h4 class="mb-0"><i class="bi bi-chat-left-text"></i> 反馈列表</h4>
+            </div>
+            <div class="card-body p-0">
+                <div id="feedbackList">
+                    <!-- 反馈列表将通过 JavaScript 加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回复 Modal -->
+    <div class="modal fade" id="replyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-chat-quote"></i> 回复反馈</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="feedbackId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">反馈详情</label>
+                        <div class="p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h5 id="modalTitle"></h5>
+                                <span id="modalStatus" class="status-badge"></span>
+                            </div>
+                            <div class="mb-2">
+                                <span id="modalCategory" class="category-badge"></span>
+                                <small class="text-muted ms-2" id="modalDate"></small>
+                            </div>
+                            <p id="modalDescription" class="mb-0"></p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-reply"></i> 回复内容</label>
+                        <textarea class="form-control" id="parentResponse" rows="4" 
+                                  placeholder="写下你的回复..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-check-circle"></i> 更新状态</label>
+                        <select class="form-select" id="statusSelect">
+                            <option value="REVIEWED">已查看</option>
+                            <option value="ACCEPTED">已采纳</option>
+                            <option value="REJECTED">已拒绝</option>
+                        </select>
+                    </div>
+
+                    <div id="existingResponse" class="response-section" style="display: none;">
+                        <strong><i class="bi bi-info-circle"></i> 已有回复：</strong>
+                        <p id="existingResponseText" class="mb-0 mt-2"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitResponse()">
+                        <i class="bi bi-send"></i> 提交回复
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/webjars/axios/1.6.0/dist/axios.min.js"></script>
+    <script>
+        let allFeedbacks = [];
+        let currentFilter = 'all';
+
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                const response = await axios.get('/api/feedback/stats');
+                const stats = response.data;
+                document.getElementById('totalStats').textContent = stats.total;
+                document.getElementById('pendingStats').textContent = stats.pending;
+                document.getElementById('acceptedStats').textContent = stats.accepted;
+                document.getElementById('rejectedStats').textContent = stats.rejected;
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+
+        // 加载反馈列表
+        async function loadFeedbacks() {
+            try {
+                const response = await axios.get('/api/feedback', {
+                    params: { page: 0, size: 100 }
+                });
+                allFeedbacks = response.data.content || [];
+                renderFeedbacks();
+            } catch (error) {
+                console.error('加载反馈失败:', error);
+            }
+        }
+
+        // 渲染反馈列表
+        function renderFeedbacks() {
+            const container = document.getElementById('feedbackList');
+            let feedbacks = allFeedbacks;
+
+            // 应用筛选
+            if (currentFilter !== 'all') {
+                feedbacks = feedbacks.filter(f => f.status === currentFilter);
+            }
+
+            if (feedbacks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center p-5">
+                        <i class="bi bi-inbox" style="font-size: 4rem; opacity: 0.5;"></i>
+                        <h5 class="mt-3">暂无反馈</h5>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = feedbacks.map(f => `
+                <div class="p-3 border-bottom feedback-item" onclick="openReplyModal(${f.id})">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <h6 class="mb-0 me-2">${escapeHtml(f.title)}</h6>
+                                <span class="category-badge">${f.categoryDisplay || f.category}</span>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-person"></i> ${f.childName} · 
+                                <i class="bi bi-clock"></i> ${formatDate(f.createdAt)}
+                            </div>
+                            <p class="text-muted mb-0 mt-1">${escapeHtml(f.description).substring(0, 100)}${f.description.length > 100 ? '...' : ''}</p>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <span class="status-badge bg-${f.status.toLowerCase()}">${f.statusDisplay || f.status}</span>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button class="btn btn-sm btn-reply" onclick="event.stopPropagation(); openReplyModal(${f.id})">
+                                <i class="bi bi-reply"></i> 回复
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 打开回复 Modal
+        function openReplyModal(id) {
+            const feedback = allFeedbacks.find(f => f.id === id);
+            if (!feedback) return;
+
+            document.getElementById('feedbackId').value = id;
+            document.getElementById('modalTitle').textContent = feedback.title;
+            document.getElementById('modalCategory').textContent = feedback.categoryDisplay || feedback.category;
+            document.getElementById('modalDescription').textContent = feedback.description;
+            document.getElementById('modalDate').textContent = formatDate(feedback.createdAt);
+            document.getElementById('modalStatus').className = `status-badge bg-${feedback.status.toLowerCase()}`;
+            document.getElementById('modalStatus').textContent = feedback.statusDisplay || feedback.status;
+            
+            // 设置状态选择器
+            document.getElementById('statusSelect').value = feedback.status === 'PENDING' ? 'REVIEWED' : feedback.status;
+
+            // 显示已有回复
+            const existingResponseDiv = document.getElementById('existingResponse');
+            if (feedback.parentResponse) {
+                document.getElementById('existingResponseText').textContent = feedback.parentResponse;
+                existingResponseDiv.style.display = 'block';
+                document.getElementById('parentResponse').value = feedback.parentResponse;
+            } else {
+                existingResponseDiv.style.display = 'none';
+                document.getElementById('parentResponse').value = '';
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('replyModal'));
+            modal.show();
+        }
+
+        // 提交回复
+        async function submitResponse() {
+            const id = document.getElementById('feedbackId').value;
+            const responseData = {
+                parentResponse: document.getElementById('parentResponse').value,
+                status: document.getElementById('statusSelect').value
+            };
+
+            try {
+                await axios.put(`/api/feedback/${id}/response`, responseData);
+                bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
+                await Promise.all([loadStats(), loadFeedbacks()]);
+                alert('回复成功！');
+            } catch (error) {
+                alert('提交失败，请重试');
+                console.error('提交失败:', error);
+            }
+        }
+
+        // 筛选按钮事件
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                renderFeedbacks();
+            });
+        });
+
+        // 工具函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 页面加载
+        loadStats();
+        loadFeedbacks();
+    </script>
+</body>
+</html>

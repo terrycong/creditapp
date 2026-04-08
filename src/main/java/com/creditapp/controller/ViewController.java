@@ -55,11 +55,6 @@ public class ViewController {
     private final PenaltyService penaltyService;
     private final CouponService couponService;
 
-    @GetMapping("/")
-    public String home() {
-        return "redirect:/login";
-    }
-
     @GetMapping("/login")
     public String login() {
         return "login";

@@ -147,6 +147,11 @@
                             <i class="bi bi-people"></i> 小孩管理
                         </a>
                     </li>
+                    <li th:if="${role == 'PARENT'}" class="nav-item">
+                        <a class="nav-link" href="/parent/feedback">
+                            <i class="bi bi-chat-quote"></i> 反馈管理
+                        </a>
+                    </li>
                     <li th:if="${role == 'CHILD'}" class="nav-item">
                         <a class="nav-link" href="/child/tasks">
                             <i class="bi bi-list-check"></i> 我的任务
@@ -170,6 +175,11 @@
                     <li th:if="${role == 'CHILD'}" class="nav-item">
                         <a class="nav-link" href="/child/lottery">
                             <i class="bi bi-trophy"></i> 幸运抽奖
+                        </a>
+                    </li>
+                    <li th:if="${role == 'CHILD'}" class="nav-item">
+                        <a class="nav-link" href="/child/feedback">
+                            <i class="bi bi-chat-dots"></i> 我的反馈
                         </a>
                     </li>
                     <li th:if="${role == 'CHILD'}" class="nav-item">
