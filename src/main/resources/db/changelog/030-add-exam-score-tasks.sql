@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset admin:030-add-exam-score-tasks
+--changeset admin:030-add-exam-score-tasks-20260409
 --comment: Add exam score tasks: 90+ points = 50 credits, 95+ points = 200 credits
 
 -- ============================================
