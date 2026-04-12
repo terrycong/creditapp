@@ -1386,4 +1386,30 @@ public class ViewController {
         log.info("Found {} coupons for parent: {}", coupons.size(), username);
         return "coupons";
     }
+
+    // ========== Feedback Management ==========
+
+    @GetMapping("/parent/feedback")
+    public String parentFeedback(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        model.addAttribute("username", username);
+
+        return "feedback/parent-feedback";
+    }
+
+    @GetMapping("/child/feedback")
+    public String childFeedback(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        String username = userDetails.getUsername();
+        model.addAttribute("username", username);
+
+        return "feedback/child-feedback";
+    }
 }
