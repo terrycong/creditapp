@@ -77,15 +77,13 @@ Controller (HTTP requests) → Service (business logic) → Repository (data acc
 
 **Lottery System:** `LotteryTheme`, `LotteryPrize`, `LotteryDraw`, `LotteryDrawResult`
 
-**Point System:** `PointWallet` (FIFO batches with expiration), `PointHistory`
+**Point System:** `PointHistory`
 
 **Other:** `PenaltyRule`, `PenaltyRecord`, `Coupon`, `Notification`
 
 ### Key Design Patterns
 
 **Task-TaskJob Separation:** Task is purely a template; TaskJob manages child associations. This enables the marketplace feature where multiple children can pick the same task template.
-
-**FIFO Point Expiration:** Points are tracked in batches (PointWallet). Oldest batches are spent first. Expired after 180 days via scheduled job at 2 AM daily.
 
 **Task Types:**
 - `ONE_TIME` - Complete once, not repeatable
@@ -192,14 +190,7 @@ OpenAPI/Swagger UI available at `/swagger-ui.html` (springdoc-openapi 2.5.0)
 Parent creates task → Task saved (no child assignment)
 Child picks task → TaskJob created (childId, assignedAt)
 Child completes → TaskCompletion created (PENDING)
-Parent approves → Points added to child wallet
-```
-
-### Point Expiration Flow
-```
-Child earns points → PointWallet batch created (earnedDate, expirationDate=+180d)
-Child spends points → FIFO deduction from oldest batches
-Daily 2 AM job → Mark expired batches (remainingPoints=0, expired=true)
+Parent approves → Points added to child points balance
 ```
 
 ## Configuration Files
@@ -256,18 +247,13 @@ Daily 2 AM job → Mark expired batches (remainingPoints=0, expired=true)
 - All child associations go through TaskJob entity
 - Query pattern: `JOIN TaskJob tj ON t.id = tj.task.id WHERE tj.child.id = :childId`
 
-**Point Spending (FIFO):**
-- Always spend from oldest PointWallet batch first
-- Track remainingPoints per batch
-- Mark batch as fullySpent when exhausted
-
 ## Feature Reference
 
 **Implemented Systems:**
 - Task Management (with marketplace, draft approval)
 - Reward System (redemption with inventory)
 - Lottery (weighted random algorithm, multiple themes)
-- Point Wallet (FIFO batches, 180-day expiration)
+- Point System (tracked via PointHistory)
 - Penalty System (predefined rules, execution records)
 - Coupon Management (batch import, individual redemption)
 - Notification System (user preferences)
