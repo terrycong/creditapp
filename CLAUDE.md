@@ -210,3 +210,64 @@ Daily 2 AM job → Mark expired batches (remainingPoints=0, expired=true)
 - `application-prod.properties` - Production profile (MySQL)
 - `liquibase.properties` - Manual migration credentials
 - `docker-compose.yml` - Local container orchestration
+
+## Code Conventions
+
+**Import Order:**
+1. Java standard library (java.*, javax.*)
+2. Third-party (org.springframework.*, lombok.*)
+3. Project internal (com.creditapp.*)
+
+**Lombok Usage:**
+- `@Data` - Simple DTOs only
+- `@Builder` - Complex objects with `@AllArgsConstructor` + `@NoArgsConstructor`
+- `@RequiredArgsConstructor` - Service classes (constructor injection)
+- **Never** use `@Data` on JPA entities (manually implement equals/hashCode)
+
+**Entity Naming:**
+- Entities: Singular (Task, User, Reward)
+- Tables: Plural (tasks, users, rewards)
+- Use `@Column` for explicit column names and constraints
+
+**Test Naming:**
+- Test class: `{ClassName}Test`
+- Test method: `{methodName}_{Should}_{expectedResult}`
+
+**Logging (SLF4J):**
+- `ERROR` - System errors, exception stacks
+- `WARN` - Recoverable exceptions, business rule violations
+- `INFO` - Important business operations
+- `DEBUG` - Method parameters, intermediate state
+- Use placeholders: `log.info("User {} logged in", username)`
+
+## Common Pitfalls
+
+**N+1 Query Problem:**
+- Use `JOIN FETCH` in queries or `@EntityGraph`
+- Example: `SELECT t FROM Task t JOIN FETCH t.createdBy`
+
+**Transaction Management:**
+- Service layer must use `@Transactional`
+- Read-only queries: `@Transactional(readOnly = true)`
+- Multi-table operations require transactions
+
+**Task-TaskJob Relationship:**
+- Task has NO assignedChild field
+- All child associations go through TaskJob entity
+- Query pattern: `JOIN TaskJob tj ON t.id = tj.task.id WHERE tj.child.id = :childId`
+
+**Point Spending (FIFO):**
+- Always spend from oldest PointWallet batch first
+- Track remainingPoints per batch
+- Mark batch as fullySpent when exhausted
+
+## Feature Reference
+
+**Implemented Systems:**
+- Task Management (with marketplace, draft approval)
+- Reward System (redemption with inventory)
+- Lottery (weighted random algorithm, multiple themes)
+- Point Wallet (FIFO batches, 180-day expiration)
+- Penalty System (predefined rules, execution records)
+- Coupon Management (batch import, individual redemption)
+- Notification System (user preferences)
