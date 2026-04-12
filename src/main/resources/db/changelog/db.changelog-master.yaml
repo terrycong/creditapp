@@ -22,3 +22,15 @@ databaseChangeLog:
   - include:
       file: 030-add-exam-score-tasks.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/031-add-sitting-reward.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/032-remove-sitting-reward.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/033-add-sitting-task.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/034-add-computer-learning-task.sql
+      relativeToChangelogFile: true
