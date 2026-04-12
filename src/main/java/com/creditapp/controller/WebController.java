@@ -1,6 +1,9 @@
 package com.creditapp.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
@@ -30,7 +33,11 @@ public class WebController {
      * 孩子反馈页面
      */
     @GetMapping("/child/feedback")
-    public String childFeedback() {
+    public String childFeedback(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("username", userDetails.getUsername());
         return "feedback/child-feedback";
     }
 
@@ -38,7 +45,11 @@ public class WebController {
      * 家长反馈管理页面
      */
     @GetMapping("/parent/feedback")
-    public String parentFeedback() {
+    public String parentFeedback(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("username", userDetails.getUsername());
         return "feedback/parent-feedback";
     }
 }
