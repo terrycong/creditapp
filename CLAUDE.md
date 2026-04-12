@@ -1,0 +1,212 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Family Points Task Management System built with Spring Boot 3.3.0 + Maven + JPA + Thymeleaf + Spring Security. Kids complete tasks to earn points and redeem rewards.
+
+**Tech Stack:**
+- Java 21, Spring Boot 3.3.0, Maven
+- MySQL 8.0 (production) / H2 (development)
+- Liquibase 4.27.0 for database migrations
+- Thymeleaf + Bootstrap 5 + Animate.css for frontend
+- Cucumber + JUnit 5 + Mockito for testing
+
+## Build & Development Commands
+
+```bash
+# Compile
+mvn clean compile
+
+# Package (skip tests)
+mvn clean package -DskipTests
+
+# Run application
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Run all tests
+mvn test
+
+# Run single test class
+mvn test -Dtest=TaskServiceTest
+
+# Run single test method
+mvn test -Dtest=TaskServiceTest#testCreateTask
+
+# Run Selenium UI tests
+mvn clean install -Pselenium-tests
+
+# Generate JaCoCo coverage report
+mvn clean test
+
+# Database migrations
+mvn liquibase:validate   # Validate changelog
+mvn liquibase:status     # Check pending changes
+mvn liquibase:update     # Apply migrations
+mvn liquibase:clearCheckSums  # Clear checksums (dev only)
+```
+
+## Architecture
+
+### Layered Architecture
+```
+Controller (HTTP requests) → Service (business logic) → Repository (data access) → Entity (database)
+```
+
+### Package Structure
+- `controller` - REST APIs and Thymeleaf page controllers
+- `service` / `service.impl` - Business logic
+- `repository` - JPA repositories
+- `entity` - JPA entities
+- `dto` - Data transfer objects
+- `config` - Spring configuration
+- `security` - Spring Security config, CustomUserDetailsService
+- `exception` - Custom exceptions and global handler
+
+### Core Entities
+
+**User System:** `User`, `Child` (extends User with parent relationship)
+
+**Task System:**
+- `Task` - Task template (title, points, type)
+- `TaskJob` - Task-child association (which child picked/assigned)
+- `TaskCompletion` - Completion records with approval status
+
+**Reward System:** `Reward`, `RewardRedemption`
+
+**Lottery System:** `LotteryTheme`, `LotteryPrize`, `LotteryDraw`, `LotteryDrawResult`
+
+**Point System:** `PointWallet` (FIFO batches with expiration), `PointHistory`
+
+**Other:** `PenaltyRule`, `PenaltyRecord`, `Coupon`, `Notification`
+
+### Key Design Patterns
+
+**Task-TaskJob Separation:** Task is purely a template; TaskJob manages child associations. This enables the marketplace feature where multiple children can pick the same task template.
+
+**FIFO Point Expiration:** Points are tracked in batches (PointWallet). Oldest batches are spent first. Expired after 180 days via scheduled job at 2 AM daily.
+
+**Task Types:**
+- `ONE_TIME` - Complete once, not repeatable
+- `REPEATABLE` - Can be completed multiple times
+- `DAILY_ONCE` - Once per child per day (enforced by existsCompletionToday query)
+
+## Database
+
+### Liquibase Setup
+- Master file: `src/main/resources/db/changelog/db.changelog-master.yaml`
+- Main schema: `001-schema-ddl.sql` (all DDL)
+- Initial data: `002-data-dml.sql` (all DML with INSERT ... SELECT ... WHERE NOT EXISTS)
+- Incremental changes: `changes/0XX-*.sql`
+
+### Connection Configuration
+- Dev (H2): `application-dev.properties`
+- Prod (MySQL): `application-prod.properties` or environment variables
+- Manual migrations use `liquibase.properties`
+
+### Production Database
+```
+Host: 192.168.9.113:3306
+Database: creditapp
+User: root
+```
+
+## Security
+
+**Roles:** `ROLE_PARENT` (full management), `ROLE_CHILD` (limited operations)
+
+**Authentication:** Form-based login with BCrypt password encoding
+
+**Authorization:** Method-level `@PreAuthorize("hasRole('PARENT')")` annotations
+
+**CSRF:** Disabled by default, enabled in production profile
+
+## Frontend
+
+**Template Structure:**
+- `parent/` - Parent pages (dashboard, tasks, rewards, penalties, lottery, coupons)
+- `child/` - Child pages (tasks, marketplace, lottery, rewards)
+- `common/` - Shared fragments
+- `layout/` - Main layout template
+
+**UI Libraries:** Bootstrap 5, Bootstrap Icons, Animate.css, Chart.js
+
+**Thymeleaf Patterns:**
+```html
+<th:each="task : ${tasks}">
+<th:if="${task.active}">
+<th:href="@{/tasks/{id}(id=${task.id})}">
+<th:replace="~{common/header :: header}">
+```
+
+## Testing
+
+**Test Frameworks:** JUnit 5, Mockito, Cucumber BDD, Selenium WebDriver
+
+**Test Locations:**
+- Unit/Integration: `src/test/java/com/creditapp/...`
+- BDD Features: `src/test/resources/features/`
+- Selenium: `src/test/java/com/creditapp/selenium/`
+
+**Test Properties:** `src/test/resources/application-test.properties`
+
+## Docker & Deployment
+
+**Docker Compose:** `docker-compose.yml` includes creditapp, mysql, phpmyadmin, redis, nginx
+
+**Environment Variables:**
+```
+SPRING_PROFILES_ACTIVE=prod
+SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/creditapp
+TZ=Asia/Shanghai
+```
+
+**CI/CD:**
+- GitHub Actions: `.github/workflows/docker-build.yml` (daily sync from Gitee)
+- CodeWave Pipeline: `.workflow/master-pipeline.yml` (master branch build)
+
+## API Documentation
+
+OpenAPI/Swagger UI available at `/swagger-ui.html` (springdoc-openapi 2.5.0)
+
+## Common Workflows
+
+### Adding a New Feature
+1. Create entity class with JPA annotations
+2. Create repository interface extending JpaRepository
+3. Create service interface and implementation
+4. Create controller (REST API or Thymeleaf view)
+5. Add Liquibase changelog for database changes
+6. Write tests
+
+### Adding Database Changes
+1. Create new SQL file in `db/changelog/changes/0XX-description.sql`
+2. Add changeset header: `--changeset author:id`
+3. Use `CREATE TABLE IF NOT EXISTS` or `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+4. Include in master yaml
+5. Run `mvn liquibase:validate` then `mvn liquibase:update`
+
+### Task Marketplace Flow
+```
+Parent creates task → Task saved (no child assignment)
+Child picks task → TaskJob created (childId, assignedAt)
+Child completes → TaskCompletion created (PENDING)
+Parent approves → Points added to child wallet
+```
+
+### Point Expiration Flow
+```
+Child earns points → PointWallet batch created (earnedDate, expirationDate=+180d)
+Child spends points → FIFO deduction from oldest batches
+Daily 2 AM job → Mark expired batches (remainingPoints=0, expired=true)
+```
+
+## Configuration Files
+
+- `pom.xml` - Maven dependencies and plugins (JaCoCo, Liquibase, Surefire)
+- `application.properties` - Base configuration
+- `application-dev.properties` - Development profile (H2)
+- `application-prod.properties` - Production profile (MySQL)
+- `liquibase.properties` - Manual migration credentials
+- `docker-compose.yml` - Local container orchestration
