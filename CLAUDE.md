@@ -9,7 +9,6 @@ Family Points Task Management System built with Spring Boot 3.3.0 + Maven + JPA 
 **Tech Stack:**
 - Java 21, Spring Boot 3.3.0, Maven
 - MySQL 8.0 (production) / H2 (development)
-- Liquibase 4.27.0 for database migrations
 - Thymeleaf + Bootstrap 5 + Animate.css for frontend
 - Cucumber + JUnit 5 + Mockito for testing
 
@@ -39,12 +38,6 @@ mvn clean install -Pselenium-tests
 
 # Generate JaCoCo coverage report
 mvn clean test
-
-# Database migrations
-mvn liquibase:validate   # Validate changelog
-mvn liquibase:status     # Check pending changes
-mvn liquibase:update     # Apply migrations
-mvn liquibase:clearCheckSums  # Clear checksums (dev only)
 ```
 
 ## Architecture
@@ -92,16 +85,9 @@ Controller (HTTP requests) → Service (business logic) → Repository (data acc
 
 ## Database
 
-### Liquibase Setup
-- Master file: `src/main/resources/db/changelog/db.changelog-master.yaml`
-- Main schema: `001-schema-ddl.sql` (all DDL)
-- Initial data: `002-data-dml.sql` (all DML with INSERT ... SELECT ... WHERE NOT EXISTS)
-- Incremental changes: `changes/0XX-*.sql`
-
 ### Connection Configuration
 - Dev (H2): `application-dev.properties`
 - Prod (MySQL): `application-prod.properties` or environment variables
-- Manual migrations use `liquibase.properties`
 
 ### Production Database
 ```
@@ -175,15 +161,7 @@ OpenAPI/Swagger UI available at `/swagger-ui.html` (springdoc-openapi 2.5.0)
 2. Create repository interface extending JpaRepository
 3. Create service interface and implementation
 4. Create controller (REST API or Thymeleaf view)
-5. Add Liquibase changelog for database changes
-6. Write tests
-
-### Adding Database Changes
-1. Create new SQL file in `db/changelog/changes/0XX-description.sql`
-2. Add changeset header: `--changeset author:id`
-3. Use `CREATE TABLE IF NOT EXISTS` or `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
-4. Include in master yaml
-5. Run `mvn liquibase:validate` then `mvn liquibase:update`
+5. Write tests
 
 ### Task Marketplace Flow
 ```
@@ -195,11 +173,10 @@ Parent approves → Points added to child points balance
 
 ## Configuration Files
 
-- `pom.xml` - Maven dependencies and plugins (JaCoCo, Liquibase, Surefire)
+- `pom.xml` - Maven dependencies and plugins (JaCoCo, Surefire)
 - `application.properties` - Base configuration
 - `application-dev.properties` - Development profile (H2)
 - `application-prod.properties` - Production profile (MySQL)
-- `liquibase.properties` - Manual migration credentials
 - `docker-compose.yml` - Local container orchestration
 
 ## Code Conventions

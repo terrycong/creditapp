@@ -18,7 +18,6 @@ app.log
 cookies.txt
 coupon.txt
 reset-mysql.sql
-liquibase.properties
 
 # Submodules / symlinks (separate repos)
 creditapp/
