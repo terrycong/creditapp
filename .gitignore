@@ -20,19 +20,19 @@ coupon.txt
 reset-mysql.sql
 
 # Submodules / symlinks (separate repos)
-creditapp/
-creditapp-android/
-iso20022-viewer/
-project-manager/
-qr-data-bridge/
-qr-data-bridge-sender/
-quant_analysis/
-charts/
-docker/
-helm/
-.github/
-.workflow/
-.sisyphus/
+/creditapp/
+/creditapp-android/
+/iso20022-viewer/
+/project-manager/
+/qr-data-bridge/
+/qr-data-bridge-sender/
+/quant_analysis/
+/charts/
+/docker/
+/helm/
+/.github/
+/.workflow/
+/.sisyphus/
 
 # IDE
 *.iml
