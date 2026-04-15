@@ -6,7 +6,10 @@
       "Bash(mvn test:*)",
       "Bash(mvn package:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(unzip -p target/credit-app-1.3.0.jar BOOT-INF/classes/application.properties)",
+      "Bash(mvn compile:*)",
+      "Bash(git check-ignore:*)"
     ]
   }
 }
