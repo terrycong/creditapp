@@ -4,7 +4,8 @@
       "Bash(git push:*)",
       "Bash(mvn clean:*)",
       "Bash(mvn test:*)",
-      "Bash(mvn package:*)"
+      "Bash(mvn package:*)",
+      "Bash(git add:*)"
     ]
   }
 }
