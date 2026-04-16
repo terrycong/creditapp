@@ -14,7 +14,7 @@
 
     <groupId>com.creditapp</groupId>
     <artifactId>credit-app</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.2</version>
     <name>Credit App</name>
     <description>Family Points Task Management System</description>
 
