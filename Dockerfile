@@ -12,8 +12,8 @@ RUN addgroup -S spring && adduser -S spring -G spring
 # Set working directory
 WORKDIR /app
 
-# Copy the pre-built JAR
-COPY target/*.jar app.jar
+# Copy the pre-built JAR (updated 1.4.0 with timezone fix)
+COPY target/credit-app-1.4.0.jar app.jar
 
 # Change ownership to non-root user
 USER spring:spring
